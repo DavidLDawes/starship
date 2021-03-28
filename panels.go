@@ -16,6 +16,7 @@ type panels struct {
 	builds      map[string]build
 	tons        map[string]floatReturn
 	selects     map[string][]*widget.Select
+	checks      map[string][]*widget.Check
 	intValues   map[string][]int
 	boolValues  map[string][]bool
 	floatValues map[string][]float32
@@ -25,14 +26,15 @@ type panels struct {
 }
 
 var thePanels = panels {
-		changes:    make(map[string]twoBoolReturn),
-		builds:     make(map[string]build),
-		tons:       make(map[string]floatReturn),
-		selects:    make(map[string][]*widget.Select),
-		intValues:  make(map[string][]int),
-		boolValues: make(map[string][]bool),
+		changes:     make(map[string]twoBoolReturn),
+		builds:      make(map[string]build),
+		tons:        make(map[string]floatReturn),
+		selects:     make(map[string][]*widget.Select),
+		checks:      make(map[string][]*widget.Check),
+		intValues:   make(map[string][]int),
+		boolValues:  make(map[string][]bool),
 		floatValues: make(map[string][]float32),
-		settings:   make(map[string]*widget.Form),
-		detailBox:  make(map[string]*widget.Box),
-		details:    make(map[string]string),
+		settings:    make(map[string]*widget.Form),
+		detailBox:   make(map[string]*widget.Box),
+		details:     make(map[string]string),
 }

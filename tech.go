@@ -6,6 +6,19 @@ import (
 )
 
 const (
+	tl8 = 0
+	tl9 = 1
+	tlA = 2
+	tlB = 3
+	tlC = 4
+	tlD = 5
+	tlE = 6
+	tlF = 7
+	tlG = 8
+	tlH = 9
+	tlJ = 10
+	tlK = 11
+	tlL = 12
 	tlOffset = iota
 )
 
@@ -46,31 +59,31 @@ func offsetToTech(tlOffsetIn int) (result string) {
 	result = "8"
 	switch(tlOffsetIn) {
 	default:
-	case 0:
+	case tl8:
 		result = "8"
-	case 1:
+	case tl9:
 		result = "9"
-	case 2:
+	case tlA:
 		result = "A"
-	case 3:
+	case tlB:
 		result = "B"
-	case 4:
+	case tlC:
 		result = "C"
-	case 5:
+	case tlD:
 		result = "D"
-	case 6:
+	case tlE:
 		result = "E"
-	case 7:
+	case tlF:
 		result = "F"
-	case 8:
+	case tlG:
 		result = "G"
-	case 9:
+	case tlH:
 		result = "H"
-	case 10:
+	case tlJ:
 		result = "J"
-	case 11:
+	case tlK:
 		result = "K"
-	case 12:
+	case tlL:
 		result = "L"
 	}
 	return
@@ -80,31 +93,31 @@ func techToOffset(techIn string) (result int) {
 	switch(techIn) {
 	default:
 	case "8":
-		result = 0
+		result = tl8
 	case "9":
-		result = 1
+		result = tl9
 	case "A":
-		result = 2
+		result = tlA
 	case "B":
-		result = 3
+		result = tlB
 	case "C":
-		result = 4
+		result = tlC
 	case "D":
-		result = 5
+		result = tlD
 	case "E":
-		result = 6
+		result = tlE
 	case "F":
-		result = 7
+		result = tlF
 	case "G":
-		result = 8
+		result = tlG
 	case "H":
-		result = 9
+		result = tlH
 	case "J":
-		result = 10
+		result = tlJ
 	case "K":
-		result = 11
+		result = tlK
 	case "L":
-		result = 12
+		result = tlL
 	}
 	return
 }

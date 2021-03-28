@@ -15,6 +15,7 @@ const (
 	jump = iota
 	maneuver
 	power
+	fuel
 	jumpCost
 	maneuverCost
 	powerCost
@@ -24,6 +25,8 @@ const (
 	maneuverDiscount
 	powerCostFactor
 	powerDiscount
+	fuelDiscount
+	antiMatter = 0
 )
 
 var (
@@ -36,7 +39,8 @@ var (
 
 	jSelect *widget.Select
     mSelect *widget.Select
-    pSelect *widget.Select
+	pSelect *widget.Select
+	amCheck *widget.Check
 
 	// Power plants cost 3 MCr/ton
 	pCost = float32(3)
@@ -56,6 +60,7 @@ var (
 func drivesInit() {
 	thePanels.intValues["drives"] = make([]int, 3)  // using 8 so far
 	thePanels.floatValues["drives"] = make([]float32, 20)  // using 8 so far
+	thePanels.boolValues["drives"] = make([]bool, 1)
 	thePanels.intValues["drives"][jump] = 2
 	thePanels.floatValues["drives"][jump] = 1.0
 	thePanels.floatValues["drives"][jumpDiscount] = 1.0
@@ -71,9 +76,12 @@ func drivesInit() {
 	thePanels.floatValues["drives"][power] = 1.0
 	thePanels.floatValues["drives"][powerCost] = 1.0
 
+	thePanels.boolValues["drives"][antiMatter] = false
 	thePanels.details["drives"] = getDriveDetails()
 	detailDrives = widget.NewLabel(thePanels.details["drives"])
 
+	// creatin gthe widgets during startup, so we have to make the event handlers
+	// effectively no-ops until all are defined.
 	jSelect = widget.NewSelect(driveSelections, stringValuedNothing)
 	jSelect.SetSelected("2")
 	mSelect = widget.NewSelect(driveSelections, stringValuedNothing)
@@ -81,19 +89,30 @@ func drivesInit() {
 	pSelect = widget.NewSelect(powerSelections, stringValuedNothing)
 	pSelect.SetSelected("2")
 
+	amCheck = widget.NewCheck("Antimatter", amChecked)
+	amCheck.Checked = false
+
 	thePanels.changes["drives"] = updateDrives
 	thePanels.selects["drives"] = make([]*widget.Select, 3)
+	thePanels.checks["drives"] = make([]*widget.Check, 1)
+
+	// all defined, safe to apply select handlers now
 	thePanels.selects["drives"][jump] = jSelect
 	thePanels.selects["drives"][jump].OnChanged = jChange
 	thePanels.selects["drives"][maneuver] =  mSelect
 	thePanels.selects["drives"][maneuver].OnChanged = mChange
 	thePanels.selects["drives"][power] = pSelect
 	thePanels.selects["drives"][power].OnChanged = pChange
+	thePanels.checks["drives"][antiMatter] = amCheck
+	// safe to preset the boolean, unlike the selectors, when we are setting up,
+	// so this was already set above when we created the NewSelect
+	//thePanels.checks["drives"][antiMatter].OnChanged = amChecked
 
 	thePanels.settings["drives"] = widget.NewForm(
 		widget.NewFormItem("Jump", jSelect),
 		widget.NewFormItem("Maneuver", mSelect),
-		widget.NewFormItem("Power", pSelect))
+		widget.NewFormItem("Power", pSelect),
+		widget.NewFormItem("Antimatter Fuel", amCheck))
 
 	thePanels.tons["drives"] = getDriveTons
 	thePanels.detailBox["drives"] = widget.NewVBox(widget.NewLabel(""), detailDrives)
@@ -142,50 +161,82 @@ func pChange(newPower string) {
 	}
 }
 
+func amChecked(antimatter bool) {
+	if thePanels.intValues["tech"][0] > tlG {
+		thePanels.boolValues["drives"][0] = antimatter
+	} else {
+		thePanels.boolValues["drives"][0] = false
+		thePanels.checks["drives"][antiMatter].Checked = false
+	}
+	changes()
+}
+
 func getDriveDetails() (driveDetails string) {
-	thePanels.floatValues["drives"][jumpDiscount], thePanels.floatValues["drives"][jumpCostFactor] = figureTechEffects(tech4JDrives[thePanels.intValues["drives"][jump]])
+	thePanels.floatValues["drives"][jumpCostFactor], thePanels.floatValues["drives"][jumpDiscount] = figureTechEffects(tech4JDrives[thePanels.intValues["drives"][jump]])
+
 	// tonnage for Jump drives is discount * jump * tonnage / 10
-	thePanels.floatValues["drives"][jump] = thePanels.floatValues["drives"][jumpDiscount] * float32(thePanels.intValues["hull"][0])*float32(thePanels.intValues["drives"][jump])/10.0
+	thePanels.floatValues["drives"][jump] = thePanels.floatValues["drives"][jumpDiscount] * float32(thePanels.intValues["hull"][0]) * jTon[thePanels.intValues["tech"][0]]
 	// cost for Jump drives is CostMultiplier * Jump drive tonnage * 4 (cost per ton of Jump drive)
 	thePanels.floatValues["drives"][jumpCost] = thePanels.floatValues["drives"][jumpCostFactor] * jCost * thePanels.floatValues["drives"][jump]
 
-	thePanels.floatValues["drives"][maneuverDiscount], thePanels.floatValues["drives"][maneuverCostFactor] = figureTechEffects(tech4MDrives[thePanels.intValues["drives"][maneuver]])
+	thePanels.floatValues["drives"][maneuverCostFactor], thePanels.floatValues["drives"][maneuverDiscount] = figureTechEffects(tech4MDrives[thePanels.intValues["drives"][maneuver]])
 	// tonnage for Maneuver drives is discount * maneuver * tonnage / 10
-	thePanels.floatValues["drives"][maneuver] = thePanels.floatValues["drives"][maneuverDiscount] * float32(thePanels.intValues["hull"][0])*float32(thePanels.intValues["drives"][maneuver])/10.0
+	thePanels.floatValues["drives"][maneuver] = thePanels.floatValues["drives"][maneuverDiscount] * float32(thePanels.intValues["hull"][0])*  float32(thePanels.intValues["drives"][maneuver])/100.0
 	// cost for Maneuver drives is CostMultiplier * Maneuver drive tonnage * v (variable per tech level, see mCost[])
 	thePanels.floatValues["drives"][maneuverCost] = thePanels.floatValues["drives"][maneuverCostFactor] * mCost[thePanels.intValues["tech"][0]] * thePanels.floatValues["drives"][maneuver]
 
-	thePanels.floatValues["drives"][powerDiscount], thePanels.floatValues["drives"][powerCostFactor] = figureTechEffects(tech4MDrives[thePanels.intValues["drives"][power]])
+	thePanels.floatValues["drives"][powerCostFactor], thePanels.floatValues["drives"][powerDiscount] = figureTechEffects(tech4MDrives[thePanels.intValues["drives"][power]])
 	// tonnage for Maneuver drives is discount * maneuver * tonnage / 10
-	thePanels.floatValues["drives"][power] = thePanels.floatValues["drives"][powerDiscount] * float32(thePanels.intValues["hull"][0])*float32(thePanels.intValues["drives"][power])/10.0
+	thePanels.floatValues["drives"][power] = thePanels.floatValues["drives"][powerDiscount] * float32(thePanels.intValues["hull"][0]) * pTonByTech[thePanels.intValues["tech"][0]]
 	// cost for Maneuver drives is CostMultiplier * Maneuver drive tonnage * v (variable per tech level, see mCost[])
 	thePanels.floatValues["drives"][powerCost] = thePanels.floatValues["drives"][powerCostFactor] * mCost[thePanels.intValues["tech"][0]] * thePanels.floatValues["drives"][power]
 
+	thePanels.floatValues["drives"][fuelDiscount] = float32(1.0)
+	if thePanels.boolValues["drives"][antiMatter] {
+		thePanels.floatValues["drives"][fuelDiscount] = float32(10.0)
+	}
+
 	if thePanels.intValues["drives"][jump] < 1 {
+		thePanels.floatValues["drives"][fuel] =
+			thePanels.floatValues["drives"][power] * 4.0 / (3.0) / thePanels.floatValues["drives"][fuelDiscount]
+
 		if thePanels.intValues["drives"][maneuver] < 1 {
-			driveDetails = fmt.Sprintf("P-%d, %.1f tons; No jump or maneuver",
-				thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power])
+			driveDetails = fmt.Sprintf("P-%d, %.1f tons; %.1f tons of fuel; No jump or maneuver",
+				thePanels.intValues["drives"][power],
+				thePanels.floatValues["drives"][power],
+				thePanels.floatValues["drives"][fuel])
 		} else {
-			driveDetails = fmt.Sprintf("M-%d, %.1f tons; P-%d, %.1f tons; No jump",
+			driveDetails = fmt.Sprintf("M-%d, %.1f tons; P-%d, %.1f tons; %.1f tons of fuel; No jump",
 				thePanels.intValues["drives"][maneuver], thePanels.floatValues["drives"][maneuver],
-				thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power])
+				thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power],
+				thePanels.floatValues["drives"][fuel])
+
 		}
 	} else if thePanels.intValues["drives"][maneuver] < 1 {
-		driveDetails = fmt.Sprintf("J-%d, %.1f tons; P-%d, %.1f tons; No maneuver",
+		thePanels.floatValues["drives"][fuel] =
+			(thePanels.floatValues["drives"][power] * 4.0 / (3.0) +
+			float32(thePanels.intValues["hull"][0]) * float32(thePanels.intValues["drives"][jump]))  *
+			thePanels.floatValues["drives"][fuelDiscount]
+		driveDetails = fmt.Sprintf("J-%d, %.1f tons; P-%d, %.1f tons; %.1f tons of fuel; No maneuver",
 			thePanels.intValues["drives"][jump], thePanels.floatValues["drives"][jump],
-			thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power])
+			thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power],
+			thePanels.floatValues["drives"][power] * 4.0 / (3.0 * thePanels.floatValues["drives"][fuelDiscount]) +
+				thePanels.floatValues["drives"][fuel])
+
+		// tonnage for Jump drives is discount * jump * tonnage / 10
+
 	} else {
-		driveDetails = fmt.Sprintf("J-%d, %.1f tons; M-%d, %.1f tons; P-%d, %.1f tons",
-			thePanels.intValues["drives"][jump], thePanels.floatValues["drives"][jump],
-			thePanels.intValues["drives"][maneuver], thePanels.floatValues["drives"][maneuver],
-			thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power])
+			driveDetails = fmt.Sprintf("J-%d, %.1f tons; M-%d, %.1f tons; P-%d, %.1f tons; %.1f tons of fuel",
+				thePanels.intValues["drives"][jump], thePanels.floatValues["drives"][jump],
+				thePanels.intValues["drives"][maneuver], thePanels.floatValues["drives"][maneuver],
+				thePanels.intValues["drives"][power], thePanels.floatValues["drives"][power],
+				thePanels.floatValues["drives"][fuel])
 	}
 
 	return
 }
-
+ 
 func updateDrives() (jChanged bool, mChanged bool) {
-	mChanged = false
 	jChanged = false
 	maxJ := 20
 	maxM := 20
@@ -250,6 +301,7 @@ func updateDrives() (jChanged bool, mChanged bool) {
 	}
 
 	detailDrives.Text = getDriveDetails()
+	thePanels.details["drives"] = detailDrives.Text
 
 	return
 }
