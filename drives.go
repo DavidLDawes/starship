@@ -201,7 +201,7 @@ func getDriveDetails() (driveDetails string) {
 	jd := thePanels.floatValues["drives"][jumpDiscount]
 	jt := jTon[thePanels.intValues["drives"][jump]]
 	thePanels.floatValues["drives"][jump] = jd * float32(thePanels.intValues["hull"][0]) * jt
-	//thePanels.floatValues["drives"][jump] = thePanels.floatValues["drives"][jumpDiscount] * float32(thePanels.intValues["hull"][0]) * jTon[thePanels.intValues["drives"][jump]]
+	// thePanels.floatValues["drives"][jump] = thePanels.floatValues["drives"][jumpDiscount] * float32(thePanels.intValues["hull"][0]) * jTon[thePanels.intValues["drives"][jump]]
 	thePanels.intValues["drives"][jEngineers] = engineersFromDriveTonnage(thePanels.floatValues["drives"][jump])
 	// cost for Jump drives is CostMultiplier * Jump drive tonnage * 4 (cost per ton of Jump drive)
 	thePanels.floatValues["drives"][jumpCost] = thePanels.floatValues["drives"][jumpCostFactor] * jCost * thePanels.floatValues["drives"][jump]

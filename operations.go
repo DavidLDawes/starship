@@ -48,7 +48,7 @@ func getOperationsDetails() string {
 	}
 
 	thePanels.floatValues["operations"][0] = float32(20.0)
-	if thePanels.floatValues["operations"][0] < float32(thePanels.intValues["hull"][hull]) * float32(0.02) {
+	if thePanels.floatValues["operations"][0] < float32(thePanels.intValues["hull"][hull])*float32(0.02) {
 		thePanels.floatValues["operations"][0] = float32(thePanels.intValues["hull"][hull]) * float32(0.02)
 	}
 	return fmt.Sprintf("Bridge %.1f tons",
