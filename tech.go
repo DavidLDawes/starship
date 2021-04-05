@@ -2,41 +2,42 @@ package main
 
 import (
 	"fmt"
+
 	"fyne.io/fyne/widget"
 )
 
 const (
-	tl8 = 0
-	tl9 = 1
-	tlA = 2
-	tlB = 3
-	tlC = 4
-	tlD = 5
-	tlE = 6
-	tlF = 7
-	tlG = 8
-	tlH = 9
-	tlJ = 10
-	tlK = 11
-	tlL = 12
+	tl8      = 0
+	tl9      = 1
+	tlA      = 2
+	tlB      = 3
+	tlC      = 4
+	tlD      = 5
+	tlE      = 6
+	tlF      = 7
+	tlG      = 8
+	tlH      = 9
+	tlJ      = 10
+	tlK      = 11
+	tlL      = 12
 	tlOffset = iota
 )
 
 var (
-	tlSelect *widget.Select
+	tlSelect    *widget.Select
 	techDetails = "Tech Level A"
-	detailTech *widget.Label
-	techOffset = techToOffset("A")
-	techLevels = []string {"8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L",}
+	detailTech  *widget.Label
+	techOffset  = techToOffset("A")
+	techLevels  = []string{"8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L"}
 )
 
 func techInit() {
 	thePanels.intValues["tech"] = make([]int, 1)
 	thePanels.intValues["tech"][0] = techToOffset("A")
-	tlSelect = widget.NewSelect(techLevels, techSelectChange)
+	tlSelect = widget.NewSelect(techLevels, stringValuedNothing)
 	tlSelect.SetSelected("A")
 	detailTech = widget.NewLabel(techDetails)
-	
+
 	thePanels.changes["tech"] = returnBBFalse
 	thePanels.selects["tech"] = []*widget.Select{tlSelect}
 	thePanels.intValues["tech"] = []int{techToOffset("A")}
@@ -44,20 +45,23 @@ func techInit() {
 
 	thePanels.details["tech"] = fmt.Sprintf("Tech Level %s", offsetToTech(thePanels.intValues["tech"][0]))
 	thePanels.settings["tech"] = widget.NewForm(widget.NewFormItem("Tech Level", tlSelect))
-	thePanels.detailBox["tech"] =  widget.NewVBox(widget.NewLabel(""), detailTech)
+	thePanels.detailBox["tech"] = widget.NewVBox(widget.NewLabel(""), detailTech)
+	thePanels.indexBox = append(thePanels.indexBox, thePanels.detailBox["tech"])
 	thePanels.details["tech"] = techDetails
+	tlSelect.OnChanged = techSelectChange
 }
 
 func techSelectChange(tlSelected string) {
 	techOffset = techToOffset(tlSelected)
 	thePanels.intValues["tech"][0] = techOffset
 	thePanels.details["tech"] = fmt.Sprintf("Tech Level %s", offsetToTech(thePanels.intValues["tech"][0]))
+	detailTech.Text = thePanels.details["tech"]
 	changes()
 }
 
 func offsetToTech(tlOffsetIn int) (result string) {
 	result = "8"
-	switch(tlOffsetIn) {
+	switch tlOffsetIn {
 	default:
 	case tl8:
 		result = "8"
@@ -90,7 +94,7 @@ func offsetToTech(tlOffsetIn int) (result string) {
 }
 
 func techToOffset(techIn string) (result int) {
-	switch(techIn) {
+	switch techIn {
 	default:
 	case "8":
 		result = tl8

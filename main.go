@@ -6,13 +6,14 @@ import (
 )
 
 func main() {
-
 	a := app.New()
 	w := a.NewWindow("Designer")
 
 	techInit()
 	hullInit()
 	drivesInit()
+	operationsInit()
+	summaryInit()
 
 	ui := widget.NewHBox()
 	left := widget.NewVBox()
@@ -20,7 +21,7 @@ func main() {
 	for _, nextSetting := range thePanels.settings {
 		left.Append(nextSetting)
 	}
-	for _, nextBox := range thePanels.detailBox {
+	for _, nextBox := range thePanels.indexBox {
 		right.Append(nextBox)
 	}
 	ui.Append(left)
