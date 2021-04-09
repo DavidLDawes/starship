@@ -2,23 +2,15 @@ package main
 
 import (
 	"fmt"
-
-	"fyne.io/fyne/widget"
 )
 
-var detailSummary *widget.Label
-
 func summaryInit() {
-	detailSummary = widget.NewLabel("<Not Set Yet>")
-
 	thePanels.changes["summary"] = returnBBFalse
 	thePanels.getTons["summary"] = getSummaryTons
 	thePanels.getStaff["summary"] = getSummaryCrew
 	thePanels.floatValues["summary"] = []float32{20.0}
 	thePanels.boolValues["summary"] = make([]bool, 0)
 
-	thePanels.detailBox["summary"] = widget.NewVBox(widget.NewLabel(""), detailSummary)
-	thePanels.indexBox = append(thePanels.indexBox, thePanels.detailBox["summary"])
 	thePanels.changes["summary"] = changesSummary
 	updateSummary()
 }
@@ -30,8 +22,9 @@ func changesSummary() (change1 bool, change2 bool) {
 }
 
 func updateSummary() {
-	detailSummary.Text = getSummaryDetails()
-	thePanels.details["summary"] = detailSummary.Text
+	summaryDetails := getSummaryDetails()
+	thePanels.details["summary"] = summaryDetails
+	thePanels.indexDetails = append(thePanels.indexDetails, summaryDetails)
 }
 
 func getSummaryDetails() string {

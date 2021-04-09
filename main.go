@@ -5,24 +5,27 @@ import (
 	"fyne.io/fyne/widget"
 )
 
+var details *widget.Label
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Designer")
-
 	techInit()
 	hullInit()
 	drivesInit()
 	operationsInit()
 	summaryInit()
+	if details == nil {
+		details = widget.NewLabel("")
+	}
+	assignDetails(getDetails())
+
 
 	ui := widget.NewHBox()
 	left := widget.NewVBox()
-	right := widget.NewVBox()
+	right := details
 	for _, nextSetting := range thePanels.settings {
 		left.Append(nextSetting)
-	}
-	for _, nextBox := range thePanels.indexBox {
-		right.Append(nextBox)
 	}
 	ui.Append(left)
 	ui.Append(right)
@@ -36,4 +39,21 @@ func changes() {
 	for _, nextChange := range thePanels.changes {
 		nextChange()
 	}
+	if details == nil {
+		details = widget.NewLabel("")
+	}
+	assignDetails(getDetails())
+}
+
+func getDetails() (designDetails string) {
+	designDetails = ""
+	for _, nextDetail := range thePanels.indexDetails {
+		designDetails += nextDetail
+	}
+	thePanels.indexDetails = make([]string, 0)
+	return
+}
+
+func assignDetails(designDetails string) {
+	details.Text = designDetails
 }

@@ -20,13 +20,11 @@ const (
 	tlJ      = 10
 	tlK      = 11
 	tlL      = 12
-	tlOffset = iota
 )
 
 var (
 	tlSelect    *widget.Select
-	techDetails = "Tech Level A"
-	detailTech  *widget.Label
+	techDetails string
 	techOffset  = techToOffset("A")
 	techLevels  = []string{"8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L"}
 )
@@ -36,26 +34,23 @@ func techInit() {
 	thePanels.intValues["tech"][0] = techToOffset("A")
 	tlSelect = widget.NewSelect(techLevels, stringValuedNothing)
 	tlSelect.SetSelected("A")
-	detailTech = widget.NewLabel(techDetails)
 
 	thePanels.changes["tech"] = returnBBFalse
 	thePanels.selects["tech"] = []*widget.Select{tlSelect}
 	thePanels.intValues["tech"] = []int{techToOffset("A")}
 	thePanels.boolValues["tech"] = make([]bool, 0)
 
-	thePanels.details["tech"] = fmt.Sprintf("Tech Level %s", offsetToTech(thePanels.intValues["tech"][0]))
-	thePanels.settings["tech"] = widget.NewForm(widget.NewFormItem("Tech Level", tlSelect))
-	thePanels.detailBox["tech"] = widget.NewVBox(widget.NewLabel(""), detailTech)
-	thePanels.indexBox = append(thePanels.indexBox, thePanels.detailBox["tech"])
+	techDetails = fmt.Sprintf("Tech Level %s\n", offsetToTech(thePanels.intValues["tech"][0]))
 	thePanels.details["tech"] = techDetails
+	thePanels.indexDetails = append(thePanels.indexDetails, techDetails)
+	thePanels.settings["tech"] = widget.NewForm(widget.NewFormItem("Tech Level", tlSelect))
 	tlSelect.OnChanged = techSelectChange
 }
 
 func techSelectChange(tlSelected string) {
 	techOffset = techToOffset(tlSelected)
 	thePanels.intValues["tech"][0] = techOffset
-	thePanels.details["tech"] = fmt.Sprintf("Tech Level %s", offsetToTech(thePanels.intValues["tech"][0]))
-	detailTech.Text = thePanels.details["tech"]
+	thePanels.details["tech"] = fmt.Sprintf("Tech Level %s\n", offsetToTech(thePanels.intValues["tech"][0]))
 	changes()
 }
 

@@ -26,7 +26,6 @@ var (
 		8, 9, 10, 11, 12, 13, 14, 15, 24, 34, 36, 42, 46, 50,
 	}
 
-	detailHull *widget.Label
 	hullSizes  = []string{
 		"100", "120", "150", "200", "300", "330", "400", "500", "600", "700", "800", "900", "980",
 		"1000", "1200", "1500", "2000", "2500", "2600", "3000", "3500", "4000", "4500", "5000", "5500", "6000", "6400", "6500", "7000", "7200", "7500", "8000", "8500", "9000", "9500",
@@ -45,7 +44,6 @@ func hullInit() {
 	thePanels.intValues["hull"][armor] = defaultArmor
 	hullSelect = widget.NewSelect(hullSizes, stringValuedNothing)
 	hullSelect.SetSelected(defaultHullString)
-	detailHull = widget.NewLabel("<Hull details not yet set>")
 	armorSelect = widget.NewSelect(getArmorRangeFromTech(), armorChange)
 	armorSelect.SetSelected(defaultArmorString)
 
@@ -56,8 +54,6 @@ func hullInit() {
 
 	thePanels.settings["hull"] = widget.NewForm(widget.NewFormItem("Hull", hullSelect), widget.NewFormItem("Armor", armorSelect))
 	updateHullDetails()
-	thePanels.detailBox["hull"] = widget.NewVBox(widget.NewLabel(""), detailHull)
-	thePanels.indexBox = append(thePanels.indexBox, thePanels.detailBox["hull"])
 	hullSelect.OnChanged = hullChange
 	thePanels.getTons["hull"] = getHullTons
 }
@@ -108,21 +104,23 @@ func updateHullDetails() (bool, bool) {
 	if thePanels.intValues["hull"][armor] < 1 {
 		thePanels.floatValues["hull"] = make([]float32, 1)
 		thePanels.floatValues["hull"][0] = 0.0
-		thePanels.details["hull"] = fmt.Sprintf("Hull tonnage %s, no armor",
+		hullDetails := fmt.Sprintf("Hull tonnage %s, no armor\n",
 			strconv.Itoa(thePanels.intValues["hull"][hull]))
+		thePanels.details["hull"] = hullDetails
+		thePanels.indexDetails = append(thePanels.indexDetails, hullDetails)
 	} else {
 		thePanels.floatValues["hull"] = make([]float32, 1)
 		thePanels.floatValues["hull"][0] = float32(thePanels.intValues["hull"][armor]) *
 			float32(thePanels.intValues["hull"][hull]) *
 			armorTonCostByTech[thePanels.intValues["tech"][0]]
-		thePanels.details["hull"] = fmt.Sprintf("Hull tonnage %s, armor AF-%s using %.1f tons",
+		hullDetails := fmt.Sprintf("Hull tonnage %s, armor AF-%s using %.1f tons\n",
 			strconv.Itoa(thePanels.intValues["hull"][hull]),
 			strconv.Itoa(thePanels.intValues["hull"][armor]),
-			thePanels.floatValues["hull"][0],
-		)
-	}
-	detailHull.Text = thePanels.details["hull"]
+			thePanels.floatValues["hull"][0])
 
+		thePanels.details["hull"] = hullDetails
+		thePanels.indexDetails = append(thePanels.indexDetails, hullDetails)
+	}
 	// Hull updates never trigger further re-updates
 	return false, false
 }
