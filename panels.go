@@ -11,7 +11,6 @@ type (
 	intStringReturn func() (int, string)
 )
 
-
 type panels struct {
 	changes      map[string]twoBoolReturn
 	builds       map[string]build

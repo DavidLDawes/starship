@@ -14,12 +14,13 @@ func main() {
 	hullInit()
 	drivesInit()
 	operationsInit()
+	electronicsInit()
+	berthsInit()
 	summaryInit()
 	if details == nil {
 		details = widget.NewLabel("")
 	}
 	assignDetails(getDetails())
-
 
 	ui := widget.NewHBox()
 	left := widget.NewVBox()
@@ -51,6 +52,7 @@ func getDetails() (designDetails string) {
 		designDetails += nextDetail
 	}
 	thePanels.indexDetails = make([]string, 0)
+
 	return
 }
 

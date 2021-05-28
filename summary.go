@@ -35,13 +35,30 @@ func getSummaryDetails() string {
 	totalStaff := 0
 	description := ""
 	for _, staff := range thePanels.getStaff {
-		staffCount, staffDescription := staff()
-		totalStaff += staffCount
+		_, staffDescription := staff()
 		description += staffDescription + "\n"
 	}
+	totalStaff = getStaffCount()
+	updateBerths(totalStaff)
+	stewards, stewardsDescription := getBerthsCrew(totalStaff + thePanels.intValues["berths"][1])
+	description += stewardsDescription + "\n"
+	totalStaff += stewards
 
-	return fmt.Sprintf("%sTotal Staff %d\nTonnage used %.1f, tonnage remaining %.1f",
-		description, totalStaff, tonsUsed, float32(thePanels.intValues["hull"][hull])-tonsUsed)
+	return fmt.Sprintf("%s Total Staff %d\nTonnage used before passgengers %.1f, "+
+		"tonnage remaining before passengers %.1f\n"+
+		"%.1f tonnage after passengers and accommodations.",
+		description, totalStaff, tonsUsed, float32(thePanels.intValues["hull"][hull])-tonsUsed,
+		float32(thePanels.intValues["hull"][hull])-tonsUsed-thePanels.floatValues["berths"][0]-thePanels.floatValues["berths"][1])
+}
+
+func getStaffCount() (count int) {
+	count = 0
+	for _, staff := range thePanels.getStaff {
+		staffCount, _ := staff()
+		count += staffCount
+	}
+
+	return
 }
 
 func getSummaryTons() float32 {

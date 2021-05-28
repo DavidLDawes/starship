@@ -7,19 +7,19 @@ import (
 )
 
 const (
-	tl8      = 0
-	tl9      = 1
-	tlA      = 2
-	tlB      = 3
-	tlC      = 4
-	tlD      = 5
-	tlE      = 6
-	tlF      = 7
-	tlG      = 8
-	tlH      = 9
-	tlJ      = 10
-	tlK      = 11
-	tlL      = 12
+	tl8 = 0
+	tl9 = 1
+	tlA = 2
+	tlB = 3
+	tlC = 4
+	tlD = 5
+	tlE = 6
+	tlF = 7
+	tlG = 8
+	tlH = 9
+	tlJ = 10
+	tlK = 11
+	tlL = 12
 )
 
 var (
