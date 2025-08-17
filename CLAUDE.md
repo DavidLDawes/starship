@@ -1,43 +1,123 @@
-#Claude Instructions
+# CLAUDE.md
 
-#Baseline
-Features of this code:
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-    Room Database
-    Hilt
-    ViewModel, read+write
-    UI in Compose, list + write (Material3)
-    Navigation
-    Repository and data source
-    Kotlin Coroutines and Flow
-    Unit tests
-    UI tests using fake data with Hilt
+## Development Commands
 
-#Workflow Process
+### Build Commands
+- `./gradlew.bat build` - Full project build and verification
+- `./gradlew.bat assembleDebug` - Build debug APK
+- `./gradlew.bat assembleRelease` - Build release APK
+- `./gradlew.bat clean` - Clean build artifacts
 
-##Assignment Phase
-1. Operator invokes Claude in a terminal window in the root of the github project for all work
-2. Claude gets instructions from stories and bugs as assigned in the terminal ("Read CLAUDE.md and following the instructions there address link-to-story" or "address link-to-bug")
+### Testing Commands
+- `./gradlew.bat test` - Run all unit tests
+- `./gradlew.bat testDebugUnitTest` - Run debug unit tests only
+- `./gradlew.bat connectedAndroidTest` - Run instrumentation tests (requires device/emulator)
+- `./gradlew.bat :app:testDebugUnitTest --tests "*.StarShipViewModelTest"` - Run single test class
 
-##Implementation Phase
-3. Claude does the work normally following the baseline architecture and conventions
-4. Claude maintains detailed logs of all work performed including:
-   - Analysis of requirements
-   - Implementation decisions and rationale
-   - Files modified or created
-   - Tests written or updated
-   - Any issues encountered and resolutions
+### Development Commands
+- `./gradlew.bat installDebug` - Install debug APK to connected device
+- `./gradlew.bat uninstallDebug` - Uninstall debug APK
 
-##Review Phase
-5. Logs are copied to the story/issue and Claude asks for approval
-6. Human reviews, tests, and either:
-   a) Adds requests for fixes, corrections, enhancements, or details needed work back to the story and re-invokes Claude to follow up, OR
-   b) Approves work and tells Claude to create a branch and PR for final review, approval and merging
+## Architecture Overview
 
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
-Add unit tests with mocking if needed when adding UI elements and complex logic.
+### Technology Stack
+- **Android**: Target SDK 35, Min SDK 21
+- **UI**: Jetpack Compose with Material3
+- **Database**: Room with SQLite
+- **DI**: Hilt for dependency injection
+- **Async**: Kotlin Coroutines with Flow
+- **Testing**: JUnit 4, Hilt Testing, Compose Testing
 
+### Code Architecture
+
+#### MVVM + Repository Pattern
+```
+StarShipScreen (Compose UI) 
+  ↓ observes StateFlow
+StarShipViewModel (@HiltViewModel)
+  ↓ calls repository methods  
+StarShipRepository (interface + implementation)
+  ↓ uses DAO
+StarShipDao (Room DAO)
+  ↓ queries
+AppDatabase (Room Database)
+```
+
+#### Package Structure
+- `ui.starship.*` - Compose screens and ViewModels
+- `data.*` - Repository implementations and interfaces  
+- `data.local.database.*` - Room entities, DAOs, and database
+- `data.di.*` - Hilt modules for data layer
+- `data.local.di.*` - Hilt modules for database
+
+#### Key Architectural Files
+- `StarShipDesigner.kt` - Application class with `@HiltAndroidApp`
+- `AppDatabase.kt` - Room database with migration support
+- `StarShip.kt` - Room entity and DAO definitions
+- `StarShipRepository.kt` - Repository pattern implementation
+- `DatabaseModule.kt` & `DataModule.kt` - Hilt dependency injection modules
+
+### Testing Strategy
+
+#### Unit Tests (`/test/`)
+- Use fake implementations: `FakeStarShipRepository`, `FakeStarShipDao`
+- Test ViewModels with `TestDispatcher` and `runTest`
+- Mock external dependencies, use fakes for internal components
+
+#### Integration Tests (`/androidTest/`)
+- Use `HiltTestRunner` as custom test runner
+- Replace production modules with `@TestInstallIn(replaces = [DatabaseModule::class])`
+- Test Compose UI with `createComposeRule()` and semantic testing
+- Use in-memory Room database for isolation
+
+### State Management Pattern
+
+#### UI State
+```kotlin
+sealed interface StarShipUiState {
+    data object Loading : StarShipUiState
+    data class Success(val starShips: List<StarShip>) : StarShipUiState
+    data class Error(val exception: Throwable) : StarShipUiState
+}
+```
+
+#### ViewModel Pattern
+- Expose `StateFlow<UiState>` for UI observation
+- Use `viewModelScope` for coroutine management
+- Collect Repository `Flow` and transform to UI state
+
+### Room Database Patterns
+
+#### Entity Design
+- Entities use `@PrimaryKey(autoGenerate = true)` with `var uid: Int = 0`
+- DAOs return `Flow<List<T>>` for reactive queries
+- Use `suspend` functions for write operations
+
+#### Database Configuration
+- Schema location: `$projectDir/schemas` for version control
+- Database version: Currently 1
+- Export schema: `true` for migration tracking
+
+### Workflow Process
+
+#### Assignment Phase
+1. Operator invokes Claude in terminal at project root
+2. Claude gets instructions from stories/bugs: "Read CLAUDE.md and following the instructions there address [link-to-story]"
+
+#### Implementation Phase  
+3. Claude follows baseline architecture and conventions
+4. Claude maintains detailed logs including analysis, decisions, files modified, tests, and issues
+
+#### Review Phase
+5. Logs copied to story/issue, Claude asks for approval
+6. Human reviews and either requests changes or approves for branch/PR creation
+
+## Important Instructions
+- Use existing architectural patterns and conventions
+- Follow MVVM + Repository pattern with Hilt DI
+- Add unit tests with mocking for UI elements and complex logic
+- Use Room database patterns for data persistence
+- Follow Compose UI patterns with StateFlow observation
+- Always run tests before finalizing work
