@@ -42,7 +42,6 @@ fun Configuration.displayName(): String {
         Configuration.DISPERSED_STRUCTURE -> "Dispersed Structure"
         Configuration.PLANETOID -> "Planetoid"
         Configuration.BUFFERED_PLANETOID -> "Buffered Planetoid"
-    }
 }
 
 @Entity

@@ -55,7 +55,7 @@ class StarShipScreenTest {
         composeTestRule.onNodeWithText("Description").assertExists() 
         composeTestRule.onNodeWithText("Tonnage").assertExists()
         composeTestRule.onNodeWithText("Tech Level: C").assertExists()
-        composeTestRule.onNodeWithText("Configuration: STANDARD").assertExists()
+        composeTestRule.onNodeWithText("Configuration: Standard (Cylinder)").assertExists()
     }
 
     @Test
