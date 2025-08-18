@@ -11,7 +11,8 @@
       "Bash(gh project item-list:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git cherry-pick:*)"
     ],
     "deny": [],
     "ask": []

@@ -29,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,7 +51,11 @@ import starship.virtualsoundnw.com.data.local.database.Configuration
 import starship.virtualsoundnw.com.data.local.database.displayName
 
 @Composable
-fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel = hiltViewModel()) {
+fun StarShipScreen(
+    modifier: Modifier = Modifier, 
+    viewModel: StarShipViewModel = hiltViewModel(),
+    onNavigateToEngines: (String) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
         is StarShipUiState.Loading -> {
@@ -63,6 +68,7 @@ fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel =
             StarShipScreen(
                 items = state.data,
                 onSave = viewModel::addStarShip,
+                onNavigateToEngines = onNavigateToEngines,
                 modifier = modifier
             )
         }
@@ -73,6 +79,7 @@ fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel =
 internal fun StarShipScreen(
     items: List<StarShip>,
     onSave: (starShip: StarShip) -> Unit,
+    onNavigateToEngines: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier.padding(16.dp)) {
@@ -119,6 +126,14 @@ internal fun StarShipScreen(
                     )
                     Text(text = "Hull Class: ${ship.hullClass}")
                     Text(text = "Hull Cost: ${ship.hullCost} MCr")
+                    
+                    // Navigation button
+                    OutlinedButton(
+                        onClick = { onNavigateToEngines(ship.name) },
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Configure Engines")
+                    }
                 }
             }
         }
@@ -267,7 +282,8 @@ private fun DefaultPreview() {
                 StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
                 StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.CONE)
             ),
-            onSave = {}
+            onSave = {},
+            onNavigateToEngines = {}
         )
     }
 }
@@ -280,7 +296,8 @@ private fun PortraitPreview() {
             items = listOf(
                 StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISPERSED_STRUCTURE)
             ),
-            onSave = {}
+            onSave = {},
+            onNavigateToEngines = {}
         )
     }
 }
