@@ -11,7 +11,14 @@
       "Bash(gh project item-list:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(git pull:*)",
+      "Bash(gh run view:*)",
+      "Bash(git commit:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
