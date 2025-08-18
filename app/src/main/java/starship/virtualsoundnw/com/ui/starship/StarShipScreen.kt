@@ -36,14 +36,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 
 @Composable
 fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel = hiltViewModel()) {
     val items by viewModel.uiState.collectAsStateWithLifecycle()
     if (items is StarShipUiState.Success) {
         StarShipScreen(
-            items = (items as StarShipUiState.Success).data,
-            onSave = viewModel::addStarShip,
+            items = (items as StarShipUiState.Success).data.map { it.name },
+            onSave = { name -> 
+                viewModel.addStarShip(StarShip(
+                    name = name,
+                    description = "Default description",
+                    tons = 200,
+                    techLevel = TechLevel.C,
+                    configuration = Configuration.STANDARD
+                ))
+            },
             modifier = modifier
         )
     }

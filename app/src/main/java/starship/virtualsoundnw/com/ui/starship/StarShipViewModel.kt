@@ -26,6 +26,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 import starship.virtualsoundnw.com.ui.starship.StarShipUiState.Error
 import starship.virtualsoundnw.com.ui.starship.StarShipUiState.Loading
 import starship.virtualsoundnw.com.ui.starship.StarShipUiState.Success
@@ -37,13 +40,13 @@ class StarShipViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<StarShipUiState> = starShipRepository
-        .starShips.map<List<String>, StarShipUiState>(::Success)
+        .starShips.map<List<StarShip>, StarShipUiState>(::Success)
         .catch { emit(Error(it)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
-    fun addStarShip(name: String) {
+    fun addStarShip(starShip: StarShip) {
         viewModelScope.launch {
-            starShipRepository.add(name)
+            starShipRepository.add(starShip)
         }
     }
 }
@@ -51,5 +54,5 @@ class StarShipViewModel @Inject constructor(
 sealed interface StarShipUiState {
     object Loading : StarShipUiState
     data class Error(val throwable: Throwable) : StarShipUiState
-    data class Success(val data: List<String>) : StarShipUiState
+    data class Success(val data: List<StarShip>) : StarShipUiState
 }

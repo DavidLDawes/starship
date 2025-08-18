@@ -24,6 +24,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.DefaultStarShipRepository
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,11 +42,15 @@ interface DataModule {
 }
 
 class FakeStarShipRepository @Inject constructor() : StarShipRepository {
-    override val starShips: Flow<List<String>> = flowOf(fakeStarShips)
+    override val starShips: Flow<List<StarShip>> = flowOf(fakeStarShips)
 
-    override suspend fun add(name: String) {
+    override suspend fun add(starShip: StarShip) {
         throw NotImplementedError()
     }
 }
 
-val fakeStarShips = listOf("One", "Two", "Three")
+val fakeStarShips = listOf(
+    StarShip("One", "First test ship", 200, TechLevel.C, Configuration.STANDARD),
+    StarShip("Two", "Second test ship", 400, TechLevel.E, Configuration.STREAMLINED),
+    StarShip("Three", "Third test ship", 600, TechLevel.G, Configuration.DISTRIBUTED)
+)

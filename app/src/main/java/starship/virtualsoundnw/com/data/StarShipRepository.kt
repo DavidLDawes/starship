@@ -17,25 +17,26 @@
 package starship.virtualsoundnw.com.data
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 import javax.inject.Inject
 
 interface StarShipRepository {
-    val starShips: Flow<List<String>>
+    val starShips: Flow<List<StarShip>>
 
-    suspend fun add(name: String)
+    suspend fun add(starShip: StarShip)
 }
 
 class DefaultStarShipRepository @Inject constructor(
     private val starShipDao: StarShipDao
 ) : StarShipRepository {
 
-    override val starShips: Flow<List<String>> =
-        starShipDao.getStarShips().map { items -> items.map { it.name } }
+    override val starShips: Flow<List<StarShip>> =
+        starShipDao.getStarShips()
 
-    override suspend fun add(name: String) {
-        starShipDao.insertStarShip(StarShip(name = name))
+    override suspend fun add(starShip: StarShip) {
+        starShipDao.insertStarShip(starShip)
     }
 }
