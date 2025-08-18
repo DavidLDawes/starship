@@ -51,6 +51,6 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
 
 val fakeStarShips = listOf(
     StarShip("One", "First test ship", 200, TechLevel.C, Configuration.STANDARD),
-    StarShip("Two", "Second test ship", 400, TechLevel.E, Configuration.STREAMLINED),
-    StarShip("Three", "Third test ship", 600, TechLevel.G, Configuration.DISTRIBUTED)
+    StarShip("Two", "Second test ship", 400, TechLevel.E, Configuration.CONE),
+    StarShip("Three", "Third test ship", 600, TechLevel.G, Configuration.DISPERSED_STRUCTURE)
 )
