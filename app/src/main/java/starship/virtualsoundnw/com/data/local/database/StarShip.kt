@@ -32,19 +32,6 @@ enum class Configuration {
     SPHERE, DISPERSED_STRUCTURE, PLANETOID, BUFFERED_PLANETOID
 }
 
-fun Configuration.displayName(): String {
-    return when (this) {
-        Configuration.NEEDLE_WEDGE -> "Needle/Wedge"
-        Configuration.CONE -> "Cone"
-        Configuration.STANDARD -> "Standard"
-        Configuration.CLOSE_STRUCTURE -> "Close Structure"
-        Configuration.SPHERE -> "Sphere"
-        Configuration.DISPERSED_STRUCTURE -> "Dispersed Structure"
-        Configuration.PLANETOID -> "Planetoid"
-        Configuration.BUFFERED_PLANETOID -> "Buffered Planetoid"
-    }
-}
-
 @Entity
 data class StarShip(
     val name: String,
