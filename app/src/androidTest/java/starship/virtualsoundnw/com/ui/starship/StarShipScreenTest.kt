@@ -74,5 +74,5 @@ class StarShipScreenTest {
 
 private val FAKE_DATA = listOf(
     StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
-    StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.SPHERE)
+    StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISPERSED_STRUCTURE)
 )

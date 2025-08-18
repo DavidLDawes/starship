@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
+import starship.virtualsoundnw.com.data.local.database.displayName
 
 @Composable
 fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel = hiltViewModel()) {
@@ -104,11 +105,20 @@ internal fun StarShipScreen(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "${ship.shipDesignation}'s Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
                     Text(text = "Description: ${ship.description}")
                     Text(text = "Tonnage: ${ship.tons}")
                     Text(text = "Tech Level: ${ship.techLevel}")
-                    Text(text = "Configuration: ${ship.configuration}")
+                    Text(text = "Configuration: ${ship.configuration.displayName()}")
+                    
+                    // Calculated fields section
+                    Text(
+                        text = "Calculated Fields",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                    )
+                    Text(text = "Hull Class: ${ship.hullClass}")
+                    Text(text = "Hull Cost: ${ship.hullCost} MCr")
                 }
             }
         }
@@ -255,7 +265,7 @@ private fun DefaultPreview() {
         StarShipScreen(
             items = listOf(
                 StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
-                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.NEEDLE_WEDGE)
+                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.CONE)
             ),
             onSave = {}
         )
@@ -268,7 +278,7 @@ private fun PortraitPreview() {
     MyApplicationTheme {
         StarShipScreen(
             items = listOf(
-                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.SPHERE)
+                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISPERSED_STRUCTURE)
             ),
             onSave = {}
         )
