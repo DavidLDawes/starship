@@ -43,6 +43,7 @@ class DatabaseModule {
             appContext,
             AppDatabase::class.java,
             "StarShip"
-        ).build()
+        ).fallbackToDestructiveMigration()
+         .build()
     }
 }

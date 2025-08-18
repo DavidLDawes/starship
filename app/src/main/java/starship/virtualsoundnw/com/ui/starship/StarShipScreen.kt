@@ -23,9 +23,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,47 +50,198 @@ import starship.virtualsoundnw.com.data.local.database.Configuration
 
 @Composable
 fun StarShipScreen(modifier: Modifier = Modifier, viewModel: StarShipViewModel = hiltViewModel()) {
-    val items by viewModel.uiState.collectAsStateWithLifecycle()
-    if (items is StarShipUiState.Success) {
-        StarShipScreen(
-            items = (items as StarShipUiState.Success).data.map { it.name },
-            onSave = { name -> 
-                viewModel.addStarShip(StarShip(
-                    name = name,
-                    description = "Default description",
-                    tons = 200,
-                    techLevel = TechLevel.C,
-                    configuration = Configuration.STANDARD
-                ))
-            },
-            modifier = modifier
-        )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    when (val state = uiState) {
+        is StarShipUiState.Loading -> {
+            Text("Loading...")
+        }
+        is StarShipUiState.Error -> {
+            Text("Error: ${state.throwable.message}")
+        }
+        is StarShipUiState.Success -> {
+            StarShipScreen(
+                items = state.data,
+                onSave = viewModel::addStarShip,
+                modifier = modifier
+            )
+        }
     }
 }
 
 @Composable
 internal fun StarShipScreen(
-    items: List<String>,
-    onSave: (name: String) -> Unit,
+    items: List<StarShip>,
+    onSave: (starShip: StarShip) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier) {
-        var nameStarShip by remember { mutableStateOf("Compose") }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+    Column(modifier.padding(16.dp)) {
+        // Ship Input Form
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            TextField(
-                value = nameStarShip,
-                onValueChange = { nameStarShip = it }
-            )
-
-            Button(modifier = Modifier.width(96.dp), onClick = { onSave(nameStarShip) }) {
-                Text("Save")
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Ship Details",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                
+                ShipInputForm(onSave = onSave)
             }
         }
-        items.forEach {
-            Text("Saved item: $it")
+        
+        // Saved Ships List
+        Text(
+            text = "Saved Ships",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        items.forEach { ship ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Description: ${ship.description}")
+                    Text(text = "Tonnage: ${ship.tons}")
+                    Text(text = "Tech Level: ${ship.techLevel}")
+                    Text(text = "Configuration: ${ship.configuration}")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShipInputForm(
+    onSave: (starShip: StarShip) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var tons by remember { mutableStateOf("200") }
+    var techLevel by remember { mutableStateOf(TechLevel.C) }
+    var configuration by remember { mutableStateOf(Configuration.STANDARD) }
+    var techLevelDropdownExpanded by remember { mutableStateOf(false) }
+    var configurationDropdownExpanded by remember { mutableStateOf(false) }
+    var tonsError by remember { mutableStateOf(false) }
+    
+    // Validate tons input
+    LaunchedEffect(tons) {
+        tonsError = tons.toIntOrNull()?.let { it < 100 } ?: true
+    }
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Ship Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        OutlinedTextField(
+            value = tons,
+            onValueChange = { tons = it },
+            label = { Text("Tonnage") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = tonsError,
+            supportingText = if (tonsError) { { Text("Minimum 100 tons required") } } else null,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        // Tech Level Dropdown
+        Column {
+            TextButton(
+                onClick = { techLevelDropdownExpanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Tech Level: $techLevel")
+                    Text("▼")
+                }
+            }
+            DropdownMenu(
+                expanded = techLevelDropdownExpanded,
+                onDismissRequest = { techLevelDropdownExpanded = false }
+            ) {
+                TechLevel.entries.forEach { level ->
+                    DropdownMenuItem(
+                        text = { Text(level.name) },
+                        onClick = {
+                            techLevel = level
+                            techLevelDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+        
+        // Configuration Dropdown
+        Column {
+            TextButton(
+                onClick = { configurationDropdownExpanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Configuration: $configuration")
+                    Text("▼")
+                }
+            }
+            DropdownMenu(
+                expanded = configurationDropdownExpanded,
+                onDismissRequest = { configurationDropdownExpanded = false }
+            ) {
+                Configuration.entries.forEach { config ->
+                    DropdownMenuItem(
+                        text = { Text(config.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                        onClick = {
+                            configuration = config
+                            configurationDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+        
+        Button(
+            onClick = {
+                if (name.isNotBlank() && description.isNotBlank() && !tonsError) {
+                    onSave(
+                        StarShip(
+                            name = name,
+                            description = description,
+                            tons = tons.toInt(),
+                            techLevel = techLevel,
+                            configuration = configuration
+                        )
+                    )
+                    // Reset form
+                    name = ""
+                    description = ""
+                    tons = "200"
+                    techLevel = TechLevel.C
+                    configuration = Configuration.STANDARD
+                }
+            },
+            enabled = name.isNotBlank() && description.isNotBlank() && !tonsError,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Save Ship")
         }
     }
 }
@@ -93,7 +252,13 @@ internal fun StarShipScreen(
 @Composable
 private fun DefaultPreview() {
     MyApplicationTheme {
-        StarShipScreen(listOf("Compose", "Room", "Kotlin"), onSave = {})
+        StarShipScreen(
+            items = listOf(
+                StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
+                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.STREAMLINED)
+            ),
+            onSave = {}
+        )
     }
 }
 
@@ -101,6 +266,11 @@ private fun DefaultPreview() {
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
-        StarShipScreen(listOf("Compose", "Room", "Kotlin"), onSave = {})
+        StarShipScreen(
+            items = listOf(
+                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISTRIBUTED)
+            ),
+            onSave = {}
+        )
     }
 }
