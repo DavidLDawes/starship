@@ -28,7 +28,14 @@ enum class TechLevel {
 }
 
 enum class Configuration {
-    STANDARD, STREAMLINED, DISTRIBUTED
+    NEEDLE_WEDGE,
+    CONE,
+    STANDARD,
+    CLOSE_STRUCTURE,
+    SPHERE,
+    DISPERSED_STRUCTURE,
+    PLANETOID,
+    BUFFERED_PLANETOID
 }
 
 @Entity

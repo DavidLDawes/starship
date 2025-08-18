@@ -198,7 +198,7 @@ private fun ShipInputForm(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Configuration: $configuration")
+                    Text("Configuration: ${configuration.displayName()}")
                     Text("▼")
                 }
             }
@@ -208,7 +208,7 @@ private fun ShipInputForm(
             ) {
                 Configuration.entries.forEach { config ->
                     DropdownMenuItem(
-                        text = { Text(config.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                        text = { Text(config.displayName()) },
                         onClick = {
                             configuration = config
                             configurationDropdownExpanded = false
@@ -255,7 +255,7 @@ private fun DefaultPreview() {
         StarShipScreen(
             items = listOf(
                 StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
-                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.STREAMLINED)
+                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.NEEDLE_WEDGE)
             ),
             onSave = {}
         )
@@ -268,9 +268,21 @@ private fun PortraitPreview() {
     MyApplicationTheme {
         StarShipScreen(
             items = listOf(
-                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISTRIBUTED)
+                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.SPHERE)
             ),
             onSave = {}
         )
     }
+}
+
+// Extension function to display user-friendly configuration names
+private fun Configuration.displayName(): String = when (this) {
+    Configuration.NEEDLE_WEDGE -> "Needle/Wedge"
+    Configuration.CONE -> "Cone"
+    Configuration.STANDARD -> "Standard (Cylinder)"
+    Configuration.CLOSE_STRUCTURE -> "Close Structure"
+    Configuration.SPHERE -> "Sphere"
+    Configuration.DISPERSED_STRUCTURE -> "Dispersed Structure"
+    Configuration.PLANETOID -> "Planetoid"
+    Configuration.BUFFERED_PLANETOID -> "Buffered Planetoid"
 }
