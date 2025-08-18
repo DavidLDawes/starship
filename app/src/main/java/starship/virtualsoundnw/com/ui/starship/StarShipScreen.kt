@@ -284,3 +284,15 @@ private fun PortraitPreview() {
         )
     }
 }
+
+// Extension function to display user-friendly configuration names
+private fun Configuration.displayName(): String = when (this) {
+    Configuration.NEEDLE_WEDGE -> "Needle/Wedge"
+    Configuration.CONE -> "Cone"
+    Configuration.STANDARD -> "Standard (Cylinder)"
+    Configuration.CLOSE_STRUCTURE -> "Close Structure"
+    Configuration.SPHERE -> "Sphere"
+    Configuration.DISPERSED_STRUCTURE -> "Dispersed Structure"
+    Configuration.PLANETOID -> "Planetoid"
+    Configuration.BUFFERED_PLANETOID -> "Buffered Planetoid"
+}
