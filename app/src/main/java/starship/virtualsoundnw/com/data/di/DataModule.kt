@@ -49,6 +49,7 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
     }
 }
 
+// Test data for fake repository
 val fakeStarShips = listOf(
     StarShip("One", "First test ship", 200, TechLevel.C, Configuration.STANDARD),
     StarShip("Two", "Second test ship", 400, TechLevel.E, Configuration.CONE),
