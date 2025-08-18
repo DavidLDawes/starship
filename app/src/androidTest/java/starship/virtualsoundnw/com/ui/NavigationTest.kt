@@ -18,6 +18,8 @@ package starship.virtualsoundnw.com.ui
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertIsDisplayed
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
@@ -34,9 +36,28 @@ class NavigationTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun test1() {
-        // TODO: Add navigation tests
-        composeTestRule.onNodeWithText(fakeStarShips.first(), substring = true).assertExists()
+    fun navigationToEnginesScreen_worksCorrectly() {
+        // Verify we start on the ship screen
+        composeTestRule.onNodeWithText("Ship Details").assertIsDisplayed()
+        
+        // Verify ship data is displayed
+        composeTestRule.onNodeWithText(fakeStarShips.first().name, substring = true).assertExists()
+        
+        // Click the "Configure Engines" button for the first ship
+        composeTestRule.onNodeWithText("Configure Engines").performClick()
+        
+        // Verify navigation to engines screen
+        composeTestRule.onNodeWithText("Ship Engines").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Configuring engines for: ${fakeStarShips.first().name}").assertIsDisplayed()
+    }
+    
+    @Test
+    fun enginesScreen_showsCorrectShipName() {
+        // Navigate to engines screen
+        composeTestRule.onNodeWithText("Configure Engines").performClick()
+        
+        // Verify the ship name is passed correctly
+        composeTestRule.onNodeWithText("Configuring engines for:", substring = true).assertIsDisplayed()
     }
 }
 

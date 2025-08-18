@@ -20,17 +20,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import starship.virtualsoundnw.com.ui.starship.StarShipScreen
+import starship.virtualsoundnw.com.ui.engines.EnginesScreen
 
 @Composable
 fun MainNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "main") {
-        composable("main") { StarShipScreen(modifier = Modifier.padding(16.dp)) }
-        // TODO: Add more destinations
+    NavHost(navController = navController, startDestination = "ship") {
+        composable("ship") { 
+            StarShipScreen(
+                modifier = Modifier.padding(16.dp),
+                onNavigateToEngines = { shipName ->
+                    navController.navigate("engines/$shipName")
+                }
+            ) 
+        }
+        composable("engines/{shipName}") { backStackEntry ->
+            val shipName = backStackEntry.arguments?.getString("shipName")
+            EnginesScreen(
+                modifier = Modifier.padding(16.dp),
+                shipName = shipName
+            )
+        }
     }
 }
