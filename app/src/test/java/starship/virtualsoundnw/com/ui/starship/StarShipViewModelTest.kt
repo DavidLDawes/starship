@@ -25,6 +25,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -48,12 +51,12 @@ class StarShipViewModelTest {
 
 private class FakeStarShipRepository : StarShipRepository {
 
-    private val data = mutableListOf<String>()
+    private val data = mutableListOf<StarShip>()
 
-    override val starShips: Flow<List<String>>
+    override val starShips: Flow<List<StarShip>>
         get() = flow { emit(data.toList()) }
 
-    override suspend fun add(name: String) {
-        data.add(0, name)
+    override suspend fun add(starShip: StarShip) {
+        data.add(0, starShip)
     }
 }

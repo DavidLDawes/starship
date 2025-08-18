@@ -23,9 +23,21 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+enum class TechLevel {
+    A, B, C, D, E, F, G, H, J
+}
+
+enum class Configuration {
+    STANDARD, STREAMLINED, DISTRIBUTED
+}
+
 @Entity
 data class StarShip(
-    val name: String
+    val name: String,
+    val description: String,
+    val tons: Int,
+    val techLevel: TechLevel,
+    val configuration: Configuration
 ) {
     @PrimaryKey(autoGenerate = true)
     var uid: Int = 0

@@ -25,6 +25,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.data.local.database.Configuration
 
 /**
  * Unit tests for [DefaultStarShipRepository].
@@ -36,9 +38,19 @@ class DefaultStarShipRepositoryTest {
     fun starShips_newItemSaved_itemIsReturned() = runTest {
         val repository = DefaultStarShipRepository(FakeStarShipDao())
 
-        repository.add("Repository")
+        val testStarShip = StarShip(
+            name = "Repository",
+            description = "Test starship",
+            tons = 200,
+            techLevel = TechLevel.C,
+            configuration = Configuration.STANDARD
+        )
+        repository.add(testStarShip)
 
         assertEquals(repository.starShips.first().size, 1)
+        assertEquals(repository.starShips.first().first().name, "Repository")
+        assertEquals(repository.starShips.first().first().tons, 200)
+        assertEquals(repository.starShips.first().first().techLevel, TechLevel.C)
     }
 
 }
