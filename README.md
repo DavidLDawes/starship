@@ -44,15 +44,13 @@ For executing work on stories and bugs:
 
 1. **Operator invokes Claude** in a terminal window in the root of the github project
 2. **Claude gets instructions** from assigned stories/bugs using terminal commands like:
-   - `"Read CLAUDE.md and following the instructions there address [link-to-story]"`
-   - `"Read CLAUDE.md and following the instructions there address [link-to-bug]"`
+   - `"Address github project issue Starship #8`
 3. **Claude does the work** following baseline architecture and conventions
 4. **Logs are copied** to the story/issue and Claude asks for approval
 5. **Human reviews and tests**, then either:
    - **a)** Adds requests for fixes, corrections, enhancements back to the story and re-invokes Claude, OR
    - **b)** Approves work and tells Claude to create a branch and PR for final review, approval and merging
-
+6. Operator cleanup: checkout main && git pull origin main
 ### Architecture
 
 See [CLAUDE.md](CLAUDE.md) for detailed AI instructions and baseline architecture information.
-
