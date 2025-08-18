@@ -55,7 +55,7 @@ class StarShipScreenTest {
         composeTestRule.onNodeWithText("Description").assertExists() 
         composeTestRule.onNodeWithText("Tonnage").assertExists()
         composeTestRule.onNodeWithText("Tech Level: C").assertExists()
-        composeTestRule.onNodeWithText("Configuration: STANDARD").assertExists()
+        composeTestRule.onNodeWithText("Configuration: Standard (Cylinder)").assertExists()
     }
 
     @Test
@@ -74,5 +74,5 @@ class StarShipScreenTest {
 
 private val FAKE_DATA = listOf(
     StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
-    StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISTRIBUTED)
+    StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.SPHERE)
 )
