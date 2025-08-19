@@ -161,12 +161,69 @@ class EnginesViewModel @Inject constructor(
     fun removeEngine(engine: Engine) {
         viewModelScope.launch {
             try {
-                enginesRepository.removeEngine(engine)
+                // If removing a power plant, check if we need to adjust other engines
+                if (engine.type == EngineType.POWER_PLANT) {
+                    adjustEnginesAfterPowerPlantRemoval(engine)
+                } else {
+                    enginesRepository.removeEngine(engine)
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to remove engine: ${e.message}"
                 )
             }
+        }
+    }
+    
+    private suspend fun adjustEnginesAfterPowerPlantRemoval(powerPlantToRemove: Engine) {
+        val currentState = _uiState.value
+        val currentPowerPlants = currentState.powerPlants
+        
+        // Only proceed if there are multiple power plants
+        if (currentPowerPlants.size <= 1) {
+            enginesRepository.removeEngine(powerPlantToRemove)
+            return
+        }
+        
+        // Calculate the new maximum power plant performance after removal
+        val remainingPowerPlants = currentPowerPlants.filter { it.uid != powerPlantToRemove.uid }
+        val newMaxPowerPlantPerformance = remainingPowerPlants.maxOfOrNull { it.performance } ?: 0
+        
+        // Remove the power plant first
+        enginesRepository.removeEngine(powerPlantToRemove)
+        
+        // Check and adjust jump drives that exceed the new maximum
+        val jumpDriveAdjustments = currentState.jumpDrives.filter { 
+            it.performance > newMaxPowerPlantPerformance 
+        }
+        
+        // Check and adjust maneuver drives that exceed the new maximum
+        val maneuverDriveAdjustments = currentState.maneuverDrives.filter { 
+            it.performance > newMaxPowerPlantPerformance 
+        }
+        
+        // Apply adjustments to jump drives
+        jumpDriveAdjustments.forEach { jumpDrive ->
+            enginesRepository.removeEngine(jumpDrive)
+            val adjustedJumpDrive = jumpDrive.copy(performance = newMaxPowerPlantPerformance)
+            enginesRepository.addEngine(adjustedJumpDrive)
+        }
+        
+        // Apply adjustments to maneuver drives
+        maneuverDriveAdjustments.forEach { maneuverDrive ->
+            enginesRepository.removeEngine(maneuverDrive)
+            val adjustedManeuverDrive = maneuverDrive.copy(performance = newMaxPowerPlantPerformance)
+            enginesRepository.addEngine(adjustedManeuverDrive)
+        }
+        
+        // Show informative message if adjustments were made
+        val totalAdjustments = jumpDriveAdjustments.size + maneuverDriveAdjustments.size
+        if (totalAdjustments > 0) {
+            val message = buildString {
+                append("Power plant removed. ")
+                append("$totalAdjustments engine(s) adjusted to match new maximum power plant performance ($newMaxPowerPlantPerformance).")
+            }
+            _uiState.value = _uiState.value.copy(errorMessage = message)
         }
     }
 
