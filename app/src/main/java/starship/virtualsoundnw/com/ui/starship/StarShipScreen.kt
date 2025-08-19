@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -88,13 +90,14 @@ internal fun StarShipScreen(
     onNavigateToEngines: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var isFormMinimized by remember { mutableStateOf(false) }
+    
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Ship Input Form
+        // Ship Input Form - Collapsible
         Card(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
@@ -102,16 +105,32 @@ internal fun StarShipScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Ship Details",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-                
-                ShipInputForm(onSave = onSave)
+                if (isFormMinimized) {
+                    // Minimized state - just a button
+                    OutlinedButton(
+                        onClick = { isFormMinimized = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Define Ship")
+                    }
+                } else {
+                    // Full form state
+                    Text(
+                        text = "Ship Details",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    
+                    ShipInputForm(
+                        onSave = { ship ->
+                            onSave(ship)
+                            isFormMinimized = true // Minimize after saving
+                        }
+                    )
+                }
             }
         }
         
-        // Saved Ships List
+        // Saved Ships List - Scrollable
         if (items.isNotEmpty()) {
             Text(
                 text = "Saved Ships",
@@ -119,11 +138,21 @@ internal fun StarShipScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
-            items.forEach { ship ->
-                ShipListItem(
-                    ship = ship,
-                    onNavigateToEngines = onNavigateToEngines
-                )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items) { ship ->
+                    ShipListItem(
+                        ship = ship,
+                        onNavigateToEngines = onNavigateToEngines,
+                        onClick = {
+                            if (!isFormMinimized) {
+                                isFormMinimized = true
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -263,10 +292,12 @@ private fun ShipInputForm(
 @Composable
 private fun ShipListItem(
     ship: StarShip,
-    onNavigateToEngines: (Int) -> Unit
+    onNavigateToEngines: (Int) -> Unit,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = "${ship.shipDesignation}'s Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
