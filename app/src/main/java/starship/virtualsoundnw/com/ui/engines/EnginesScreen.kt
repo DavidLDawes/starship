@@ -43,6 +43,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -72,7 +73,8 @@ import kotlin.math.roundToInt
 fun EnginesScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
-    viewModel: EnginesViewModel = hiltViewModel()
+    viewModel: EnginesViewModel = hiltViewModel(),
+    onNavigateToFittings: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -161,6 +163,18 @@ fun EnginesScreen(
                             ship = ship,
                             uiState = uiState
                         )
+                    }
+                    
+                    // Next: Fittings button when requirements are met
+                    if (uiState.hasRequiredEngines()) {
+                        item {
+                            Button(
+                                onClick = { onNavigateToFittings(shipId) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Next: Fittings")
+                            }
+                        }
                     }
                 }
             }
@@ -675,6 +689,18 @@ private fun EnginesScreenPreview() {
                     ship = sampleShip,
                     uiState = uiState
                 )
+            }
+            
+            // Next: Fittings button when requirements are met
+            if (uiState.hasRequiredEngines()) {
+                item {
+                    Button(
+                        onClick = { },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Next: Fittings")
+                    }
+                }
             }
         }
     }

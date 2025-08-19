@@ -27,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import starship.virtualsoundnw.com.ui.starship.StarShipScreen
 import starship.virtualsoundnw.com.ui.engines.EnginesScreen
+import starship.virtualsoundnw.com.ui.fittings.FittingsScreen
 
 @Composable
 fun MainNavigation() {
@@ -44,6 +45,16 @@ fun MainNavigation() {
         composable("engines/{shipId}") { backStackEntry ->
             val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
             EnginesScreen(
+                shipId = shipId,
+                modifier = Modifier.padding(16.dp),
+                onNavigateToFittings = { shipId ->
+                    navController.navigate("fittings/$shipId")
+                }
+            )
+        }
+        composable("fittings/{shipId}") { backStackEntry ->
+            val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
+            FittingsScreen(
                 shipId = shipId,
                 modifier = Modifier.padding(16.dp)
             )

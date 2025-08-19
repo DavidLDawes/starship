@@ -93,6 +93,14 @@ data class EnginesUiState(
     fun isCapitalShip(): Boolean {
         return ship?.isCapitalShip ?: false
     }
+    
+    /**
+     * Check if ship has required engines to proceed to fittings
+     * Requires at least 1 power plant and 1 jump drive
+     */
+    fun hasRequiredEngines(): Boolean {
+        return powerPlants.isNotEmpty() && jumpDrives.isNotEmpty()
+    }
 }
 
 @HiltViewModel
