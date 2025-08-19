@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.DefaultStarShipRepository
+import starship.virtualsoundnw.com.data.EnginesRepository
+import starship.virtualsoundnw.com.data.DefaultEnginesRepository
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -39,6 +41,12 @@ interface DataModule {
     fun bindsStarShipRepository(
         starShipRepository: DefaultStarShipRepository
     ): StarShipRepository
+    
+    @Singleton
+    @Binds
+    fun bindsEnginesRepository(
+        enginesRepository: DefaultEnginesRepository
+    ): EnginesRepository
 }
 
 class FakeStarShipRepository @Inject constructor() : StarShipRepository {

@@ -35,16 +35,16 @@ fun MainNavigation() {
         composable("ship") { 
             StarShipScreen(
                 modifier = Modifier.padding(16.dp),
-                onNavigateToEngines = { shipName ->
-                    navController.navigate("engines/$shipName")
+                onNavigateToEngines = { shipId ->
+                    navController.navigate("engines/$shipId")
                 }
             ) 
         }
-        composable("engines/{shipName}") { backStackEntry ->
-            val shipName = backStackEntry.arguments?.getString("shipName")
+        composable("engines/{shipId}") { backStackEntry ->
+            val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
             EnginesScreen(
-                modifier = Modifier.padding(16.dp),
-                shipName = shipName
+                shipId = shipId,
+                modifier = Modifier.padding(16.dp)
             )
         }
     }
