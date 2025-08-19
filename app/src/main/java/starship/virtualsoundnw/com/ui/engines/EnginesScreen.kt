@@ -92,21 +92,73 @@ fun EnginesScreen(
                 modifier = Modifier.align(Alignment.Center)
             )
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                uiState.ship?.let { ship ->
-                    EnginesConfigurationScreen(
-                        ship = ship,
-                        uiState = uiState,
-                        onAddEngine = viewModel::addEngine,
-                        onRemoveEngine = viewModel::removeEngine,
-                        onUpdateEnginePerformance = viewModel::updateEnginePerformance,
-                        isJumpPerformanceValid = viewModel::isJumpPerformanceValid
-                    )
+            uiState.ship?.let { ship ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        EnginesConfigurationHeader(ship = ship)
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Power Plant",
+                            engineType = EngineType.POWER_PLANT,
+                            engines = uiState.powerPlants,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = { true },
+                            performanceRange = 1..12
+                        )
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Jump Drive",
+                            engineType = EngineType.JUMP_DRIVE,
+                            engines = uiState.jumpDrives,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = viewModel::isJumpPerformanceValid,
+                            performanceRange = 1..12
+                        )
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Maneuver Drive",
+                            engineType = EngineType.MANEUVER_DRIVE,
+                            engines = uiState.maneuverDrives,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = { true },
+                            performanceRange = 0..12
+                        )
+                    }
+                    
+                    item {
+                        FuelPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
+                    
+                    item {
+                        SummaryPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
                 }
             }
         }
@@ -119,15 +171,7 @@ fun EnginesScreen(
 }
 
 @Composable
-fun EnginesConfigurationScreen(
-    ship: StarShip,
-    uiState: EnginesUiState,
-    onAddEngine: (EngineType, Int) -> Unit,
-    onRemoveEngine: (Engine) -> Unit,
-    onUpdateEnginePerformance: (Engine, Int) -> Unit,
-    isJumpPerformanceValid: (Int) -> Boolean
-) {
-    // Header
+fun EnginesConfigurationHeader(ship: StarShip) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -151,60 +195,6 @@ fun EnginesConfigurationScreen(
             )
         }
     }
-    
-    // Power Plant Section
-    EngineSection(
-        title = "Power Plant",
-        engineType = EngineType.POWER_PLANT,
-        engines = uiState.powerPlants,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = { true }, // Power plants don't have tech level restrictions
-        performanceRange = 1..12
-    )
-    
-    // Jump Drive Section
-    EngineSection(
-        title = "Jump Drive",
-        engineType = EngineType.JUMP_DRIVE,
-        engines = uiState.jumpDrives,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = isJumpPerformanceValid,
-        performanceRange = 1..12
-    )
-    
-    // Maneuver Drive Section
-    EngineSection(
-        title = "Maneuver Drive",
-        engineType = EngineType.MANEUVER_DRIVE,
-        engines = uiState.maneuverDrives,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = { true }, // Maneuver drives don't have tech level restrictions
-        performanceRange = 0..12
-    )
-    
-    // Fuel Panel
-    FuelPanel(
-        ship = ship,
-        uiState = uiState
-    )
-    
-    // Summary Panel
-    SummaryPanel(
-        ship = ship,
-        uiState = uiState
-    )
 }
 
 @Composable
@@ -263,10 +253,10 @@ fun EngineSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                LazyColumn(
+                Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(engines) { engine ->
+                    engines.forEach { engine ->
                         EngineControlCard(
                             engine = engine,
                             ship = ship,
@@ -646,13 +636,41 @@ private fun EnginesScreenPreview() {
             maneuverDrives = listOf(sampleEngines[2])
         )
         
-        EnginesConfigurationScreen(
-            ship = sampleShip,
-            uiState = uiState,
-            onAddEngine = { _, _ -> },
-            onRemoveEngine = { },
-            onUpdateEnginePerformance = { _, _ -> },
-            isJumpPerformanceValid = { true }
-        )
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                EnginesConfigurationHeader(ship = sampleShip)
+            }
+            
+            item {
+                EngineSection(
+                    title = "Power Plant",
+                    engineType = EngineType.POWER_PLANT,
+                    engines = uiState.powerPlants,
+                    ship = sampleShip,
+                    isCapitalShip = uiState.isCapitalShip(),
+                    onAddEngine = { _, _ -> },
+                    onRemoveEngine = { },
+                    onUpdateEnginePerformance = { _, _ -> },
+                    isPerformanceValid = { true },
+                    performanceRange = 1..12
+                )
+            }
+            
+            item {
+                FuelPanel(
+                    ship = sampleShip,
+                    uiState = uiState
+                )
+            }
+            
+            item {
+                SummaryPanel(
+                    ship = sampleShip,
+                    uiState = uiState
+                )
+            }
+        }
     }
 }
