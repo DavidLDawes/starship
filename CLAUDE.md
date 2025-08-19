@@ -121,3 +121,38 @@ sealed interface StarShipUiState {
 - Use Room database patterns for data persistence
 - Follow Compose UI patterns with StateFlow observation
 - Always run tests before finalizing work
+
+### Copyright Management
+
+When working with files that have copyright headers, follow these rules:
+
+#### For Files with Existing "Copyright (C) 2022 The Android Open Source Project" Headers:
+1. **If the file is unchanged since the original template**: Leave the copyright as-is
+2. **If the file has been modified since the original template**: Update to dual copyright:
+   ```
+   * Copyright (C) 2022 The Android Open Source Project, 2025 David L. Dawes
+   * Notice: As this license requires, be aware this file has been changed by David L. Dawes since cloning it from github.
+   ```
+
+#### For New Files Created:
+Use single copyright for David L. Dawes:
+```
+/*
+ * Copyright (C) 2025 David L. Dawes
+ * Notice: As this license may require, be aware this file is new and had been added by David L. Dawes since cloning the original archive from github.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+```
+
+**Note**: When modifying any file for the first time that still has the old single copyright, update it to the dual copyright format before making other changes.
