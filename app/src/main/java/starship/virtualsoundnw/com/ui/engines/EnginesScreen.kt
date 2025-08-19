@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -261,18 +263,22 @@ fun EngineSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                engines.forEach { engine ->
-                    EngineControlCard(
-                        engine = engine,
-                        ship = ship,
-                        canRemove = isCapitalShip && engines.size > 1,
-                        onRemove = { onRemoveEngine(engine) },
-                        onUpdatePerformance = { newPerformance ->
-                            onUpdateEnginePerformance(engine, newPerformance)
-                        },
-                        isPerformanceValid = isPerformanceValid,
-                        performanceRange = performanceRange
-                    )
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(engines) { engine ->
+                        EngineControlCard(
+                            engine = engine,
+                            ship = ship,
+                            canRemove = isCapitalShip && engines.size > 1,
+                            onRemove = { onRemoveEngine(engine) },
+                            onUpdatePerformance = { newPerformance ->
+                                onUpdateEnginePerformance(engine, newPerformance)
+                            },
+                            isPerformanceValid = isPerformanceValid,
+                            performanceRange = performanceRange
+                        )
+                    }
                 }
             }
         }
