@@ -21,9 +21,14 @@ import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -83,7 +88,12 @@ internal fun StarShipScreen(
     onNavigateToEngines: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
         // Ship Input Form
         Card(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
@@ -102,40 +112,18 @@ internal fun StarShipScreen(
         }
         
         // Saved Ships List
-        Text(
-            text = "Saved Ships",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        items.forEach { ship ->
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "${ship.shipDesignation}'s Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "Description: ${ship.description}")
-                    Text(text = "Tonnage: ${ship.tons}")
-                    Text(text = "Tech Level: ${ship.techLevel}")
-                    Text(text = "Configuration: ${ship.configuration.displayName()}")
-                    
-                    // Calculated fields section
-                    Text(
-                        text = "Calculated Fields",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-                    )
-                    Text(text = "Hull Class: ${ship.hullClass}")
-                    Text(text = "Hull Cost: ${ship.hullCost} MCr")
-                    
-                    // Navigation button
-                    OutlinedButton(
-                        onClick = { onNavigateToEngines(ship.uid) },
-                        modifier = Modifier.padding(top = 8.dp)
-                    ) {
-                        Text("Configure Engines")
-                    }
-                }
+        if (items.isNotEmpty()) {
+            Text(
+                text = "Saved Ships",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            items.forEach { ship ->
+                ShipListItem(
+                    ship = ship,
+                    onNavigateToEngines = onNavigateToEngines
+                )
             }
         }
     }
@@ -272,6 +260,41 @@ private fun ShipInputForm(
     }
 }
 
+@Composable
+private fun ShipListItem(
+    ship: StarShip,
+    onNavigateToEngines: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "${ship.shipDesignation}'s Name: ${ship.name}", style = MaterialTheme.typography.titleMedium)
+            Text(text = "Description: ${ship.description}")
+            Text(text = "Tonnage: ${ship.tons}")
+            Text(text = "Tech Level: ${ship.techLevel}")
+            Text(text = "Configuration: ${ship.configuration.displayName()}")
+            
+            // Calculated fields section
+            Text(
+                text = "Calculated Fields",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+            Text(text = "Hull Class: ${ship.hullClass}")
+            Text(text = "Hull Cost: ${ship.hullCost} MCr")
+            
+            // Navigation button
+            OutlinedButton(
+                onClick = { onNavigateToEngines(ship.uid) },
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text("Configure Engines")
+            }
+        }
+    }
+}
+
 // Previews
 
 @Preview(showBackground = true)
@@ -296,6 +319,25 @@ private fun PortraitPreview() {
         StarShipScreen(
             items = listOf(
                 StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISPERSED_STRUCTURE)
+            ),
+            onSave = {},
+            onNavigateToEngines = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, heightDp = 600)
+@Composable
+private fun ScrollableListPreview() {
+    MyApplicationTheme {
+        StarShipScreen(
+            items = listOf(
+                StarShip("Enterprise", "Constitution class", 200, TechLevel.G, Configuration.STANDARD),
+                StarShip("Millennium Falcon", "Modified freighter", 400, TechLevel.E, Configuration.CONE),
+                StarShip("Voyager", "Intrepid class", 300, TechLevel.H, Configuration.DISPERSED_STRUCTURE),
+                StarShip("Defiant", "Escort class", 170, TechLevel.J, Configuration.NEEDLE_WEDGE),
+                StarShip("Serenity", "Firefly class", 250, TechLevel.D, Configuration.STANDARD),
+                StarShip("Nostromo", "Commercial towing vehicle", 800, TechLevel.C, Configuration.SPHERE)
             ),
             onSave = {},
             onNavigateToEngines = {}
