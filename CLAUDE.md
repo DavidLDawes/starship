@@ -104,7 +104,7 @@ sealed interface StarShipUiState {
 
 #### Assignment Phase
 1. Operator invokes Claude in terminal at project root
-2. Claude gets instructions from stories/bugs: "Read CLAUDE.md and following the instructions there address [link-to-story]"
+2. Claude gets instructions from github project issues. also called stories or bugs, referred to by the issue number: "Address Starship #105"
 
 #### Implementation Phase  
 3. Claude follows baseline architecture and conventions
