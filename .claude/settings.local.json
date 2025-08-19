@@ -12,6 +12,7 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
+      "Bash(git cherry-pick:*)"
       "Bash(./gradlew.bat:*)",
       "Bash(git pull:*)",
       "Bash(gh run view:*)",
