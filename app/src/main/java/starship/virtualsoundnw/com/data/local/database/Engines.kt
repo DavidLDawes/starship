@@ -17,6 +17,7 @@
 package starship.virtualsoundnw.com.data.local.database
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.PrimaryKey
@@ -135,6 +136,9 @@ interface EngineDao {
     
     @Insert
     suspend fun insertEngine(engine: Engine)
+    
+    @Delete
+    suspend fun deleteEngine(engine: Engine)
     
     @Query("DELETE FROM engines WHERE shipId = :shipId")
     suspend fun deleteEnginesForShip(shipId: Int)

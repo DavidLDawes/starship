@@ -25,6 +25,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import starship.virtualsoundnw.com.data.local.database.AppDatabase
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
+import starship.virtualsoundnw.com.data.local.database.EngineDao
 import javax.inject.Singleton
 
 
@@ -34,6 +35,11 @@ class DatabaseModule {
     @Provides
     fun provideStarShipDao(appDatabase: AppDatabase): StarShipDao {
         return appDatabase.starShipDao()
+    }
+    
+    @Provides
+    fun provideEngineDao(appDatabase: AppDatabase): EngineDao {
+        return appDatabase.engineDao()
     }
 
     @Provides

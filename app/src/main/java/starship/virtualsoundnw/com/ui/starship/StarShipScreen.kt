@@ -54,7 +54,7 @@ import starship.virtualsoundnw.com.data.local.database.displayName
 fun StarShipScreen(
     modifier: Modifier = Modifier, 
     viewModel: StarShipViewModel = hiltViewModel(),
-    onNavigateToEngines: (String) -> Unit = {}
+    onNavigateToEngines: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val state = uiState) {
@@ -79,7 +79,7 @@ fun StarShipScreen(
 internal fun StarShipScreen(
     items: List<StarShip>,
     onSave: (starShip: StarShip) -> Unit,
-    onNavigateToEngines: (String) -> Unit = {},
+    onNavigateToEngines: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier.padding(16.dp)) {
@@ -129,7 +129,7 @@ internal fun StarShipScreen(
                     
                     // Navigation button
                     OutlinedButton(
-                        onClick = { onNavigateToEngines(ship.name) },
+                        onClick = { onNavigateToEngines(ship.uid) },
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Text("Configure Engines")
