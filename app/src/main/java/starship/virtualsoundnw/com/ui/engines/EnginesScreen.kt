@@ -20,13 +20,17 @@ package starship.virtualsoundnw.com.ui.engines
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -90,21 +94,74 @@ fun EnginesScreen(
                 modifier = Modifier.align(Alignment.Center)
             )
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                uiState.ship?.let { ship ->
-                    EnginesConfigurationScreen(
-                        ship = ship,
-                        uiState = uiState,
-                        onAddEngine = viewModel::addEngine,
-                        onRemoveEngine = viewModel::removeEngine,
-                        onUpdateEnginePerformance = viewModel::updateEnginePerformance,
-                        isJumpPerformanceValid = viewModel::isJumpPerformanceValid
-                    )
+            uiState.ship?.let { ship ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        EnginesConfigurationHeader(ship = ship)
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Power Plant",
+                            engineType = EngineType.POWER_PLANT,
+                            engines = uiState.powerPlants,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = { true },
+                            performanceRange = 1..12
+                        )
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Jump Drive",
+                            engineType = EngineType.JUMP_DRIVE,
+                            engines = uiState.jumpDrives,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = viewModel::isJumpPerformanceValid,
+                            performanceRange = 1..12
+                        )
+                    }
+                    
+                    item {
+                        EngineSection(
+                            title = "Maneuver Drive",
+                            engineType = EngineType.MANEUVER_DRIVE,
+                            engines = uiState.maneuverDrives,
+                            ship = ship,
+                            isCapitalShip = uiState.isCapitalShip(),
+                            onAddEngine = viewModel::addEngine,
+                            onRemoveEngine = viewModel::removeEngine,
+                            onUpdateEnginePerformance = viewModel::updateEnginePerformance,
+                            isPerformanceValid = { true },
+                            performanceRange = 0..12
+                        )
+                    }
+                    
+                    item {
+                        FuelPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
+                    
+                    item {
+                        SummaryPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
                 }
             }
         }
@@ -117,15 +174,7 @@ fun EnginesScreen(
 }
 
 @Composable
-fun EnginesConfigurationScreen(
-    ship: StarShip,
-    uiState: EnginesUiState,
-    onAddEngine: (EngineType, Int) -> Unit,
-    onRemoveEngine: (Engine) -> Unit,
-    onUpdateEnginePerformance: (Engine, Int) -> Unit,
-    isJumpPerformanceValid: (Int) -> Boolean
-) {
-    // Header
+fun EnginesConfigurationHeader(ship: StarShip) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -149,60 +198,6 @@ fun EnginesConfigurationScreen(
             )
         }
     }
-    
-    // Power Plant Section
-    EngineSection(
-        title = "Power Plant",
-        engineType = EngineType.POWER_PLANT,
-        engines = uiState.powerPlants,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = { true }, // Power plants don't have tech level restrictions
-        performanceRange = 1..12
-    )
-    
-    // Jump Drive Section
-    EngineSection(
-        title = "Jump Drive",
-        engineType = EngineType.JUMP_DRIVE,
-        engines = uiState.jumpDrives,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = isJumpPerformanceValid,
-        performanceRange = 1..12
-    )
-    
-    // Maneuver Drive Section
-    EngineSection(
-        title = "Maneuver Drive",
-        engineType = EngineType.MANEUVER_DRIVE,
-        engines = uiState.maneuverDrives,
-        ship = ship,
-        isCapitalShip = uiState.isCapitalShip(),
-        onAddEngine = onAddEngine,
-        onRemoveEngine = onRemoveEngine,
-        onUpdateEnginePerformance = onUpdateEnginePerformance,
-        isPerformanceValid = { true }, // Maneuver drives don't have tech level restrictions
-        performanceRange = 0..12
-    )
-    
-    // Fuel Panel
-    FuelPanel(
-        ship = ship,
-        uiState = uiState
-    )
-    
-    // Summary Panel
-    SummaryPanel(
-        ship = ship,
-        uiState = uiState
-    )
 }
 
 @Composable
@@ -261,18 +256,22 @@ fun EngineSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                engines.forEach { engine ->
-                    EngineControlCard(
-                        engine = engine,
-                        ship = ship,
-                        canRemove = isCapitalShip && engines.size > 1,
-                        onRemove = { onRemoveEngine(engine) },
-                        onUpdatePerformance = { newPerformance ->
-                            onUpdateEnginePerformance(engine, newPerformance)
-                        },
-                        isPerformanceValid = isPerformanceValid,
-                        performanceRange = performanceRange
-                    )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    engines.forEach { engine ->
+                        EngineControlCard(
+                            engine = engine,
+                            ship = ship,
+                            canRemove = isCapitalShip && engines.size > 1,
+                            onRemove = { onRemoveEngine(engine) },
+                            onUpdatePerformance = { newPerformance ->
+                                onUpdateEnginePerformance(engine, newPerformance)
+                            },
+                            isPerformanceValid = isPerformanceValid,
+                            performanceRange = performanceRange
+                        )
+                    }
                 }
             }
         }
@@ -640,13 +639,43 @@ private fun EnginesScreenPreview() {
             maneuverDrives = listOf(sampleEngines[2])
         )
         
-        EnginesConfigurationScreen(
-            ship = sampleShip,
-            uiState = uiState,
-            onAddEngine = { _, _ -> },
-            onRemoveEngine = { },
-            onUpdateEnginePerformance = { _, _ -> },
-            isJumpPerformanceValid = { true }
-        )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                EnginesConfigurationHeader(ship = sampleShip)
+            }
+            
+            item {
+                EngineSection(
+                    title = "Power Plant",
+                    engineType = EngineType.POWER_PLANT,
+                    engines = uiState.powerPlants,
+                    ship = sampleShip,
+                    isCapitalShip = uiState.isCapitalShip(),
+                    onAddEngine = { _, _ -> },
+                    onRemoveEngine = { },
+                    onUpdateEnginePerformance = { _, _ -> },
+                    isPerformanceValid = { true },
+                    performanceRange = 1..12
+                )
+            }
+            
+            item {
+                FuelPanel(
+                    ship = sampleShip,
+                    uiState = uiState
+                )
+            }
+            
+            item {
+                SummaryPanel(
+                    ship = sampleShip,
+                    uiState = uiState
+                )
+            }
+        }
     }
 }
