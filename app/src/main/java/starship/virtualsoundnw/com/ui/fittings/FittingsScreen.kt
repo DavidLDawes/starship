@@ -32,11 +32,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import starship.virtualsoundnw.com.data.local.database.Configuration
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.TechLevel
+import starship.virtualsoundnw.com.ui.starship.StarShipUiState
+import starship.virtualsoundnw.com.ui.starship.StarShipViewModel
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
 fun FittingsScreen(
     shipId: Int,
+    modifier: Modifier = Modifier,
+    viewModel: StarShipViewModel = hiltViewModel()
+) {
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+    
+    when (val state = uiState.value) {
+        is StarShipUiState.Loading -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Loading...")
+            }
+        }
+        is StarShipUiState.Error -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Error: ${state.throwable.message}")
+            }
+        }
+        is StarShipUiState.Success -> {
+            val ship = state.data.find { it.uid == shipId }
+            FittingsContent(
+                ship = ship,
+                modifier = modifier
+            )
+        }
+    }
+}
+
+@Composable
+private fun FittingsContent(
+    ship: StarShip?,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -57,11 +99,20 @@ fun FittingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 
-                Text(
-                    text = "Ship ID: $shipId",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (ship != null) {
+                    val shipDesignation = if (ship.isCapitalShip) "Capital Ship" else "Ship"
+                    Text(
+                        text = "$shipDesignation: ${ship.name}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        text = "Ship not found",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
                 
                 Text(
                     text = "Coming Soon",
@@ -85,8 +136,15 @@ fun FittingsScreen(
 @Composable
 private fun FittingsScreenPreview() {
     MyApplicationTheme {
-        FittingsScreen(
-            shipId = 1
+        val sampleShip = StarShip(
+            "Constitution",
+            "Constitution class",
+            400,
+            TechLevel.G,
+            Configuration.STANDARD
+        )
+        FittingsContent(
+            ship = sampleShip
         )
     }
 }
