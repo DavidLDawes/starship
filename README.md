@@ -31,7 +31,7 @@ This project uses a structured workflow combining GitHub Projects for backlog ma
 
 ### Backlog Management Loop
 
-Use the [DavidLDawes Starship Project](https://github.com/users/DavidLDawes/projects/1) for all backlog management:
+Use the [Starship Project](https://github.com/users/DavidLDawes/projects/1) for all backlog management:
 
 1. **Create backlog entries** - Ensure entry requirements are met, include boilerplate Claude section that refers to the CLAUDE.md file for Claude's guidance & instructions including logging requirements, unit tests, etc.
 2. **Add new stories** as needed 

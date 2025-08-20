@@ -69,6 +69,11 @@ data class WeaponsUiState(
     fun getTotalWeaponsCost(): Float = weapons.sumOf { it.getTotalCost().toDouble() }.toFloat()
     
     /**
+     * Calculate total weapons tonnage
+     */
+    fun getTotalWeaponsTonnage(): Float = weapons.sumOf { it.getTotalTonnage().toDouble() }.toFloat()
+    
+    /**
      * Group weapons by turret type
      */
     fun getWeaponsByTurretType(): Map<TurretType, List<Weapon>> {

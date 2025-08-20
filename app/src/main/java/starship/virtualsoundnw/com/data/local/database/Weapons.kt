@@ -30,24 +30,24 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Weapon types available for turrets
  */
-enum class WeaponType(val cost: Float) {
-    PULSE_LASER(0.5f),
-    BEAM_LASER(1.0f),
-    PARTICLE_BEAM(4.0f),
-    MISSILE_RACK(0.75f),
-    SANDCASTER(0.25f)
+enum class WeaponType(val cost: Float, val tonnage: Float) {
+    PULSE_LASER(0.5f, 1.0f),
+    BEAM_LASER(1.0f, 1.0f),
+    PARTICLE_BEAM(4.0f, 1.0f),
+    MISSILE_RACK(0.75f, 0.5f),
+    SANDCASTER(0.25f, 0.5f)
 }
 
 /**
  * Turret types with their base costs
  */
-enum class TurretType(val baseCost: Float, val isPopUp: Boolean, val weaponCapacity: Int) {
-    SINGLE(0.2f, false, 1),
-    DOUBLE(0.5f, false, 2),
-    TRIPLE(1.0f, false, 3),
-    POPUP_SINGLE(1.2f, true, 1),
-    POPUP_DOUBLE(1.5f, true, 2),
-    POPUP_TRIPLE(2.0f, true, 3)
+enum class TurretType(val baseCost: Float, val tonnage: Float, val isPopUp: Boolean, val weaponCapacity: Int) {
+    SINGLE(0.2f, 1.0f, false, 1),
+    DOUBLE(0.5f, 1.0f, false, 2),
+    TRIPLE(1.0f, 1.0f, false, 3),
+    POPUP_SINGLE(1.2f, 2.0f, true, 1),
+    POPUP_DOUBLE(1.5f, 2.0f, true, 2),
+    POPUP_TRIPLE(2.0f, 2.0f, true, 3)
 }
 
 /**
@@ -80,6 +80,14 @@ data class Weapon(
      */
     fun getTotalCost(): Float {
         return turretType.baseCost + (turretType.weaponCapacity * weaponType.cost)
+    }
+    
+    /**
+     * Calculate total tonnage for this weapon installation
+     * Tonnage = turret tonnage + (weapon capacity × weapon tonnage)
+     */
+    fun getTotalTonnage(): Float {
+        return turretType.tonnage + (turretType.weaponCapacity * weaponType.tonnage)
     }
     
     /**
@@ -150,6 +158,7 @@ data class WeaponsCalculation(
     val usedHardpoints: Int get() = weapons.size
     val remainingHardpoints: Int get() = maxHardpoints - usedHardpoints
     val totalWeaponsCost: Float get() = weapons.sumOf { it.getTotalCost().toDouble() }.toFloat()
+    val totalWeaponsTonnage: Float get() = weapons.sumOf { it.getTotalTonnage().toDouble() }.toFloat()
     
     /**
      * Check if adding another weapon would exceed hardpoint limits
