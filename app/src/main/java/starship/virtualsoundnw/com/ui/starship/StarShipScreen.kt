@@ -313,7 +313,6 @@ private fun ShipListItem(
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
             )
             Text(text = "Ship Code: ${ship.hullCode}")
-            Text(text = "Hull Class: ${ship.hullClass}")
             Text(text = "Hull Cost: ${ship.hullCost} MCr")
             
             // Navigation button
