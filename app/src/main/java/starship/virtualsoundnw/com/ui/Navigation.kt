@@ -29,6 +29,7 @@ import starship.virtualsoundnw.com.ui.starship.StarShipScreen
 import starship.virtualsoundnw.com.ui.engines.EnginesScreen
 import starship.virtualsoundnw.com.ui.fittings.FittingsScreen
 import starship.virtualsoundnw.com.ui.weapons.WeaponsScreen
+import starship.virtualsoundnw.com.ui.defenses.DefensesScreen
 
 @Composable
 fun MainNavigation() {
@@ -70,7 +71,23 @@ fun MainNavigation() {
             val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
             WeaponsScreen(
                 shipId = shipId,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
+                onNavigateToFittings = { shipId ->
+                    navController.navigate("fittings/$shipId")
+                },
+                onNavigateToDefenses = { shipId ->
+                    navController.navigate("defenses/$shipId")
+                }
+            )
+        }
+        composable("defenses/{shipId}") { backStackEntry ->
+            val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
+            DefensesScreen(
+                shipId = shipId,
+                modifier = Modifier.padding(16.dp),
+                onNavigateToWeapons = { shipId ->
+                    navController.navigate("weapons/$shipId")
+                }
             )
         }
     }

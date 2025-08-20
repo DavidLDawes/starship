@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -73,7 +74,9 @@ import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 fun WeaponsScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
-    viewModel: WeaponsViewModel = hiltViewModel()
+    viewModel: WeaponsViewModel = hiltViewModel(),
+    onNavigateToFittings: (Int) -> Unit = {},
+    onNavigateToDefenses: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -143,6 +146,14 @@ fun WeaponsScreen(
                         ShipSummaryPanel(
                             ship = ship,
                             uiState = uiState
+                        )
+                    }
+                    
+                    item {
+                        NavigationButtons(
+                            shipId = shipId,
+                            onNavigateToFittings = onNavigateToFittings,
+                            onNavigateToDefenses = onNavigateToDefenses
                         )
                     }
                 }
@@ -463,6 +474,33 @@ fun getTurretDisplayName(turretType: TurretType): String {
 }
 
 @Composable
+fun NavigationButtons(
+    shipId: Int,
+    onNavigateToFittings: (Int) -> Unit,
+    onNavigateToDefenses: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        OutlinedButton(
+            onClick = { onNavigateToFittings(shipId) }
+        ) {
+            Text("Back: Fittings")
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Button(
+            onClick = { onNavigateToDefenses(shipId) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Next: Defenses")
+        }
+    }
+}
+
+@Composable
 fun ShipSummaryPanel(
     ship: StarShip,
     uiState: WeaponsUiState
@@ -682,6 +720,10 @@ fun getWeaponDisplayName(weaponType: WeaponType): String {
 @Composable
 private fun WeaponsScreenPreview() {
     MyApplicationTheme {
-        WeaponsScreen(shipId = 1)
+        WeaponsScreen(
+            shipId = 1,
+            onNavigateToFittings = { },
+            onNavigateToDefenses = { }
+        )
     }
 }
