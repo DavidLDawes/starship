@@ -27,11 +27,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.WeaponsRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.EnginesRepository
+import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.local.database.Weapon
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.WeaponType
 import starship.virtualsoundnw.com.data.local.database.TurretType
 import starship.virtualsoundnw.com.data.local.database.calculateMaxHardpoints
+import starship.virtualsoundnw.com.data.local.database.Engine
+import starship.virtualsoundnw.com.data.local.database.Fitting
+import starship.virtualsoundnw.com.data.local.database.EngineType
+import starship.virtualsoundnw.com.data.local.database.PowerPlantType
+import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
 import javax.inject.Inject
 
 /**
@@ -40,6 +47,8 @@ import javax.inject.Inject
 data class WeaponsUiState(
     val ship: StarShip? = null,
     val weapons: List<Weapon> = emptyList(),
+    val engines: List<Engine> = emptyList(),
+    val fitting: Fitting? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -81,6 +90,63 @@ data class WeaponsUiState(
     }
     
     /**
+     * Calculate total engine tonnage
+     */
+    fun getTotalEngineTonnage(): Float {
+        return ship?.let { ship ->
+            engines.sumOf { engine -> engine.getTonnage(ship.tons).toDouble() }
+        }?.toFloat() ?: 0f
+    }
+    
+    /**
+     * Calculate total engine cost
+     */
+    fun getTotalEngineCost(): Float {
+        return ship?.let { ship ->
+            engines.sumOf { engine -> engine.getTotalCost(ship.tons, ship.techLevel).toDouble() }
+        }?.toFloat() ?: 0f
+    }
+    
+    /**
+     * Calculate fuel requirement
+     */
+    fun getFuelRequirement(): Float {
+        return ship?.let { ship ->
+            val maxJumpPerformance = engines.filter { it.type == EngineType.JUMP_DRIVE }
+                .maxOfOrNull { it.performance } ?: 0
+            val powerPlants = engines.filter { it.type == EngineType.POWER_PLANT }
+            val hasAntimatterPowerPlant = powerPlants.any { 
+                PowerPlantType.getBestAvailableForTechLevel(ship.techLevel) == PowerPlantType.ANTIMATTER
+            }
+            calculateFuelRequirement(maxJumpPerformance, ship.tons, hasAntimatterPowerPlant)
+        } ?: 0f
+    }
+    
+    /**
+     * Calculate total fittings tonnage
+     */
+    fun getTotalFittingsTonnage(): Float = ship?.let { ship ->
+        fitting?.getTotalTonnage(ship.tons) ?: (ship.tons * 0.005f) // Just bridge if no fitting
+    } ?: 0f
+    
+    /**
+     * Calculate total fittings cost
+     */
+    fun getTotalFittingsCost(): Float = ship?.let { ship ->
+        fitting?.getTotalCost(ship.tons) ?: (ship.tons * 0.005f * 0.1f) // Just bridge if no fitting
+    } ?: 0f
+    
+    /**
+     * Calculate remaining tonnage including all systems
+     */
+    fun getRemainingTonnage(): Float {
+        return ship?.let { ship ->
+            ship.tons - getTotalEngineTonnage() - getFuelRequirement() - 
+            getTotalFittingsTonnage() - getTotalWeaponsTonnage()
+        } ?: 0f
+    }
+    
+    /**
      * Group weapons by weapon type
      */
     fun getWeaponsByWeaponType(): Map<WeaponType, List<Weapon>> {
@@ -98,7 +164,9 @@ data class WeaponsUiState(
 @HiltViewModel
 class WeaponsViewModel @Inject constructor(
     private val weaponsRepository: WeaponsRepository,
-    private val starShipRepository: StarShipRepository
+    private val starShipRepository: StarShipRepository,
+    private val enginesRepository: EnginesRepository,
+    private val fittingsRepository: FittingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeaponsUiState(isLoading = true))
@@ -111,16 +179,20 @@ class WeaponsViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data with weapons data
+                // Combine ship data with weapons, engines, and fittings data
                 combine(
                     starShipRepository.starShips,
-                    weaponsRepository.getWeaponsForShip(shipId)
-                ) { ships, weapons ->
+                    weaponsRepository.getWeaponsForShip(shipId),
+                    enginesRepository.getEnginesForShip(shipId),
+                    fittingsRepository.getFittingForShip(shipId)
+                ) { ships, weapons, engines, fitting ->
                     val ship = ships.find { it.uid == shipId }
                     
                     WeaponsUiState(
                         ship = ship,
                         weapons = weapons,
+                        engines = engines,
+                        fitting = fitting,
                         isLoading = false
                     )
                 }.collect { state ->

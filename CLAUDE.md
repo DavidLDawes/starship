@@ -121,6 +121,7 @@ sealed interface StarShipUiState {
 - Use Room database patterns for data persistence
 - Follow Compose UI patterns with StateFlow observation
 - Always run tests before finalizing work
+- Each new screen should include the Ship's Summary table, and when the new Screen allows adding items that use Tons and cost MCr, those get summed into the Summary correctly
 
 ### Copyright Management
 

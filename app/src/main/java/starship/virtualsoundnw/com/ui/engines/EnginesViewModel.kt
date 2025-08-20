@@ -28,11 +28,13 @@ import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.EnginesRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.FittingsRepository
+import starship.virtualsoundnw.com.data.WeaponsRepository
 import starship.virtualsoundnw.com.data.local.database.Engine
 import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Fitting
+import starship.virtualsoundnw.com.data.local.database.Weapon
 import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
 import starship.virtualsoundnw.com.data.local.database.isJumpDrivePerformanceValidForTechLevel
 import javax.inject.Inject
@@ -47,6 +49,7 @@ data class EnginesUiState(
     val jumpDrives: List<Engine> = emptyList(),
     val maneuverDrives: List<Engine> = emptyList(),
     val fitting: Fitting? = null,
+    val weapons: List<Weapon> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
