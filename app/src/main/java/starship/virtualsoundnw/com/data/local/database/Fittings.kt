@@ -80,14 +80,31 @@ enum class ComputerModel(
             maxJumpPerformance: Int,
             techLevel: TechLevel
         ): List<ComputerModel> {
-            return values().filter { model ->
-                // Check tech level requirement
-                techLevel >= model.requiredTechLevel &&
-                // Check size range (if model has size restrictions)
-                (model.sizeRangeMin == 0 || shipTonnage >= model.sizeRangeMin) &&
-                (model.sizeRangeMax == Int.MAX_VALUE || shipTonnage <= model.sizeRangeMax) &&
-                // Check jump performance requirement
-                model.jumpMinimum <= maxJumpPerformance
+            // Find minimum computer for tonnage
+            val minForTonnage = values()
+                .filter { techLevel >= it.requiredTechLevel }
+                .filter { shipTonnage >= it.sizeRangeMin && 
+                         (it.sizeRangeMax == Int.MAX_VALUE || shipTonnage <= it.sizeRangeMax) }
+                .minByOrNull { it.ordinal }
+            
+            // Find minimum computer for jump performance
+            val minForJump = values()
+                .filter { techLevel >= it.requiredTechLevel }
+                .filter { it.jumpMinimum >= maxJumpPerformance }
+                .minByOrNull { it.ordinal } // Use ordinal to get the earliest/lowest computer that can handle the jump
+            
+            // Use whichever requirement is higher (by ordinal - later in enum = higher)
+            val minimumRequired = listOfNotNull(minForTonnage, minForJump)
+                .maxByOrNull { it.ordinal }
+            
+            return if (minimumRequired != null) {
+                // Return minimum required computer and all higher computers
+                values().filter { model ->
+                    techLevel >= model.requiredTechLevel &&
+                    model.ordinal >= minimumRequired.ordinal
+                }
+            } else {
+                emptyList()
             }
         }
         
