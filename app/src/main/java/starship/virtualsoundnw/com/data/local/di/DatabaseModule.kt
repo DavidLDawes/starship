@@ -29,6 +29,7 @@ import starship.virtualsoundnw.com.data.local.database.StarShipDao
 import starship.virtualsoundnw.com.data.local.database.EngineDao
 import starship.virtualsoundnw.com.data.local.database.FittingDao
 import starship.virtualsoundnw.com.data.local.database.WeaponDao
+import starship.virtualsoundnw.com.data.local.database.DefenseDao
 import javax.inject.Singleton
 
 
@@ -53,6 +54,11 @@ class DatabaseModule {
     @Provides
     fun provideWeaponDao(appDatabase: AppDatabase): WeaponDao {
         return appDatabase.weaponDao()
+    }
+    
+    @Provides
+    fun provideDefenseDao(appDatabase: AppDatabase): DefenseDao {
+        return appDatabase.defenseDao()
     }
 
     @Provides
