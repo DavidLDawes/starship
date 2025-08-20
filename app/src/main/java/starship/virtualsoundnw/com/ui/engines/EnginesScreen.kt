@@ -146,7 +146,7 @@ fun EnginesScreen(
                             onAddEngine = viewModel::addEngine,
                             onRemoveEngine = viewModel::removeEngine,
                             onUpdateEnginePerformance = viewModel::updateEnginePerformance,
-                            isPerformanceValid = { true },
+                            isPerformanceValid = viewModel::isManeuverPerformanceValid,
                             performanceRange = 0..12
                         )
                     }
@@ -277,7 +277,7 @@ fun EngineSection(
                         EngineControlCard(
                             engine = engine,
                             ship = ship,
-                            canRemove = isCapitalShip && engines.size > 1,
+                            canRemove = engines.size > 1,
                             onRemove = { onRemoveEngine(engine) },
                             onUpdatePerformance = { newPerformance ->
                                 onUpdateEnginePerformance(engine, newPerformance)

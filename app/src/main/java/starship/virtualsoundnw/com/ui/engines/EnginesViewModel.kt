@@ -276,7 +276,22 @@ class EnginesViewModel @Inject constructor(
 
     fun isJumpPerformanceValid(performance: Int): Boolean {
         val ship = _uiState.value.ship ?: return false
-        return isJumpDrivePerformanceValidForTechLevel(performance, ship.techLevel)
+        val maxPowerPlantPerformance = getMaxPowerPlantPerformance()
+        
+        // Jump drives must not exceed max power plant performance AND must be valid for tech level
+        return performance <= maxPowerPlantPerformance && 
+               isJumpDrivePerformanceValidForTechLevel(performance, ship.techLevel)
+    }
+    
+    fun isManeuverPerformanceValid(performance: Int): Boolean {
+        val maxPowerPlantPerformance = getMaxPowerPlantPerformance()
+        
+        // Maneuver drives must not exceed max power plant performance
+        return performance <= maxPowerPlantPerformance
+    }
+    
+    private fun getMaxPowerPlantPerformance(): Int {
+        return _uiState.value.powerPlants.maxOfOrNull { it.performance } ?: 0
     }
 
     fun clearError() {
