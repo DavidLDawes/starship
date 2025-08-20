@@ -161,6 +161,33 @@ class WeaponsViewModel @Inject constructor(
             }
         }
     }
+    
+    fun addHardpoint() {
+        viewModelScope.launch {
+            try {
+                val currentState = _uiState.value
+                
+                // Check hardpoint constraint
+                if (!currentState.canAddWeapon()) {
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Cannot add hardpoint: Maximum hardpoints (${currentState.getMaxHardpoints()}) reached"
+                    )
+                    return@launch
+                }
+                
+                val hardpoint = Weapon(
+                    shipId = currentShipId,
+                    turretType = TurretType.HARDPOINT,
+                    weaponType = WeaponType.NONE
+                )
+                weaponsRepository.addWeapon(hardpoint)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to add hardpoint: ${e.message}"
+                )
+            }
+        }
+    }
 
     fun removeWeapon(weapon: Weapon) {
         viewModelScope.launch {

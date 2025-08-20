@@ -117,6 +117,9 @@ fun WeaponsScreen(
                     AddWeaponCard(
                         onAddWeapon = { turretType, weaponType ->
                             viewModel.addWeapon(turretType, weaponType)
+                        },
+                        onAddHardpoint = {
+                            viewModel.addHardpoint()
                         }
                     )
                 }
@@ -223,7 +226,8 @@ fun WeaponsSummaryCard(uiState: WeaponsUiState) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddWeaponCard(
-    onAddWeapon: (TurretType, WeaponType) -> Unit
+    onAddWeapon: (TurretType, WeaponType) -> Unit,
+    onAddHardpoint: () -> Unit
 ) {
     var selectedTurretType by remember { mutableStateOf<TurretType?>(null) }
     var selectedWeaponType by remember { mutableStateOf<WeaponType?>(null) }
@@ -238,7 +242,7 @@ fun AddWeaponCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Add Weapon",
+                text = "Add Weapon/Hardpoint",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -267,14 +271,16 @@ fun AddWeaponCard(
                             onClick = {
                                 selectedTurretType = turretType
                                 turretExpanded = false
+                                // Reset weapon selection when turret changes
+                                selectedWeaponType = null
                             }
                         )
                     }
                 }
             }
             
-            // Weapon Type Dropdown - only show when turret is selected
-            if (selectedTurretType != null) {
+            // Weapon Type Dropdown - only show when non-hardpoint turret is selected
+            if (selectedTurretType != null && selectedTurretType != TurretType.HARDPOINT) {
                 ExposedDropdownMenuBox(
                     expanded = weaponExpanded,
                     onExpandedChange = { weaponExpanded = !weaponExpanded }
@@ -292,7 +298,7 @@ fun AddWeaponCard(
                         expanded = weaponExpanded,
                         onDismissRequest = { weaponExpanded = false }
                     ) {
-                        WeaponType.entries.forEach { weaponType ->
+                        WeaponType.entries.filter { it != WeaponType.NONE }.forEach { weaponType ->
                             DropdownMenuItem(
                                 text = { Text(getWeaponDisplayName(weaponType)) },
                                 onClick = {
@@ -305,27 +311,63 @@ fun AddWeaponCard(
                 }
             }
             
-            // Add button - only enabled when both selections are made
-            Button(
-                onClick = {
-                    selectedTurretType?.let { turret ->
-                        selectedWeaponType?.let { weapon ->
-                            onAddWeapon(turret, weapon)
-                            // Reset selections for next add
+            // Add button - logic depends on selected turret type
+            when {
+                selectedTurretType == TurretType.HARDPOINT -> {
+                    Button(
+                        onClick = {
+                            onAddHardpoint()
                             selectedTurretType = null
-                            selectedWeaponType = null
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add hardpoint"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add Hardpoint")
                     }
-                },
-                enabled = selectedTurretType != null && selectedWeaponType != null,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add weapon"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Weapon")
+                }
+                selectedTurretType != null && selectedWeaponType != null -> {
+                    Button(
+                        onClick = {
+                            selectedTurretType?.let { turret ->
+                                selectedWeaponType?.let { weapon ->
+                                    onAddWeapon(turret, weapon)
+                                    // Reset selections for next add
+                                    selectedTurretType = null
+                                    selectedWeaponType = null
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add weapon"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add Weapon")
+                    }
+                }
+                else -> {
+                    Button(
+                        onClick = { },
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add weapon"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            if (selectedTurretType == null) "Select Turret Type" 
+                            else "Select Weapon Type"
+                        )
+                    }
+                }
             }
         }
     }
@@ -399,6 +441,7 @@ fun WeaponGroupCard(
 
 fun getTurretDisplayName(turretType: TurretType): String {
     return when (turretType) {
+        TurretType.HARDPOINT -> "Hardpoint"
         TurretType.SINGLE -> "Single Turret"
         TurretType.DOUBLE -> "Double Turret"
         TurretType.TRIPLE -> "Triple Turret"
@@ -410,6 +453,7 @@ fun getTurretDisplayName(turretType: TurretType): String {
 
 fun getWeaponDisplayName(weaponType: WeaponType): String {
     return when (weaponType) {
+        WeaponType.NONE -> "None"
         WeaponType.PULSE_LASER -> "Pulse Laser"
         WeaponType.BEAM_LASER -> "Beam Laser"
         WeaponType.PARTICLE_BEAM -> "Particle Beam"
