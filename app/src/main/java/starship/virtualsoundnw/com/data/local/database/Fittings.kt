@@ -87,7 +87,7 @@ enum class ComputerModel(
                 (model.sizeRangeMin == 0 || shipTonnage >= model.sizeRangeMin) &&
                 (model.sizeRangeMax == Int.MAX_VALUE || shipTonnage <= model.sizeRangeMax) &&
                 // Check jump performance requirement
-                maxJumpPerformance <= model.jumpMinimum
+                model.jumpMinimum <= maxJumpPerformance
             }
         }
         
