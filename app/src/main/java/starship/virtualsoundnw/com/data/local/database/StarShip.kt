@@ -51,6 +51,8 @@ data class StarShip(
     
     val hullCost: Float get() = calculateHullCost(tons, configuration)
     
+    val hullCode: String get() = calculateHullCode(tons)
+    
     val shipDesignation: String get() = if (isCapitalShip) "Capital Ship" else "Ship"
 }
 
@@ -128,4 +130,63 @@ private fun calculateHullCost(tons: Int, configuration: Configuration): Float {
     }
     
     return baseCost * multiplier
+}
+
+/**
+ * Calculate Hull Code based on ship tonnage according to Issue #68 specifications
+ */
+private fun calculateHullCode(tons: Int): String {
+    return when (tons) {
+        // Single character codes for ships 100-2000 tons
+        100 -> "A"
+        in 191..200 -> "A"
+        in 201..300 -> "B"
+        in 301..400 -> "C"
+        in 401..500 -> "D"
+        in 501..600 -> "E"
+        in 601..700 -> "F"
+        in 701..800 -> "G"
+        in 801..900 -> "H"
+        in 901..1000 -> "J"
+        in 1001..1100 -> "K"
+        in 1101..1200 -> "L"
+        in 1201..1300 -> "M"
+        in 1301..1400 -> "N"
+        in 1401..1500 -> "P"
+        in 1501..1600 -> "Q"
+        in 1601..1700 -> "R"
+        in 1701..1800 -> "S"
+        in 1801..1900 -> "T"
+        in 1901..2000 -> "U"
+        
+        // Two character codes for capital ships 3000-1,000,000 tons
+        3000 -> "CA"
+        4000 -> "CB"
+        5000 -> "CC"
+        6000 -> "CD"
+        7500 -> "CE"
+        10000 -> "CF"
+        15000 -> "CG"
+        20000 -> "CH"
+        25000 -> "CJ"
+        30000 -> "CK"
+        40000 -> "CL"
+        50000 -> "CM"
+        60000 -> "CN"
+        75000 -> "CP"
+        100000 -> "CQ"
+        200000 -> "CR"
+        300000 -> "CS"
+        400000 -> "CT"
+        500000 -> "CU"
+        600000 -> "CV"
+        700000 -> "CW"
+        800000 -> "CX"
+        900000 -> "CY"
+        1000000 -> "CZ"
+        
+        // For tonnages not exactly matching the table, return "Unknown"
+        // This handles edge cases like 150 tons, 2500 tons, etc.
+        else -> "Unknown"
+    }
 }
