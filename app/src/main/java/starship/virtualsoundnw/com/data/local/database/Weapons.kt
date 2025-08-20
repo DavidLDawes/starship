@@ -30,13 +30,13 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Weapon types available for turrets
  */
-enum class WeaponType(val cost: Float, val tonnage: Float) {
-    NONE(0.0f, 0.0f),  // Used for hardpoints
-    PULSE_LASER(0.5f, 1.0f),
-    BEAM_LASER(1.0f, 1.0f),
-    PARTICLE_BEAM(4.0f, 1.0f),
-    MISSILE_RACK(0.75f, 0.5f),
-    SANDCASTER(0.25f, 0.5f)
+enum class WeaponType(val cost: Float) {
+    NONE(0.0f),  // Used for hardpoints
+    PULSE_LASER(0.5f),
+    BEAM_LASER(1.0f),
+    PARTICLE_BEAM(4.0f),
+    MISSILE_RACK(0.75f),
+    SANDCASTER(0.25f)
 }
 
 /**
@@ -86,10 +86,10 @@ data class Weapon(
     
     /**
      * Calculate total tonnage for this weapon installation
-     * Tonnage = turret tonnage + (weapon capacity × weapon tonnage)
+     * Tonnage = turret tonnage only (weapons don't add tonnage)
      */
     fun getTotalTonnage(): Float {
-        return turretType.tonnage + (turretType.weaponCapacity * weaponType.tonnage)
+        return turretType.tonnage
     }
     
     /**
@@ -103,10 +103,10 @@ data class Weapon(
         
         val turretName = when (turretType) {
             TurretType.HARDPOINT -> "Hard Point"
-            TurretType.SINGLE -> "Single"
+            TurretType.SINGLE -> ""  // Drop "Single" per feedback
             TurretType.DOUBLE -> "Double"
             TurretType.TRIPLE -> "Triple"
-            TurretType.POPUP_SINGLE -> "Pop-up Single"
+            TurretType.POPUP_SINGLE -> "Pop-up"  // Drop "Single" from pop-up too
             TurretType.POPUP_DOUBLE -> "Pop-up Double"
             TurretType.POPUP_TRIPLE -> "Pop-up Triple"
         }
@@ -120,7 +120,7 @@ data class Weapon(
             WeaponType.SANDCASTER -> "Sandcaster"
         }
         
-        return "$turretName $weaponName"
+        return if (turretName.isEmpty()) weaponName else "$turretName $weaponName"
     }
 }
 

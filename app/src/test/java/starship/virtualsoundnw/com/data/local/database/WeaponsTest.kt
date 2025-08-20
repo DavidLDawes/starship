@@ -62,29 +62,29 @@ class WeaponsTest {
 
     @Test
     fun weaponTonnageCalculations_correctValues() {
-        // Test Single Pulse Laser (1.0 + 1 * 1.0 = 2.0 tons)
+        // Test Single Pulse Laser (1.0 ton - turret tonnage only)
         val singlePulseLaser = Weapon(
             shipId = 1,
             turretType = TurretType.SINGLE,
             weaponType = WeaponType.PULSE_LASER
         )
-        assertEquals(2.0f, singlePulseLaser.getTotalTonnage(), 0.01f)
+        assertEquals(1.0f, singlePulseLaser.getTotalTonnage(), 0.01f)
 
-        // Test Double Missile Rack (1.0 + 2 * 0.5 = 2.0 tons)
+        // Test Double Missile Rack (1.0 ton - turret tonnage only)
         val doubleMissileRack = Weapon(
             shipId = 1,
             turretType = TurretType.DOUBLE,
             weaponType = WeaponType.MISSILE_RACK
         )
-        assertEquals(2.0f, doubleMissileRack.getTotalTonnage(), 0.01f)
+        assertEquals(1.0f, doubleMissileRack.getTotalTonnage(), 0.01f)
 
-        // Test Pop-up Triple Beam Laser (2.0 + 3 * 1.0 = 5.0 tons)
+        // Test Pop-up Triple Beam Laser (2.0 tons - pop-up turret tonnage only)
         val popupTripleBeamLaser = Weapon(
             shipId = 1,
             turretType = TurretType.POPUP_TRIPLE,
             weaponType = WeaponType.BEAM_LASER
         )
-        assertEquals(5.0f, popupTripleBeamLaser.getTotalTonnage(), 0.01f)
+        assertEquals(2.0f, popupTripleBeamLaser.getTotalTonnage(), 0.01f)
     }
 
     @Test
@@ -103,11 +103,14 @@ class WeaponsTest {
     @Test
     fun weaponDesignations_correctNames() {
         val singlePulseLaser = Weapon(1, TurretType.SINGLE, WeaponType.PULSE_LASER)
-        assertEquals("Single Pulse Laser", singlePulseLaser.getDesignation())
+        assertEquals("Pulse Laser", singlePulseLaser.getDesignation())  // Drop "Single"
 
         val doubleMissileRack = Weapon(1, TurretType.DOUBLE, WeaponType.MISSILE_RACK)
         assertEquals("Double Missile Rack", doubleMissileRack.getDesignation())
 
+        val popupSingleBeamLaser = Weapon(1, TurretType.POPUP_SINGLE, WeaponType.BEAM_LASER)
+        assertEquals("Pop-up Beam Laser", popupSingleBeamLaser.getDesignation())  // Drop "Single"
+        
         val popupTripleBeamLaser = Weapon(1, TurretType.POPUP_TRIPLE, WeaponType.BEAM_LASER)
         assertEquals("Pop-up Triple Beam Laser", popupTripleBeamLaser.getDesignation())
     }
@@ -134,7 +137,7 @@ class WeaponsTest {
         assertEquals(expectedCost, calculation.totalWeaponsCost, 0.01f)
         
         // Test total tonnage calculation  
-        val expectedTonnage = 2.0f + 3.0f // Single Pulse (2.0) + Double Beam (3.0)
+        val expectedTonnage = 1.0f + 1.0f // Single Pulse (1.0) + Double Beam (1.0)
         assertEquals(expectedTonnage, calculation.totalWeaponsTonnage, 0.01f)
     }
 }
