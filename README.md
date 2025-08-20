@@ -52,7 +52,7 @@ For executing work on stories and bugs:
 5. **Human reviews and tests**, then either:
    - **a)** Adds requests for fixes, corrections, enhancements back to the story and re-invokes Claude, OR
    - **b)** Approves work and tells Claude to create a branch and PR for final review, approval and merging
-6. Operator gives final merge approval in terminal:\
+6. Operator gives final merge approval in terminal:
   - `Approved, merge and switch back to main branch and pull the changes back`
 ### Architecture
 

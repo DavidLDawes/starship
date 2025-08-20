@@ -105,6 +105,94 @@ class StarShipTest {
         assertEquals("Buffered Planetoid", Configuration.BUFFERED_PLANETOID.displayName())
     }
 
+    @Test
+    fun hullCode_singleCharacterCodes_correctForSmallShips() {
+        // Test exact tonnages from Issue #68 specification
+        assertEquals("A", createShip(100).hullCode)
+        assertEquals("A", createShip(191).hullCode)
+        assertEquals("A", createShip(200).hullCode)
+        assertEquals("B", createShip(201).hullCode)
+        assertEquals("B", createShip(250).hullCode)
+        assertEquals("B", createShip(300).hullCode)
+        assertEquals("C", createShip(301).hullCode)
+        assertEquals("C", createShip(400).hullCode)
+        assertEquals("D", createShip(401).hullCode)
+        assertEquals("D", createShip(500).hullCode)
+        assertEquals("E", createShip(501).hullCode)
+        assertEquals("E", createShip(600).hullCode)
+        assertEquals("F", createShip(601).hullCode)
+        assertEquals("F", createShip(700).hullCode)
+        assertEquals("G", createShip(701).hullCode)
+        assertEquals("G", createShip(800).hullCode)
+        assertEquals("H", createShip(801).hullCode)
+        assertEquals("H", createShip(900).hullCode)
+        assertEquals("J", createShip(901).hullCode)
+        assertEquals("J", createShip(1000).hullCode)
+    }
+
+    @Test
+    fun hullCode_singleCharacterCodes_correctForLargerShips() {
+        // Test the higher ranges for single character codes
+        assertEquals("K", createShip(1001).hullCode)
+        assertEquals("K", createShip(1100).hullCode)
+        assertEquals("L", createShip(1101).hullCode)
+        assertEquals("L", createShip(1200).hullCode)
+        assertEquals("M", createShip(1201).hullCode)
+        assertEquals("M", createShip(1300).hullCode)
+        assertEquals("N", createShip(1301).hullCode)
+        assertEquals("N", createShip(1400).hullCode)
+        assertEquals("P", createShip(1401).hullCode)
+        assertEquals("P", createShip(1500).hullCode)
+        assertEquals("Q", createShip(1501).hullCode)
+        assertEquals("Q", createShip(1600).hullCode)
+        assertEquals("R", createShip(1601).hullCode)
+        assertEquals("R", createShip(1700).hullCode)
+        assertEquals("S", createShip(1701).hullCode)
+        assertEquals("S", createShip(1800).hullCode)
+        assertEquals("T", createShip(1801).hullCode)
+        assertEquals("T", createShip(1900).hullCode)
+        assertEquals("U", createShip(1901).hullCode)
+        assertEquals("U", createShip(2000).hullCode)
+    }
+
+    @Test
+    fun hullCode_twoCharacterCodes_correctForCapitalShips() {
+        // Test exact tonnages from Issue #68 specification
+        assertEquals("CA", createShip(3000).hullCode)
+        assertEquals("CB", createShip(4000).hullCode)
+        assertEquals("CC", createShip(5000).hullCode)
+        assertEquals("CD", createShip(6000).hullCode)
+        assertEquals("CE", createShip(7500).hullCode)
+        assertEquals("CF", createShip(10000).hullCode)
+        assertEquals("CG", createShip(15000).hullCode)
+        assertEquals("CH", createShip(20000).hullCode)
+        assertEquals("CJ", createShip(25000).hullCode)
+        assertEquals("CK", createShip(30000).hullCode)
+        assertEquals("CL", createShip(40000).hullCode)
+        assertEquals("CM", createShip(50000).hullCode)
+        assertEquals("CN", createShip(60000).hullCode)
+        assertEquals("CP", createShip(75000).hullCode)
+        assertEquals("CQ", createShip(100000).hullCode)
+        assertEquals("CR", createShip(200000).hullCode)
+        assertEquals("CS", createShip(300000).hullCode)
+        assertEquals("CT", createShip(400000).hullCode)
+        assertEquals("CU", createShip(500000).hullCode)
+        assertEquals("CV", createShip(600000).hullCode)
+        assertEquals("CW", createShip(700000).hullCode)
+        assertEquals("CX", createShip(800000).hullCode)
+        assertEquals("CY", createShip(900000).hullCode)
+        assertEquals("CZ", createShip(1000000).hullCode)
+    }
+
+    @Test
+    fun hullCode_unknownTonnages_returnsUnknown() {
+        // Test tonnages that don't match the exact specifications
+        assertEquals("Unknown", createShip(150).hullCode) // Between 100 and 191-200 range
+        assertEquals("Unknown", createShip(2500).hullCode) // Between 2000 and 3000
+        assertEquals("Unknown", createShip(3500).hullCode) // Between 3000 and 4000
+        assertEquals("Unknown", createShip(1500000).hullCode) // Above 1,000,000
+    }
+
     private fun createShip(tons: Int, configuration: Configuration = Configuration.STANDARD): StarShip {
         return StarShip(
             name = "Test Ship",
