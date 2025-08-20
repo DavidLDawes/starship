@@ -27,10 +27,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.EnginesRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.local.database.Engine
 import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
 import starship.virtualsoundnw.com.data.local.database.isJumpDrivePerformanceValidForTechLevel
 import javax.inject.Inject
@@ -44,6 +46,7 @@ data class EnginesUiState(
     val powerPlants: List<Engine> = emptyList(),
     val jumpDrives: List<Engine> = emptyList(),
     val maneuverDrives: List<Engine> = emptyList(),
+    val fitting: Fitting? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -79,11 +82,29 @@ data class EnginesUiState(
     }
     
     /**
-     * Calculate remaining tonnage
+     * Calculate fittings tonnage
+     */
+    fun getFittingsTonnage(): Float {
+        return ship?.let { ship ->
+            fitting?.getTotalTonnage(ship.tons) ?: (ship.tons * 0.005f) // Just bridge if no fitting
+        } ?: 0f
+    }
+    
+    /**
+     * Calculate fittings cost
+     */
+    fun getFittingsCost(): Float {
+        return ship?.let { ship ->
+            fitting?.getTotalCost(ship.tons) ?: (ship.tons * 0.005f * 0.1f) // Just bridge if no fitting
+        } ?: 0f
+    }
+    
+    /**
+     * Calculate remaining tonnage including fittings
      */
     fun getRemainingTonnage(): Float {
         return ship?.let { ship ->
-            ship.tons - getTotalEngineTonnage() - getFuelRequirement()
+            ship.tons - getTotalEngineTonnage() - getFuelRequirement() - getFittingsTonnage()
         } ?: 0f
     }
     
@@ -106,7 +127,8 @@ data class EnginesUiState(
 @HiltViewModel
 class EnginesViewModel @Inject constructor(
     private val enginesRepository: EnginesRepository,
-    private val starShipRepository: StarShipRepository
+    private val starShipRepository: StarShipRepository,
+    private val fittingsRepository: FittingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EnginesUiState(isLoading = true))
@@ -119,11 +141,12 @@ class EnginesViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data with engine data
+                // Combine ship data with engine data and fittings
                 combine(
                     starShipRepository.starShips,
-                    enginesRepository.getEnginesForShip(shipId)
-                ) { ships, engines ->
+                    enginesRepository.getEnginesForShip(shipId),
+                    fittingsRepository.getFittingForShip(shipId)
+                ) { ships, engines, fitting ->
                     val ship = ships.find { it.uid == shipId }
                     val powerPlants = engines.filter { it.type == EngineType.POWER_PLANT }
                     val jumpDrives = engines.filter { it.type == EngineType.JUMP_DRIVE }
@@ -135,6 +158,7 @@ class EnginesViewModel @Inject constructor(
                         powerPlants = powerPlants,
                         jumpDrives = jumpDrives,
                         maneuverDrives = maneuverDrives,
+                        fitting = fitting,
                         isLoading = false
                     )
                 }.collect { state ->

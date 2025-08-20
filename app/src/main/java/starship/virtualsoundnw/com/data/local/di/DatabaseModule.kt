@@ -27,6 +27,7 @@ import dagger.hilt.components.SingletonComponent
 import starship.virtualsoundnw.com.data.local.database.AppDatabase
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
 import starship.virtualsoundnw.com.data.local.database.EngineDao
+import starship.virtualsoundnw.com.data.local.database.FittingDao
 import javax.inject.Singleton
 
 
@@ -41,6 +42,11 @@ class DatabaseModule {
     @Provides
     fun provideEngineDao(appDatabase: AppDatabase): EngineDao {
         return appDatabase.engineDao()
+    }
+    
+    @Provides
+    fun provideFittingDao(appDatabase: AppDatabase): FittingDao {
+        return appDatabase.fittingDao()
     }
 
     @Provides
