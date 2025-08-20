@@ -202,7 +202,7 @@ fun DefensesSummaryCard(uiState: DefensesUiState) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Armor Tonnage:")
+                Text("Armor:")
                 Text("${String.format("%.2f", uiState.getArmorTonnage())} tons")
             }
             
