@@ -245,21 +245,19 @@ fun EngineSection(
                     fontWeight = FontWeight.Medium
                 )
                 
-                if (engines.isEmpty() || (isCapitalShip && engines.isNotEmpty())) {
-                    OutlinedButton(
-                        onClick = {
-                            val defaultPerformance = if (performanceRange.first == 0) 1 else performanceRange.first
-                            onAddEngine(engineType, defaultPerformance)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Engine",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add")
+                OutlinedButton(
+                    onClick = {
+                        val defaultPerformance = if (performanceRange.first == 0) 1 else performanceRange.first
+                        onAddEngine(engineType, defaultPerformance)
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Engine",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add")
                 }
             }
             
