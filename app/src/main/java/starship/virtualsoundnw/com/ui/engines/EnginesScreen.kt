@@ -146,7 +146,7 @@ fun EnginesScreen(
                             onAddEngine = viewModel::addEngine,
                             onRemoveEngine = viewModel::removeEngine,
                             onUpdateEnginePerformance = viewModel::updateEnginePerformance,
-                            isPerformanceValid = { true },
+                            isPerformanceValid = viewModel::isManeuverPerformanceValid,
                             performanceRange = 0..12
                         )
                     }
@@ -245,21 +245,19 @@ fun EngineSection(
                     fontWeight = FontWeight.Medium
                 )
                 
-                if (engines.isEmpty() || (isCapitalShip && engines.isNotEmpty())) {
-                    OutlinedButton(
-                        onClick = {
-                            val defaultPerformance = if (performanceRange.first == 0) 1 else performanceRange.first
-                            onAddEngine(engineType, defaultPerformance)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Engine",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add")
+                OutlinedButton(
+                    onClick = {
+                        val defaultPerformance = if (performanceRange.first == 0) 1 else performanceRange.first
+                        onAddEngine(engineType, defaultPerformance)
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Engine",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add")
                 }
             }
             
@@ -277,7 +275,7 @@ fun EngineSection(
                         EngineControlCard(
                             engine = engine,
                             ship = ship,
-                            canRemove = isCapitalShip && engines.size > 1,
+                            canRemove = engines.size > 1,
                             onRemove = { onRemoveEngine(engine) },
                             onUpdatePerformance = { newPerformance ->
                                 onUpdateEnginePerformance(engine, newPerformance)
