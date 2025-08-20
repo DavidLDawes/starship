@@ -61,6 +61,33 @@ class WeaponsTest {
     }
 
     @Test
+    fun weaponTonnageCalculations_correctValues() {
+        // Test Single Pulse Laser (1.0 + 1 * 1.0 = 2.0 tons)
+        val singlePulseLaser = Weapon(
+            shipId = 1,
+            turretType = TurretType.SINGLE,
+            weaponType = WeaponType.PULSE_LASER
+        )
+        assertEquals(2.0f, singlePulseLaser.getTotalTonnage(), 0.01f)
+
+        // Test Double Missile Rack (1.0 + 2 * 0.5 = 2.0 tons)
+        val doubleMissileRack = Weapon(
+            shipId = 1,
+            turretType = TurretType.DOUBLE,
+            weaponType = WeaponType.MISSILE_RACK
+        )
+        assertEquals(2.0f, doubleMissileRack.getTotalTonnage(), 0.01f)
+
+        // Test Pop-up Triple Beam Laser (2.0 + 3 * 1.0 = 5.0 tons)
+        val popupTripleBeamLaser = Weapon(
+            shipId = 1,
+            turretType = TurretType.POPUP_TRIPLE,
+            weaponType = WeaponType.BEAM_LASER
+        )
+        assertEquals(5.0f, popupTripleBeamLaser.getTotalTonnage(), 0.01f)
+    }
+
+    @Test
     fun weaponDesignations_correctNames() {
         val singlePulseLaser = Weapon(1, TurretType.SINGLE, WeaponType.PULSE_LASER)
         assertEquals("Single Pulse Laser", singlePulseLaser.getDesignation())
@@ -92,5 +119,9 @@ class WeaponsTest {
         // Test total cost calculation
         val expectedCost = 0.7f + 2.5f // Single Pulse + Double Beam
         assertEquals(expectedCost, calculation.totalWeaponsCost, 0.01f)
+        
+        // Test total tonnage calculation  
+        val expectedTonnage = 2.0f + 3.0f // Single Pulse (2.0) + Double Beam (3.0)
+        assertEquals(expectedTonnage, calculation.totalWeaponsTonnage, 0.01f)
     }
 }
