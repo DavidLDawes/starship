@@ -31,7 +31,7 @@ This project uses a structured workflow combining GitHub Projects for backlog ma
 
 ### Backlog Management Loop
 
-Use the [Starship Project](https://github.com/users/DavidLDawes/projects/1) for all backlog management:
+Use the [Starship Project](https://github.com/users/DavidLDawes/projects/3/views/1) for all backlog management:
 
 1. **Create backlog entries** - Ensure entry requirements are met, include boilerplate Claude section that refers to the CLAUDE.md file for Claude's guidance & instructions including logging requirements, unit tests, etc.
 2. **Add new stories** as needed 
@@ -45,14 +45,15 @@ Use the [Starship Project](https://github.com/users/DavidLDawes/projects/1) for 
 For executing work on stories and bugs:
 
 1. **Operator invokes Claude** in a terminal window in the root of the github project
-2. **Claude gets instructions** from assigned stories/bugs using terminal commands like:
-   - `"Address github project issue Starship #8`
+2. **Claude gets instructions** from assigned stories/bugs using terminal commands from the operator like:
+   - `Address github project issue #8`
 3. **Claude does the work** following baseline architecture and conventions
 4. **Logs are copied** to the story/issue and Claude asks for approval
 5. **Human reviews and tests**, then either:
    - **a)** Adds requests for fixes, corrections, enhancements back to the story and re-invokes Claude, OR
    - **b)** Approves work and tells Claude to create a branch and PR for final review, approval and merging
-6. Operator cleanup: checkout main && git pull origin main
+6. Operator gives final merge approval in terminal:\
+  - `Approved, merge and switch back to main branch and pull the changes back`
 ### Architecture
 
 See [CLAUDE.md](CLAUDE.md) for detailed AI instructions and baseline architecture information.

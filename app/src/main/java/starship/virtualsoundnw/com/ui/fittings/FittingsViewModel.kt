@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.EnginesRepository
+import starship.virtualsoundnw.com.data.WeaponsRepository
 import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Engine
@@ -35,6 +36,9 @@ import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.data.local.database.SensorType
 import starship.virtualsoundnw.com.data.local.database.ComputerModel
 import starship.virtualsoundnw.com.data.local.database.FittingsCalculation
+import starship.virtualsoundnw.com.data.local.database.Weapon
+import starship.virtualsoundnw.com.data.local.database.PowerPlantType
+import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
 import javax.inject.Inject
 
 /**
@@ -44,6 +48,7 @@ data class FittingsUiState(
     val ship: StarShip? = null,
     val fitting: Fitting? = null,
     val engines: List<Engine> = emptyList(),
+    val weapons: List<Weapon> = emptyList(),
     val availableComputers: List<ComputerModel> = emptyList(),
     val maxJumpPerformance: Int = 0,
     val isLoading: Boolean = false,
@@ -101,13 +106,67 @@ data class FittingsUiState(
      * Get current computer model
      */
     fun getCurrentComputerModel(): ComputerModel = fitting?.computerModel ?: ComputerModel.CORE_1
+    
+    /**
+     * Calculate total engine tonnage
+     */
+    fun getTotalEngineTonnage(): Float {
+        return ship?.let { ship ->
+            engines.sumOf { engine -> engine.getTonnage(ship.tons).toDouble() }
+        }?.toFloat() ?: 0f
+    }
+    
+    /**
+     * Calculate total engine cost
+     */
+    fun getTotalEngineCost(): Float {
+        return ship?.let { ship ->
+            engines.sumOf { engine -> engine.getTotalCost(ship.tons, ship.techLevel).toDouble() }
+        }?.toFloat() ?: 0f
+    }
+    
+    /**
+     * Calculate fuel requirement
+     */
+    fun getFuelRequirement(): Float {
+        return ship?.let { ship ->
+            val maxJumpPerformance = engines.filter { it.type == EngineType.JUMP_DRIVE }
+                .maxOfOrNull { it.performance } ?: 0
+            val powerPlants = engines.filter { it.type == EngineType.POWER_PLANT }
+            val hasAntimatterPowerPlant = powerPlants.any { 
+                PowerPlantType.getBestAvailableForTechLevel(ship.techLevel) == PowerPlantType.ANTIMATTER
+            }
+            calculateFuelRequirement(maxJumpPerformance, ship.tons, hasAntimatterPowerPlant)
+        } ?: 0f
+    }
+    
+    /**
+     * Calculate total weapons cost
+     */
+    fun getTotalWeaponsCost(): Float = weapons.sumOf { it.getTotalCost().toDouble() }.toFloat()
+    
+    /**
+     * Calculate total weapons tonnage
+     */
+    fun getTotalWeaponsTonnage(): Float = weapons.sumOf { it.getTotalTonnage().toDouble() }.toFloat()
+    
+    /**
+     * Calculate remaining tonnage including all systems
+     */
+    fun getRemainingTonnage(): Float {
+        return ship?.let { ship ->
+            ship.tons - getTotalEngineTonnage() - getFuelRequirement() - 
+            getTotalFittingsTonnage() - getTotalWeaponsTonnage()
+        } ?: 0f
+    }
 }
 
 @HiltViewModel
 class FittingsViewModel @Inject constructor(
     private val fittingsRepository: FittingsRepository,
     private val starShipRepository: StarShipRepository,
-    private val enginesRepository: EnginesRepository
+    private val enginesRepository: EnginesRepository,
+    private val weaponsRepository: WeaponsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FittingsUiState(isLoading = true))
@@ -120,12 +179,13 @@ class FittingsViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data, engines, and fittings
+                // Combine ship data, engines, weapons, and fittings
                 combine(
                     starShipRepository.starShips,
                     enginesRepository.getEnginesForShip(shipId),
+                    weaponsRepository.getWeaponsForShip(shipId),
                     fittingsRepository.getFittingForShip(shipId)
-                ) { ships, engines, fitting ->
+                ) { ships, engines, weapons, fitting ->
                     val ship = ships.find { it.uid == shipId }
                     val maxJumpPerformance = engines
                         .filter { it.type == EngineType.JUMP_DRIVE }
@@ -143,6 +203,7 @@ class FittingsViewModel @Inject constructor(
                         ship = ship,
                         fitting = fitting,
                         engines = engines,
+                        weapons = weapons,
                         availableComputers = availableComputers,
                         maxJumpPerformance = maxJumpPerformance,
                         isLoading = false
