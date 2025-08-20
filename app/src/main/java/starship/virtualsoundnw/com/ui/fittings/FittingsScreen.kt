@@ -20,12 +20,30 @@ package starship.virtualsoundnw.com.ui.fittings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,95 +55,445 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import starship.virtualsoundnw.com.data.local.database.Configuration
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
-import starship.virtualsoundnw.com.ui.starship.StarShipUiState
-import starship.virtualsoundnw.com.ui.starship.StarShipViewModel
+import starship.virtualsoundnw.com.data.local.database.SensorType
+import starship.virtualsoundnw.com.data.local.database.ComputerModel
+import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
 fun FittingsScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
-    viewModel: StarShipViewModel = hiltViewModel()
+    viewModel: FittingsViewModel = hiltViewModel()
 ) {
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
     
-    when (val state = uiState.value) {
-        is StarShipUiState.Loading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Loading...")
+    LaunchedEffect(shipId) {
+        viewModel.loadFittingsForShip(shipId)
+    }
+    
+    uiState.errorMessage?.let { error ->
+        LaunchedEffect(error) {
+            snackbarHostState.showSnackbar(error)
+            viewModel.clearError()
+        }
+    }
+    
+    Box(modifier = modifier) {
+        if (uiState.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        } else {
+            uiState.ship?.let { ship ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        FittingsHeader(ship = ship)
+                    }
+                    
+                    item {
+                        SensorSection(
+                            currentSensorType = uiState.getCurrentSensorType(),
+                            onSensorTypeSelected = viewModel::updateSensorType
+                        )
+                    }
+                    
+                    item {
+                        ComputerSection(
+                            currentComputerModel = uiState.getCurrentComputerModel(),
+                            availableComputers = uiState.availableComputers,
+                            onComputerModelSelected = viewModel::updateComputerModel
+                        )
+                    }
+                    
+                    item {
+                        BridgeSection(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
+                    
+                    item {
+                        FittingsSummaryPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
+                }
             }
         }
-        is StarShipUiState.Error -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: ${state.throwable.message}")
-            }
-        }
-        is StarShipUiState.Success -> {
-            val ship = state.data.find { it.uid == shipId }
-            FittingsContent(
-                ship = ship,
-                modifier = modifier
+        
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Composable
+fun FittingsHeader(ship: StarShip) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Ship Fittings",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            val shipDesignation = if (ship.isCapitalShip) "Capital Ship" else "Ship"
+            Text(
+                text = "$shipDesignation: ${ship.name}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "${ship.tons} tons • TL ${ship.techLevel} • ${if (ship.isCapitalShip) "Capital Ship" else "Standard Ship"}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FittingsContent(
-    ship: StarShip?,
-    modifier: Modifier = Modifier
+fun SensorSection(
+    currentSensorType: SensorType,
+    onSensorTypeSelected: (SensorType) -> Unit
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    var expanded by remember { mutableStateOf(false) }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Card(
-            modifier = Modifier.padding(32.dp)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Text(
+                text = "Sensors",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+            
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it }
+            ) {
+                OutlinedTextField(
+                    value = currentSensorType.name.replace("_", " ").lowercase()
+                        .split(" ").joinToString(" ") { it.replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase() else c.toString() } },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Sensor Type") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+                
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    SensorType.values().forEach { sensorType ->
+                        DropdownMenuItem(
+                            text = { 
+                                Column {
+                                    Text(
+                                        sensorType.name.replace("_", " ").lowercase()
+                                            .split(" ").joinToString(" ") { it.replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase() else c.toString() } }
+                                    )
+                                    Text(
+                                        text = "${sensorType.tons} tons • ${sensorType.cost} MCr",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            onClick = {
+                                onSensorTypeSelected(sensorType)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Current sensor info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Fittings",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Tonnage:",
+                    style = MaterialTheme.typography.bodyMedium
                 )
-                
-                if (ship != null) {
-                    val shipDesignation = if (ship.isCapitalShip) "Capital Ship" else "Ship"
-                    Text(
-                        text = "$shipDesignation: ${ship.name}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Text(
-                        text = "Ship not found",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                
                 Text(
-                    text = "Coming Soon",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                Text(
-                    text = "This section will allow you to configure ship fittings, equipment, and other components.",
+                    text = "${currentSensorType.tons} tons",
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${currentSensorType.cost} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComputerSection(
+    currentComputerModel: ComputerModel,
+    availableComputers: List<ComputerModel>,
+    onComputerModelSelected: (ComputerModel) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Computer",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+            
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it }
+            ) {
+                OutlinedTextField(
+                    value = currentComputerModel.model,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Computer Model") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+                
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    availableComputers.forEach { computer ->
+                        DropdownMenuItem(
+                            text = { 
+                                Column {
+                                    Text(computer.model)
+                                    Text(
+                                        text = "Rating ${computer.rating} • TL ${computer.requiredTechLevel} • ${computer.cost} MCr",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            onClick = {
+                                onComputerModelSelected(computer)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Current computer info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Rating:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${currentComputerModel.rating}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${currentComputerModel.cost} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BridgeSection(
+    ship: StarShip,
+    uiState: FittingsUiState
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Bridge",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Text(
+                text = "Automatically calculated as 0.5% of ship tonnage",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Tonnage:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", uiState.getBridgeTonnage())} tons",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", uiState.getBridgeCost())} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FittingsSummaryPanel(
+    ship: StarShip,
+    uiState: FittingsUiState
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Fittings Summary",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Sensors:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", uiState.getSensorTonnage())} tons • ${String.format("%.2f", uiState.getSensorCost())} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Computer:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "0 tons • ${String.format("%.1f", uiState.getComputerCost())} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Bridge:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", uiState.getBridgeTonnage())} tons • ${String.format("%.2f", uiState.getBridgeCost())} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            HorizontalDivider()
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Total Fittings:",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "${String.format("%.1f", uiState.getTotalFittingsTonnage())} tons • ${String.format("%.1f", uiState.getTotalFittingsCost())} MCr",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -143,8 +511,45 @@ private fun FittingsScreenPreview() {
             TechLevel.G,
             Configuration.STANDARD
         )
-        FittingsContent(
-            ship = sampleShip
+        val sampleFitting = Fitting(
+            shipId = 1,
+            sensorType = SensorType.ADVANCED,
+            computerModel = ComputerModel.CORE_3
         )
+        
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                FittingsHeader(ship = sampleShip)
+            }
+            
+            item {
+                SensorSection(
+                    currentSensorType = sampleFitting.sensorType,
+                    onSensorTypeSelected = { }
+                )
+            }
+            
+            item {
+                ComputerSection(
+                    currentComputerModel = sampleFitting.computerModel,
+                    availableComputers = listOf(ComputerModel.CORE_1, ComputerModel.CORE_2, ComputerModel.CORE_3),
+                    onComputerModelSelected = { }
+                )
+            }
+            
+            item {
+                BridgeSection(
+                    ship = sampleShip,
+                    uiState = FittingsUiState(
+                        ship = sampleShip,
+                        fitting = sampleFitting
+                    )
+                )
+            }
+        }
     }
 }

@@ -23,6 +23,8 @@ With the nicely architected and approved trivial UI in place, I can start buildi
 
 I'm largely doing this to get used to using Claude in my Android development.
 
+**TODO Add missing stuff for hulls: number of sections, hull structure, and structure per section**
+**TODO Add Capital Ship Sensor Suites, one per section 
 ## Development Workflow
 
 This project uses a structured workflow combining GitHub Projects for backlog management and Claude AI for development work.

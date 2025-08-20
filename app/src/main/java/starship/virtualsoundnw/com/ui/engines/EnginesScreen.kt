@@ -492,6 +492,8 @@ fun SummaryPanel(
             val totalEngineTons = uiState.getTotalEngineTonnage()
             val totalEngineCost = uiState.getTotalEngineCost()
             val fuelTons = uiState.getFuelRequirement()
+            val fittingsTons = uiState.getFittingsTonnage()
+            val fittingsCost = uiState.getFittingsCost()
             val remainingTons = uiState.getRemainingTonnage()
             
             Row(
@@ -534,6 +536,21 @@ fun SummaryPanel(
                 )
                 Text(
                     text = "${String.format("%.1f", fuelTons)} tons",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Fittings Tonnage:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", uiState.getFittingsTonnage())} tons",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -590,6 +607,21 @@ fun SummaryPanel(
                 )
             }
             
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Fittings Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", fittingsCost)} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
             HorizontalDivider()
             
             Row(
@@ -602,7 +634,7 @@ fun SummaryPanel(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${String.format("%.1f", ship.hullCost + totalEngineCost)} MCr",
+                    text = "${String.format("%.1f", ship.hullCost + totalEngineCost + fittingsCost)} MCr",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary

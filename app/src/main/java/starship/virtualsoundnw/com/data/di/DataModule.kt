@@ -27,6 +27,8 @@ import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.DefaultStarShipRepository
 import starship.virtualsoundnw.com.data.EnginesRepository
 import starship.virtualsoundnw.com.data.DefaultEnginesRepository
+import starship.virtualsoundnw.com.data.FittingsRepository
+import starship.virtualsoundnw.com.data.DefaultFittingsRepository
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -48,6 +50,12 @@ interface DataModule {
     fun bindsEnginesRepository(
         enginesRepository: DefaultEnginesRepository
     ): EnginesRepository
+    
+    @Singleton
+    @Binds
+    fun bindsFittingsRepository(
+        fittingsRepository: DefaultFittingsRepository
+    ): FittingsRepository
 }
 
 class FakeStarShipRepository @Inject constructor() : StarShipRepository {
