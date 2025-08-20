@@ -58,17 +58,29 @@ enum class ArmorType(
 )
 data class Defense(
     val shipId: Int,
-    val armorType: ArmorType = ArmorType.CRYSTALIRON,
     val armorProtection: Int = 0  // Selected protection level (0 to max)
 ) {
     @PrimaryKey(autoGenerate = true)
     var uid: Int = 0
     
     /**
-     * Calculate maximum armor protection based on tech level and armor type
+     * Get the armor type automatically based on tech level
+     * TL D or less: Crystaliron, TL E or better: Bonded Superdense
+     */
+    fun getArmorType(techLevel: TechLevel): ArmorType {
+        return if (techLevel >= TechLevel.E) {
+            ArmorType.BONDED_SUPERDENSE
+        } else {
+            ArmorType.CRYSTALIRON
+        }
+    }
+    
+    /**
+     * Calculate maximum armor protection based on tech level and automatically selected armor type
      */
     fun getMaxArmorProtection(techLevel: TechLevel): Int {
         val techLevelValue = techLevel.ordinal + 10  // TL A=10, B=11, C=12, etc.
+        val armorType = getArmorType(techLevel)
         
         return when (armorType) {
             ArmorType.CRYSTALIRON -> minOf(techLevelValue, 13)
@@ -111,7 +123,8 @@ data class Defense(
         }
         val hullCost = baseCost * multiplier
         
-        // Full armor cost is a percentage of hull cost
+        // Full armor cost is a percentage of hull cost based on automatically selected armor type
+        val armorType = getArmorType(techLevel)
         val fullArmorCost = hullCost * armorType.costMultiplier
         
         // Scale by selected protection level vs maximum possible
@@ -119,17 +132,6 @@ data class Defense(
         val protectionRatio = if (maxProtection > 0) armorProtection.toFloat() / maxProtection else 0f
         
         return fullArmorCost * protectionRatio
-    }
-    
-    /**
-     * Get available armor types for the given tech level
-     */
-    companion object {
-        fun getAvailableArmorTypes(techLevel: TechLevel): List<ArmorType> {
-            return ArmorType.entries.filter { armorType ->
-                techLevel >= armorType.requiredTechLevel
-            }
-        }
     }
 }
 
@@ -154,11 +156,11 @@ interface DefenseDao {
 data class DefensesCalculation(
     val ship: StarShip,
     val defense: Defense?,
-    val availableArmorTypes: List<ArmorType>,
     val maxArmorProtection: Int
 ) {
     val armorTonnage: Float get() = defense?.getArmorTonnage(ship.tons, ship.techLevel) ?: 0f
     val armorCost: Float get() = defense?.getArmorCost(ship.tons, ship.configuration, ship.techLevel) ?: 0f
     val currentArmorProtection: Int get() = defense?.armorProtection ?: 0
-    val selectedArmorType: ArmorType get() = defense?.armorType ?: ArmorType.CRYSTALIRON
+    val selectedArmorType: ArmorType get() = defense?.getArmorType(ship.techLevel) ?: 
+        if (ship.techLevel >= TechLevel.E) ArmorType.BONDED_SUPERDENSE else ArmorType.CRYSTALIRON
 }

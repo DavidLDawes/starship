@@ -31,13 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,9 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -104,7 +96,6 @@ fun DefensesScreen(
                 item {
                     ArmorConfigurationCard(
                         uiState = uiState,
-                        onArmorTypeChange = viewModel::updateArmorType,
                         onProtectionChange = viewModel::updateArmorProtection
                     )
                 }
@@ -122,14 +113,11 @@ fun DefensesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArmorConfigurationCard(
     uiState: DefensesUiState,
-    onArmorTypeChange: (ArmorType) -> Unit,
     onProtectionChange: (Int) -> Unit
 ) {
-    var armorTypeExpanded by remember { mutableStateOf(false) }
     
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -144,76 +132,42 @@ fun ArmorConfigurationCard(
                 fontWeight = FontWeight.Bold
             )
             
-            if (uiState.availableArmorTypes.isNotEmpty()) {
-                // Armor Type Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = armorTypeExpanded,
-                    onExpandedChange = { armorTypeExpanded = !armorTypeExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = uiState.getCurrentArmorType().displayName,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Armor Type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = armorTypeExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = armorTypeExpanded,
-                        onDismissRequest = { armorTypeExpanded = false }
-                    ) {
-                        uiState.availableArmorTypes.forEach { armorType ->
-                            DropdownMenuItem(
-                                text = { 
-                                    Column {
-                                        Text(armorType.displayName)
-                                        Text(
-                                            "TL ${armorType.requiredTechLevel.name}+, ${armorType.protectionPer5Percent} protection per 5%",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    onArmorTypeChange(armorType)
-                                    armorTypeExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // Armor Protection Slider
+            // Show automatically selected armor type
+            val currentArmorType = uiState.getCurrentArmorType()
+            Text(
+                text = "Armor Type: ${currentArmorType.displayName}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "TL ${currentArmorType.requiredTechLevel.name}+, ${currentArmorType.protectionPer5Percent} protection per 5%, ${(currentArmorType.costMultiplier * 100).toInt()}% hull cost",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            // Armor Protection Slider
+            Text(
+                text = "Protection Level: ${uiState.getCurrentArmorProtection()} / ${uiState.maxArmorProtection}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            
+            Slider(
+                value = uiState.getCurrentArmorProtection().toFloat(),
+                onValueChange = { onProtectionChange(it.toInt()) },
+                valueRange = 0f..uiState.maxArmorProtection.toFloat(),
+                steps = if (uiState.maxArmorProtection > 1) uiState.maxArmorProtection - 1 else 0,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            if (uiState.getCurrentArmorProtection() > 0) {
                 Text(
-                    text = "Protection Level: ${uiState.getCurrentArmorProtection()} / ${uiState.maxArmorProtection}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Tonnage: ${String.format("%.2f", uiState.getArmorTonnage())} tons",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
-                Slider(
-                    value = uiState.getCurrentArmorProtection().toFloat(),
-                    onValueChange = { onProtectionChange(it.toInt()) },
-                    valueRange = 0f..uiState.maxArmorProtection.toFloat(),
-                    steps = if (uiState.maxArmorProtection > 1) uiState.maxArmorProtection - 1 else 0,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                if (uiState.getCurrentArmorProtection() > 0) {
-                    Text(
-                        text = "Tonnage: ${String.format("%.2f", uiState.getArmorTonnage())} tons",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Cost: ${String.format("%.2f", uiState.getArmorCost())} MCr",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
                 Text(
-                    text = "No armor types available for this tech level",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Cost: ${String.format("%.2f", uiState.getArmorCost())} MCr",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 6,
-    "identityHash": "56e99ea1d100248583ceb0753005689f",
+    "version": 7,
+    "identityHash": "9243c8f0fcc40fd4ee4f041adcc45fe3",
     "entities": [
       {
         "tableName": "StarShip",
@@ -234,18 +234,12 @@
       },
       {
         "tableName": "defenses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shipId` INTEGER NOT NULL, `armorType` TEXT NOT NULL, `armorProtection` INTEGER NOT NULL, `uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`shipId`) REFERENCES `StarShip`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shipId` INTEGER NOT NULL, `armorProtection` INTEGER NOT NULL, `uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`shipId`) REFERENCES `StarShip`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "shipId",
             "columnName": "shipId",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "armorType",
-            "columnName": "armorType",
-            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -295,7 +289,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56e99ea1d100248583ceb0753005689f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9243c8f0fcc40fd4ee4f041adcc45fe3')"
     ]
   }
 }

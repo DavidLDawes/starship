@@ -30,6 +30,7 @@ import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.local.database.Defense
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.ArmorType
+import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.DefensesCalculation
 import javax.inject.Inject
 
@@ -39,7 +40,6 @@ import javax.inject.Inject
 data class DefensesUiState(
     val ship: StarShip? = null,
     val defense: Defense? = null,
-    val availableArmorTypes: List<ArmorType> = emptyList(),
     val maxArmorProtection: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
@@ -64,9 +64,12 @@ data class DefensesUiState(
     fun getCurrentArmorProtection(): Int = defense?.armorProtection ?: 0
     
     /**
-     * Get current armor type
+     * Get automatically selected armor type based on ship's tech level
      */
-    fun getCurrentArmorType(): ArmorType = defense?.armorType ?: ArmorType.CRYSTALIRON
+    fun getCurrentArmorType(): ArmorType = ship?.let { s ->
+        defense?.getArmorType(s.techLevel) ?: 
+        (if (s.techLevel >= TechLevel.E) ArmorType.BONDED_SUPERDENSE else ArmorType.CRYSTALIRON)
+    } ?: ArmorType.CRYSTALIRON
 }
 
 @HiltViewModel
@@ -92,19 +95,14 @@ class DefensesViewModel @Inject constructor(
                 ) { ships, defense ->
                     val ship = ships.find { it.uid == shipId }
                     
-                    val availableArmorTypes = ship?.let { s ->
-                        Defense.getAvailableArmorTypes(s.techLevel)
-                    } ?: emptyList()
-                    
                     val maxArmorProtection = ship?.let { s ->
                         defense?.getMaxArmorProtection(s.techLevel) ?: 
-                        Defense(shipId, ArmorType.CRYSTALIRON, 0).getMaxArmorProtection(s.techLevel)
+                        Defense(shipId, 0).getMaxArmorProtection(s.techLevel)
                     } ?: 0
                     
                     DefensesUiState(
                         ship = ship,
                         defense = defense,
-                        availableArmorTypes = availableArmorTypes,
                         maxArmorProtection = maxArmorProtection,
                         isLoading = false
                     )
@@ -120,23 +118,10 @@ class DefensesViewModel @Inject constructor(
         }
     }
 
-    fun updateArmorType(armorType: ArmorType) {
-        viewModelScope.launch {
-            try {
-                defensesRepository.updateArmorType(currentShipId, armorType)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = "Failed to update armor type: ${e.message}"
-                )
-            }
-        }
-    }
-
     fun updateArmorProtection(protection: Int) {
         viewModelScope.launch {
             try {
-                val currentArmorType = _uiState.value.getCurrentArmorType()
-                defensesRepository.updateArmorProtection(currentShipId, currentArmorType, protection)
+                defensesRepository.updateArmorProtection(currentShipId, protection)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to update armor protection: ${e.message}"
