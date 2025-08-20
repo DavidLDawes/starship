@@ -29,6 +29,8 @@ import starship.virtualsoundnw.com.data.EnginesRepository
 import starship.virtualsoundnw.com.data.DefaultEnginesRepository
 import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.DefaultFittingsRepository
+import starship.virtualsoundnw.com.data.WeaponsRepository
+import starship.virtualsoundnw.com.data.DefaultWeaponsRepository
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -56,6 +58,12 @@ interface DataModule {
     fun bindsFittingsRepository(
         fittingsRepository: DefaultFittingsRepository
     ): FittingsRepository
+    
+    @Singleton
+    @Binds
+    fun bindsWeaponsRepository(
+        weaponsRepository: DefaultWeaponsRepository
+    ): WeaponsRepository
 }
 
 class FakeStarShipRepository @Inject constructor() : StarShipRepository {
