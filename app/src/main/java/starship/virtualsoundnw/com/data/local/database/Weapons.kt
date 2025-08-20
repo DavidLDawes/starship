@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
  * Weapon types available for turrets
  */
 enum class WeaponType(val cost: Float, val tonnage: Float) {
+    NONE(0.0f, 0.0f),  // Used for hardpoints
     PULSE_LASER(0.5f, 1.0f),
     BEAM_LASER(1.0f, 1.0f),
     PARTICLE_BEAM(4.0f, 1.0f),
@@ -42,6 +43,7 @@ enum class WeaponType(val cost: Float, val tonnage: Float) {
  * Turret types with their base costs
  */
 enum class TurretType(val baseCost: Float, val tonnage: Float, val isPopUp: Boolean, val weaponCapacity: Int) {
+    HARDPOINT(1.0f, 0.0f, false, 0),
     SINGLE(0.2f, 1.0f, false, 1),
     DOUBLE(0.5f, 1.0f, false, 2),
     TRIPLE(1.0f, 1.0f, false, 3),
@@ -94,7 +96,13 @@ data class Weapon(
      * Get weapon designation (e.g., "Single Pulse Laser", "Pop-up Triple Particle Beam")
      */
     fun getDesignation(): String {
+        // Hardpoints don't have weapons
+        if (turretType == TurretType.HARDPOINT) {
+            return "Hard Point"
+        }
+        
         val turretName = when (turretType) {
+            TurretType.HARDPOINT -> "Hard Point"
             TurretType.SINGLE -> "Single"
             TurretType.DOUBLE -> "Double"
             TurretType.TRIPLE -> "Triple"
@@ -104,6 +112,7 @@ data class Weapon(
         }
         
         val weaponName = when (weaponType) {
+            WeaponType.NONE -> ""
             WeaponType.PULSE_LASER -> "Pulse Laser"
             WeaponType.BEAM_LASER -> "Beam Laser"
             WeaponType.PARTICLE_BEAM -> "Particle Beam"

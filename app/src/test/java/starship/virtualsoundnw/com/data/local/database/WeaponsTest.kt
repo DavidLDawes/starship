@@ -88,6 +88,19 @@ class WeaponsTest {
     }
 
     @Test
+    fun hardpointCalculations_correctValues() {
+        // Test Hardpoint (1.0 MCr, 0 tons)
+        val hardpoint = Weapon(
+            shipId = 1,
+            turretType = TurretType.HARDPOINT,
+            weaponType = WeaponType.NONE
+        )
+        assertEquals(1.0f, hardpoint.getTotalCost(), 0.01f) // 1.0 + (0 * 0.0)
+        assertEquals(0.0f, hardpoint.getTotalTonnage(), 0.01f) // 0.0 + (0 * 0.0)
+        assertEquals("Hard Point", hardpoint.getDesignation())
+    }
+
+    @Test
     fun weaponDesignations_correctNames() {
         val singlePulseLaser = Weapon(1, TurretType.SINGLE, WeaponType.PULSE_LASER)
         assertEquals("Single Pulse Laser", singlePulseLaser.getDesignation())
