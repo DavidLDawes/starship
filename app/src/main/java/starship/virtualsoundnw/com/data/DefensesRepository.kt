@@ -36,13 +36,45 @@ class DefensesRepository @Inject constructor(
     suspend fun deleteDefenseForShip(shipId: Int) = defenseDao.deleteDefenseForShip(shipId)
     
     /**
-     * Update armor protection level for a ship, creating defense entry if needed
+     * Update defense entry, preserving existing values for fields not specified
      */
-    suspend fun updateArmorProtection(shipId: Int, protection: Int) {
-        val defense = Defense(
-            shipId = shipId,
-            armorProtection = protection
-        )
-        defenseDao.insertDefense(defense)
+    suspend fun updateDefense(
+        shipId: Int,
+        armorProtection: Int? = null,
+        nuclearDampers: Int? = null,
+        mesonScreens: Int? = null,
+        blackGlobes: Int? = null
+    ) {
+        // Get current defense or create new one with defaults
+        val currentDefense = defenseDao.getDefenseForShipSync(shipId)
+        
+        val defense = if (currentDefense != null) {
+            // Update existing defense, preserving current values for unspecified fields
+            Defense(
+                shipId = shipId,
+                armorProtection = armorProtection ?: currentDefense.armorProtection,
+                nuclearDampers = nuclearDampers ?: currentDefense.nuclearDampers,
+                mesonScreens = mesonScreens ?: currentDefense.mesonScreens,
+                blackGlobes = blackGlobes ?: currentDefense.blackGlobes
+            ).apply {
+                // Preserve the existing uid for update
+                uid = currentDefense.uid
+            }
+        } else {
+            // Create new defense with specified values, defaulting others to 0
+            Defense(
+                shipId = shipId,
+                armorProtection = armorProtection ?: 0,
+                nuclearDampers = nuclearDampers ?: 0,
+                mesonScreens = mesonScreens ?: 0,
+                blackGlobes = blackGlobes ?: 0
+            )
+        }
+        
+        if (currentDefense != null) {
+            defenseDao.updateDefense(defense)
+        } else {
+            defenseDao.insertDefense(defense)
+        }
     }
 }

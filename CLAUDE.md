@@ -114,6 +114,28 @@ sealed interface StarShipUiState {
 5. Logs copied to story/issue, Claude asks for approval
 6. Human reviews and either requests changes or approves for branch/PR creation
 
+### Git Workflow - NEVER Merge Locally
+
+**CRITICAL**: Never use `git merge` locally. Always use GitHub Pull Requests for all merges to main.
+
+#### Proper Git Workflow:
+1. **Create Feature Branch**: `git checkout -b feature/issue-XX-description`
+2. **Implement Changes**: Make all code changes, add tests, ensure functionality works
+3. **Commit Changes**: `git add .` and `git commit -m "description"`
+4. **Push Branch**: `git push -u origin feature/issue-XX-description`
+5. **Create Pull Request**: Use `gh pr create` or GitHub web interface
+6. **Wait for Approval**: Operator reviews and approves the PR
+7. **Operator Merges**: Human operator merges the PR on GitHub (closes associated Issue)
+8. **Switch to Main**: `git checkout main`
+9. **Pull Changes**: `git pull origin main` to get the merged changes locally
+
+#### Why This Process:
+- Maintains clean commit history
+- Enables code review process
+- Automatically links PRs to Issues
+- Provides audit trail of all changes
+- Ensures human oversight on all merges
+
 ## Important Instructions
 - Use existing architectural patterns and conventions
 - Follow MVVM + Repository pattern with Hilt DI

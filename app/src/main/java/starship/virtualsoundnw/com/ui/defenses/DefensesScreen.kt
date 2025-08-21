@@ -101,6 +101,18 @@ fun DefensesScreen(
                     )
                 }
                 
+                // Only show screens for capital ships
+                if (uiState.isCapitalShip()) {
+                    item {
+                        ScreensConfigurationCard(
+                            uiState = uiState,
+                            onNuclearDampersChange = viewModel::updateNuclearDampers,
+                            onMesonScreensChange = viewModel::updateMesonScreens,
+                            onBlackGlobesChange = viewModel::updateBlackGlobes
+                        )
+                    }
+                }
+                
                 item {
                     DefensesSummaryCard(uiState)
                 }
@@ -186,6 +198,101 @@ fun ArmorConfigurationCard(
 }
 
 @Composable
+fun ScreensConfigurationCard(
+    uiState: DefensesUiState,
+    onNuclearDampersChange: (Int) -> Unit,
+    onMesonScreensChange: (Int) -> Unit,
+    onBlackGlobesChange: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Screens Configuration",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Text(
+                text = "Available only for Capital Ships (>2000 tons)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            val (maxNuclear, maxMeson, maxBlack) = uiState.maxScreenQuantities
+            
+            // Nuclear Dampers
+            if (maxNuclear > 0) {
+                Text(
+                    text = "Nuclear Dampers: ${uiState.getCurrentNuclearDampers()} / $maxNuclear",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Slider(
+                    value = uiState.getCurrentNuclearDampers().toFloat(),
+                    onValueChange = { onNuclearDampersChange(it.toInt()) },
+                    valueRange = 0f..maxNuclear.toFloat(),
+                    steps = if (maxNuclear > 1) maxNuclear - 1 else 0,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            // Meson Screens
+            if (maxMeson > 0) {
+                Text(
+                    text = "Meson Screens: ${uiState.getCurrentMesonScreens()} / $maxMeson",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Slider(
+                    value = uiState.getCurrentMesonScreens().toFloat(),
+                    onValueChange = { onMesonScreensChange(it.toInt()) },
+                    valueRange = 0f..maxMeson.toFloat(),
+                    steps = if (maxMeson > 1) maxMeson - 1 else 0,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            // Black Globes
+            if (maxBlack > 0) {
+                Text(
+                    text = "Black Globes: ${uiState.getCurrentBlackGlobes()} / $maxBlack",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Slider(
+                    value = uiState.getCurrentBlackGlobes().toFloat(),
+                    onValueChange = { onBlackGlobesChange(it.toInt()) },
+                    valueRange = 0f..maxBlack.toFloat(),
+                    steps = if (maxBlack > 1) maxBlack - 1 else 0,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            // Show screen costs if any screens are present
+            val screenCost = uiState.getScreenCost()
+            val screenTonnage = uiState.getScreenTonnage()
+            if (screenCost > 0 || screenTonnage > 0) {
+                Text(
+                    text = "Total Screen Tonnage: ${String.format("%.2f", screenTonnage)} tons",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Total Screen Cost: ${String.format("%.2f", screenCost)} MCr",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun DefensesSummaryCard(uiState: DefensesUiState) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -223,6 +330,25 @@ fun DefensesSummaryCard(uiState: DefensesUiState) {
                 Text("Armor Cost:")
                 Text("${String.format("%.2f", uiState.getArmorCost())} MCr")
             }
+            
+            // Show screen information for capital ships
+            if (uiState.isCapitalShip()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Screens:")
+                    Text("${String.format("%.2f", uiState.getScreenTonnage())} tons")
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Screen Cost:")
+                    Text("${String.format("%.2f", uiState.getScreenCost())} MCr")
+                }
+            }
         }
     }
 }
@@ -247,6 +373,8 @@ fun SummaryPanel(
             
             val armorTons = uiState.getArmorTonnage()
             val armorCost = uiState.getArmorCost()
+            val screenTons = uiState.getScreenTonnage()
+            val screenCost = uiState.getScreenCost()
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -323,6 +451,84 @@ fun SummaryPanel(
                 )
             }
             
+            // Show screen information for capital ships
+            if (uiState.isCapitalShip()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Nuclear Dampers:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${uiState.getCurrentNuclearDampers()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Meson Screens:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${uiState.getCurrentMesonScreens()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Black Globes:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${uiState.getCurrentBlackGlobes()}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Screen Tonnage:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${String.format("%.2f", screenTons)} tons",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Screen Cost:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${String.format("%.2f", screenCost)} MCr",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -347,7 +553,7 @@ fun SummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.2f", ship.hullCost + armorCost)} MCr",
+                    text = "${String.format("%.2f", ship.hullCost + armorCost + screenCost)} MCr",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
