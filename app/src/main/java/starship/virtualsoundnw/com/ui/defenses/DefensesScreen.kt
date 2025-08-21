@@ -59,7 +59,7 @@ fun DefensesScreen(
     modifier: Modifier = Modifier,
     viewModel: DefensesViewModel = hiltViewModel(),
     onNavigateToWeapons: (Int) -> Unit = {},
-    onNavigateToVehicles: (Int) -> Unit = {}
+    onNavigateToCargo: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -133,7 +133,7 @@ fun DefensesScreen(
                     DefensesNavigationButtons(
                         shipId = shipId,
                         onNavigateToWeapons = onNavigateToWeapons,
-                        onNavigateToVehicles = onNavigateToVehicles
+                        onNavigateToCargo = onNavigateToCargo
                     )
                 }
             }
@@ -577,7 +577,7 @@ fun SummaryPanel(
 fun DefensesNavigationButtons(
     shipId: Int,
     onNavigateToWeapons: (Int) -> Unit,
-    onNavigateToVehicles: (Int) -> Unit
+    onNavigateToCargo: (Int) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -592,10 +592,10 @@ fun DefensesNavigationButtons(
         Spacer(modifier = Modifier.width(16.dp))
         
         Button(
-            onClick = { onNavigateToVehicles(shipId) },
+            onClick = { onNavigateToCargo(shipId) },
             modifier = Modifier.weight(1f)
         ) {
-            Text("Next: Vehicles")
+            Text("Next: Cargo")
         }
     }
 }
