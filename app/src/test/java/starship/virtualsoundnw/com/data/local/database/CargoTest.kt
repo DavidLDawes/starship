@@ -316,9 +316,12 @@ class CargoTest {
         assertEquals(0, cargo.getTotalTonnage())
         assertEquals(0f, cargo.getTotalCargoCost(), 0.001f)
         
-        // Even with zero tonnage, frozen cargo still has base cost
+        // Test individual cargo type costs with zero tonnage
+        // Regular cargo is always free
         assertEquals(0f, cargo.getCostForCargoType(CargoType.CARGO, 0), 0.001f)
+        // Frozen cargo has base cost even with zero tonnage when explicitly requested
         assertEquals(0.1f, cargo.getCostForCargoType(CargoType.FROZEN_CARGO, 0), 0.001f)
+        // Spares and secure cargo are per-ton only
         assertEquals(0f, cargo.getCostForCargoType(CargoType.SPARES, 0), 0.001f)
         assertEquals(0f, cargo.getCostForCargoType(CargoType.SECURE_CARGO, 0), 0.001f)
     }

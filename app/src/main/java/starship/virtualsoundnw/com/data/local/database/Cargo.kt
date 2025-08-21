@@ -91,10 +91,12 @@ data class Cargo(
      * Calculate total cost for all cargo types
      */
     fun getTotalCargoCost(): Float {
-        return getCostForCargoType(CargoType.CARGO, cargoTons) +
-               getCostForCargoType(CargoType.FROZEN_CARGO, frozenCargoTons) +
-               getCostForCargoType(CargoType.SPARES, sparesTons) +
-               getCostForCargoType(CargoType.SECURE_CARGO, secureCargoTons)
+        val cargoCost = getCostForCargoType(CargoType.CARGO, cargoTons)
+        val frozenCargoCost = if (frozenCargoTons > 0) getCostForCargoType(CargoType.FROZEN_CARGO, frozenCargoTons) else 0f
+        val sparesCost = getCostForCargoType(CargoType.SPARES, sparesTons)
+        val secureCargoCost = getCostForCargoType(CargoType.SECURE_CARGO, secureCargoTons)
+        
+        return cargoCost + frozenCargoCost + sparesCost + secureCargoCost
     }
     
     /**
