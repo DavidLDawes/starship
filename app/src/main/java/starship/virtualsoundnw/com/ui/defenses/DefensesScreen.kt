@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.ArmorType
+import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -102,6 +103,15 @@ fun DefensesScreen(
                 
                 item {
                     DefensesSummaryCard(uiState)
+                }
+                
+                uiState.ship?.let { ship ->
+                    item {
+                        SummaryPanel(
+                            ship = ship,
+                            uiState = uiState
+                        )
+                    }
                 }
             }
         }
@@ -212,6 +222,135 @@ fun DefensesSummaryCard(uiState: DefensesUiState) {
             ) {
                 Text("Armor Cost:")
                 Text("${String.format("%.2f", uiState.getArmorCost())} MCr")
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryPanel(
+    ship: StarShip,
+    uiState: DefensesUiState
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Ship Summary",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+            )
+            
+            val armorTons = uiState.getArmorTonnage()
+            val armorCost = uiState.getArmorCost()
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Total Ship Tonnage:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${ship.tons} tons",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Armor Type:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = uiState.getCurrentArmorType().displayName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Armor Protection:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${uiState.getCurrentArmorProtection()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Armor Tonnage:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", armorTons)} tons",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Armor Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", armorCost)} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Hull Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", ship.hullCost)} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Total Defenses Cost:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.2f", ship.hullCost + armorCost)} MCr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
