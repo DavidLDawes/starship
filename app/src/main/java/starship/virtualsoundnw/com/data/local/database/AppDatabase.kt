@@ -20,11 +20,12 @@ package starship.virtualsoundnw.com.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class], version = 8)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class], version = 9)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
     abstract fun fittingDao(): FittingDao
     abstract fun weaponDao(): WeaponDao
     abstract fun defenseDao(): DefenseDao
+    abstract fun cargoDao(): CargoDao
 }
