@@ -209,7 +209,7 @@ class CargoTest {
 
     @Test
     fun cargoCalculation_totalTonnage_calculatesCorrectly() {
-        val ship = StarShip("Test Ship", 1000, Configuration.STANDARD, TechLevel.C, "CA")
+        val ship = StarShip("Test Ship", "Test Description", 1000, TechLevel.C, Configuration.STANDARD)
         val cargo = createCargo(
             cargoTons = 100,
             frozenCargoTons = 50,
@@ -223,7 +223,7 @@ class CargoTest {
 
     @Test
     fun cargoCalculation_totalCost_calculatesCorrectly() {
-        val ship = StarShip("Test Ship", 1000, Configuration.STANDARD, TechLevel.C, "CA")
+        val ship = StarShip("Test Ship", "Test Description", 1000, TechLevel.C, Configuration.STANDARD)
         val cargo = createCargo(
             cargoTons = 100,       // 0 MCr
             frozenCargoTons = 20,  // 0.1 + (20 * 0.01) = 0.3 MCr
@@ -237,7 +237,7 @@ class CargoTest {
 
     @Test
     fun cargoCalculation_availableTonnage_calculatesCorrectly() {
-        val ship = StarShip("Test Ship", 1000, Configuration.STANDARD, TechLevel.C, "CA")
+        val ship = StarShip("Test Ship", "Test Description", 1000, TechLevel.C, Configuration.STANDARD)
         val cargo = createCargo(
             cargoTons = 100,
             frozenCargoTons = 50
@@ -249,7 +249,7 @@ class CargoTest {
 
     @Test
     fun cargoCalculation_nullCargo_handledCorrectly() {
-        val ship = StarShip("Test Ship", 1000, Configuration.STANDARD, TechLevel.C, "CA")
+        val ship = StarShip("Test Ship", "Test Description", 1000, TechLevel.C, Configuration.STANDARD)
         val calculation = CargoCalculation(ship, null)
         
         assertEquals(0, calculation.totalTonnage)
@@ -264,7 +264,7 @@ class CargoTest {
     @Test
     fun realWorldExample_mixedCargo_1000TonMerchant() {
         // Realistic scenario: 1000-ton merchant ship with mixed cargo
-        val ship = StarShip("Free Trader", 1000, Configuration.STANDARD, TechLevel.C, "CA")
+        val ship = StarShip("Free Trader", "A small merchant vessel", 1000, TechLevel.C, Configuration.STANDARD)
         val cargo = createCargo(
             cargoTons = 200,       // Standard cargo (free)
             frozenCargoTons = 50,  // Frozen goods: 0.1 + (50 * 0.01) = 0.6 MCr
@@ -288,7 +288,7 @@ class CargoTest {
     @Test
     fun realWorldExample_highValueCargo_largeShip() {
         // High-value scenario: Large ship carrying mostly secure cargo and spares
-        val ship = StarShip("Heavy Freighter", 5000, Configuration.STANDARD, TechLevel.D, "CC")
+        val ship = StarShip("Heavy Freighter", "Large cargo vessel", 5000, TechLevel.D, Configuration.STANDARD)
         val cargo = createCargo(
             cargoTons = 100,        // Regular cargo (free)
             frozenCargoTons = 200,  // Medical supplies: 0.1 + (200 * 0.01) = 2.1 MCr
