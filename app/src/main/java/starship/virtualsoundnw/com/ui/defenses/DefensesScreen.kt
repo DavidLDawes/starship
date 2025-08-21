@@ -29,9 +29,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -56,7 +58,8 @@ fun DefensesScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
     viewModel: DefensesViewModel = hiltViewModel(),
-    onNavigateToWeapons: (Int) -> Unit = {}
+    onNavigateToWeapons: (Int) -> Unit = {},
+    onNavigateToVehicles: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -124,6 +127,14 @@ fun DefensesScreen(
                             uiState = uiState
                         )
                     }
+                }
+                
+                item {
+                    DefensesNavigationButtons(
+                        shipId = shipId,
+                        onNavigateToWeapons = onNavigateToWeapons,
+                        onNavigateToVehicles = onNavigateToVehicles
+                    )
                 }
             }
         }
@@ -558,6 +569,33 @@ fun SummaryPanel(
                     fontWeight = FontWeight.Medium
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun DefensesNavigationButtons(
+    shipId: Int,
+    onNavigateToWeapons: (Int) -> Unit,
+    onNavigateToVehicles: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        OutlinedButton(
+            onClick = { onNavigateToWeapons(shipId) }
+        ) {
+            Text("Back: Weapons")
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Button(
+            onClick = { onNavigateToVehicles(shipId) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Next: Vehicles")
         }
     }
 }
