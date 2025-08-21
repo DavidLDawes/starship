@@ -19,6 +19,7 @@ package starship.virtualsoundnw.com.data.local.database
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 /**
@@ -213,10 +214,196 @@ class DefensesTest {
         assertEquals(ArmorType.BONDED_SUPERDENSE, defense.getArmorType(techLevel))
     }
 
-    private fun createDefense(protection: Int = 0): Defense {
+    // === Screen Tests ===
+    
+    @Test
+    fun getMaxScreenQuantities_techLevelAB_noScreensAvailable() {
+        val defense = createDefense()
+        assertEquals(Triple(0, 0, 0), defense.getMaxScreenQuantities(TechLevel.A))
+        assertEquals(Triple(0, 0, 0), defense.getMaxScreenQuantities(TechLevel.B))
+    }
+    
+    @Test
+    fun getMaxScreenQuantities_techLevelC_nuclearAndMesonOnly() {
+        val defense = createDefense()
+        val expected = Triple(1, 1, 0) // Nuclear: 1, Meson: 1, Black Globe: 0
+        assertEquals(expected, defense.getMaxScreenQuantities(TechLevel.C))
+    }
+    
+    @Test
+    fun getMaxScreenQuantities_techLevelF_allScreensAvailable() {
+        val defense = createDefense()
+        val expected = Triple(6, 6, 3) // Nuclear: 6, Meson: 6, Black Globe: 3
+        assertEquals(expected, defense.getMaxScreenQuantities(TechLevel.F))
+    }
+    
+    @Test
+    fun getMaxScreenQuantities_techLevelJ_maximumQuantities() {
+        val defense = createDefense()
+        val expected = Triple(14, 12, 6) // Nuclear: 14, Meson: 12, Black Globe: 6
+        assertEquals(expected, defense.getMaxScreenQuantities(TechLevel.J))
+    }
+    
+    @Test
+    fun getHullCodeCategory_correctCategoryForEachRange() {
+        val defense = createDefense()
+        
+        // Test CA-CE range
+        assertEquals(HullCodeCategory.CA_TO_CE, defense.getHullCodeCategory("CA"))
+        assertEquals(HullCodeCategory.CA_TO_CE, defense.getHullCodeCategory("CC"))
+        assertEquals(HullCodeCategory.CA_TO_CE, defense.getHullCodeCategory("CE"))
+        
+        // Test CF-CK range  
+        assertEquals(HullCodeCategory.CF_TO_CK, defense.getHullCodeCategory("CF"))
+        assertEquals(HullCodeCategory.CF_TO_CK, defense.getHullCodeCategory("CH"))
+        assertEquals(HullCodeCategory.CF_TO_CK, defense.getHullCodeCategory("CK"))
+        
+        // Test CL-CQ range
+        assertEquals(HullCodeCategory.CL_TO_CQ, defense.getHullCodeCategory("CL"))
+        assertEquals(HullCodeCategory.CL_TO_CQ, defense.getHullCodeCategory("CN"))
+        assertEquals(HullCodeCategory.CL_TO_CQ, defense.getHullCodeCategory("CQ"))
+        
+        // Test CR-CV range
+        assertEquals(HullCodeCategory.CR_TO_CV, defense.getHullCodeCategory("CR"))
+        assertEquals(HullCodeCategory.CR_TO_CV, defense.getHullCodeCategory("CT"))
+        assertEquals(HullCodeCategory.CR_TO_CV, defense.getHullCodeCategory("CV"))
+        
+        // Test CW-CZ range
+        assertEquals(HullCodeCategory.CW_TO_CZ, defense.getHullCodeCategory("CW"))
+        assertEquals(HullCodeCategory.CW_TO_CZ, defense.getHullCodeCategory("CY"))
+        assertEquals(HullCodeCategory.CW_TO_CZ, defense.getHullCodeCategory("CZ"))
+        
+        // Test unknown code defaults to CA_TO_CE
+        assertEquals(HullCodeCategory.CA_TO_CE, defense.getHullCodeCategory("XX"))
+    }
+    
+    @Test
+    fun getScreenTonnage_noScreens_returnsZero() {
+        val defense = createDefense()
+        assertEquals(0f, defense.getScreenTonnage("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenTonnage_singleScreens_correctTonnage() {
+        // Test with CA hull code category
+        val nuclearDefense = createDefense(nuclearDampers = 1)
+        val mesonDefense = createDefense(mesonScreens = 1)
+        val blackDefense = createDefense(blackGlobes = 1)
+        
+        assertEquals(20f, nuclearDefense.getScreenTonnage("CA"), 0.001f)
+        assertEquals(50f, mesonDefense.getScreenTonnage("CA"), 0.001f)
+        assertEquals(10f, blackDefense.getScreenTonnage("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenTonnage_multipleScreens_correctTonnage() {
+        val defense = createDefense(nuclearDampers = 2, mesonScreens = 1, blackGlobes = 1)
+        val expectedTonnage = (2 * 20) + (1 * 50) + (1 * 10) // 40 + 50 + 10 = 100
+        assertEquals(expectedTonnage.toFloat(), defense.getScreenTonnage("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenTonnage_differentHullCodes_correctTonnage() {
+        val defense = createDefense(nuclearDampers = 1)
+        
+        assertEquals(20f, defense.getScreenTonnage("CA"), 0.001f)  // CA-CE
+        assertEquals(30f, defense.getScreenTonnage("CF"), 0.001f)  // CF-CK  
+        assertEquals(40f, defense.getScreenTonnage("CL"), 0.001f)  // CL-CQ
+        assertEquals(50f, defense.getScreenTonnage("CR"), 0.001f)  // CR-CV
+        assertEquals(60f, defense.getScreenTonnage("CW"), 0.001f)  // CW-CZ
+    }
+    
+    @Test
+    fun getScreenCost_noScreens_returnsZero() {
+        val defense = createDefense()
+        assertEquals(0f, defense.getScreenCost("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenCost_singleScreens_correctCost() {
+        // Test with CA hull code category
+        val nuclearDefense = createDefense(nuclearDampers = 1)
+        val mesonDefense = createDefense(mesonScreens = 1)
+        val blackDefense = createDefense(blackGlobes = 1)
+        
+        assertEquals(30f, nuclearDefense.getScreenCost("CA"), 0.001f)
+        assertEquals(70f, mesonDefense.getScreenCost("CA"), 0.001f)
+        assertEquals(100f, blackDefense.getScreenCost("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenCost_multipleScreens_correctCost() {
+        val defense = createDefense(nuclearDampers = 2, mesonScreens = 1, blackGlobes = 1)
+        val expectedCost = (2 * 30) + (1 * 70) + (1 * 100) // 60 + 70 + 100 = 230
+        assertEquals(expectedCost.toFloat(), defense.getScreenCost("CA"), 0.001f)
+    }
+    
+    @Test
+    fun getScreenCost_differentHullCodes_correctCost() {
+        val defense = createDefense(nuclearDampers = 1)
+        
+        assertEquals(30f, defense.getScreenCost("CA"), 0.001f)   // CA-CE
+        assertEquals(40f, defense.getScreenCost("CF"), 0.001f)   // CF-CK  
+        assertEquals(50f, defense.getScreenCost("CL"), 0.001f)   // CL-CQ
+        assertEquals(60f, defense.getScreenCost("CR"), 0.001f)   // CR-CV
+        assertEquals(70f, defense.getScreenCost("CW"), 0.001f)   // CW-CZ
+    }
+    
+    @Test
+    fun isCapitalShip_correctClassification() {
+        val defense = createDefense()
+        assertTrue(defense.isCapitalShip(2001))
+        assertTrue(defense.isCapitalShip(10000))
+        assertFalse(defense.isCapitalShip(2000))
+        assertFalse(defense.isCapitalShip(1000))
+    }
+    
+    @Test
+    fun screenCalculations_realWorldExample_TLF_3000TonCapitalShip() {
+        // Test realistic scenario: 3000-ton TL F capital ship with screens
+        val defense = createDefense(nuclearDampers = 2, mesonScreens = 1, blackGlobes = 1)
+        val hullCode = "CA" // 3000 tons = CA hull code
+        
+        // Expected values based on CA-CE category
+        val expectedTonnage = (2 * 20) + (1 * 50) + (1 * 10) // 40 + 50 + 10 = 100 tons
+        val expectedCost = (2 * 30) + (1 * 70) + (1 * 100) // 60 + 70 + 100 = 230 MCr
+        val expectedMaxQuantities = Triple(6, 6, 3) // TL F maximums
+        
+        assertEquals(expectedTonnage.toFloat(), defense.getScreenTonnage(hullCode), 0.001f)
+        assertEquals(expectedCost.toFloat(), defense.getScreenCost(hullCode), 0.001f)
+        assertEquals(expectedMaxQuantities, defense.getMaxScreenQuantities(TechLevel.F))
+        assertTrue(defense.isCapitalShip(3000))
+    }
+    
+    @Test
+    fun screenCalculations_highTechExample_TLJ_100000TonCapitalShip() {
+        // Test TL J ship with maximum screens
+        val defense = createDefense(nuclearDampers = 14, mesonScreens = 12, blackGlobes = 6)
+        val hullCode = "CQ" // 100000 tons = CQ hull code
+        
+        // Expected values based on CL-CQ category  
+        val expectedTonnage = (14 * 40) + (12 * 70) + (6 * 20) // 560 + 840 + 120 = 1520 tons
+        val expectedCost = (14 * 50) + (12 * 90) + (6 * 200) // 700 + 1080 + 1200 = 2980 MCr
+        val expectedMaxQuantities = Triple(14, 12, 6) // TL J maximums
+        
+        assertEquals(expectedTonnage.toFloat(), defense.getScreenTonnage(hullCode), 0.001f)
+        assertEquals(expectedCost.toFloat(), defense.getScreenCost(hullCode), 0.001f)
+        assertEquals(expectedMaxQuantities, defense.getMaxScreenQuantities(TechLevel.J))
+        assertTrue(defense.isCapitalShip(100000))
+    }
+
+    private fun createDefense(
+        protection: Int = 0,
+        nuclearDampers: Int = 0,
+        mesonScreens: Int = 0,
+        blackGlobes: Int = 0
+    ): Defense {
         return Defense(
             shipId = 1,
-            armorProtection = protection
+            armorProtection = protection,
+            nuclearDampers = nuclearDampers,
+            mesonScreens = mesonScreens,
+            blackGlobes = blackGlobes
         )
     }
 }

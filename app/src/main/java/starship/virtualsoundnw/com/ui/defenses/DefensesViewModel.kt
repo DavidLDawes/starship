@@ -41,6 +41,7 @@ data class DefensesUiState(
     val ship: StarShip? = null,
     val defense: Defense? = null,
     val maxArmorProtection: Int = 0,
+    val maxScreenQuantities: Triple<Int, Int, Int> = Triple(0, 0, 0), // Nuclear Damper, Meson Screen, Black Globe
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -70,6 +71,40 @@ data class DefensesUiState(
         defense?.getArmorType(s.techLevel) ?: 
         (if (s.techLevel >= TechLevel.E) ArmorType.BONDED_SUPERDENSE else ArmorType.CRYSTALIRON)
     } ?: ArmorType.CRYSTALIRON
+    
+    /**
+     * Get current screen tonnage
+     */
+    fun getScreenTonnage(): Float = defense?.let { d ->
+        ship?.let { s -> d.getScreenTonnage(s.hullCode) }
+    } ?: 0f
+    
+    /**
+     * Get current screen cost
+     */
+    fun getScreenCost(): Float = defense?.let { d ->
+        ship?.let { s -> d.getScreenCost(s.hullCode) }
+    } ?: 0f
+    
+    /**
+     * Get current nuclear damper count
+     */
+    fun getCurrentNuclearDampers(): Int = defense?.nuclearDampers ?: 0
+    
+    /**
+     * Get current meson screen count
+     */
+    fun getCurrentMesonScreens(): Int = defense?.mesonScreens ?: 0
+    
+    /**
+     * Get current black globe count
+     */
+    fun getCurrentBlackGlobes(): Int = defense?.blackGlobes ?: 0
+    
+    /**
+     * Check if ship is a capital ship (required for screens)
+     */
+    fun isCapitalShip(): Boolean = ship?.tons?.let { it > 2000 } ?: false
 }
 
 @HiltViewModel
@@ -100,10 +135,16 @@ class DefensesViewModel @Inject constructor(
                         Defense(shipId, 0).getMaxArmorProtection(s.techLevel)
                     } ?: 0
                     
+                    val maxScreenQuantities = ship?.let { s ->
+                        defense?.getMaxScreenQuantities(s.techLevel) ?: 
+                        Defense(shipId, 0).getMaxScreenQuantities(s.techLevel)
+                    } ?: Triple(0, 0, 0)
+                    
                     DefensesUiState(
                         ship = ship,
                         defense = defense,
                         maxArmorProtection = maxArmorProtection,
+                        maxScreenQuantities = maxScreenQuantities,
                         isLoading = false
                     )
                 }.collect { state ->
@@ -121,10 +162,75 @@ class DefensesViewModel @Inject constructor(
     fun updateArmorProtection(protection: Int) {
         viewModelScope.launch {
             try {
-                defensesRepository.updateArmorProtection(currentShipId, protection)
+                // Preserve existing screen values when updating armor
+                val currentDefense = _uiState.value.defense
+                defensesRepository.updateDefense(
+                    shipId = currentShipId,
+                    armorProtection = protection,
+                    nuclearDampers = currentDefense?.nuclearDampers,
+                    mesonScreens = currentDefense?.mesonScreens,
+                    blackGlobes = currentDefense?.blackGlobes
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to update armor protection: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun updateNuclearDampers(count: Int) {
+        viewModelScope.launch {
+            try {
+                val currentDefense = _uiState.value.defense
+                defensesRepository.updateDefense(
+                    shipId = currentShipId,
+                    armorProtection = currentDefense?.armorProtection,
+                    nuclearDampers = count,
+                    mesonScreens = currentDefense?.mesonScreens,
+                    blackGlobes = currentDefense?.blackGlobes
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to update nuclear dampers: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun updateMesonScreens(count: Int) {
+        viewModelScope.launch {
+            try {
+                val currentDefense = _uiState.value.defense
+                defensesRepository.updateDefense(
+                    shipId = currentShipId,
+                    armorProtection = currentDefense?.armorProtection,
+                    nuclearDampers = currentDefense?.nuclearDampers,
+                    mesonScreens = count,
+                    blackGlobes = currentDefense?.blackGlobes
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to update meson screens: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun updateBlackGlobes(count: Int) {
+        viewModelScope.launch {
+            try {
+                val currentDefense = _uiState.value.defense
+                defensesRepository.updateDefense(
+                    shipId = currentShipId,
+                    armorProtection = currentDefense?.armorProtection,
+                    nuclearDampers = currentDefense?.nuclearDampers,
+                    mesonScreens = currentDefense?.mesonScreens,
+                    blackGlobes = count
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to update black globes: ${e.message}"
                 )
             }
         }

@@ -36,12 +36,25 @@ class DefensesRepository @Inject constructor(
     suspend fun deleteDefenseForShip(shipId: Int) = defenseDao.deleteDefenseForShip(shipId)
     
     /**
-     * Update armor protection level for a ship, creating defense entry if needed
+     * Update defense entry, preserving existing values for fields not specified
      */
-    suspend fun updateArmorProtection(shipId: Int, protection: Int) {
+    suspend fun updateDefense(
+        shipId: Int,
+        armorProtection: Int? = null,
+        nuclearDampers: Int? = null,
+        mesonScreens: Int? = null,
+        blackGlobes: Int? = null
+    ) {
+        // Get current defense or create new one
+        val currentDefense = defenseDao.getDefenseForShip(shipId)
+        // Note: This returns Flow<Defense?>, we'll handle this in the ViewModel
+        
         val defense = Defense(
             shipId = shipId,
-            armorProtection = protection
+            armorProtection = armorProtection ?: 0,
+            nuclearDampers = nuclearDampers ?: 0,
+            mesonScreens = mesonScreens ?: 0,
+            blackGlobes = blackGlobes ?: 0
         )
         defenseDao.insertDefense(defense)
     }
