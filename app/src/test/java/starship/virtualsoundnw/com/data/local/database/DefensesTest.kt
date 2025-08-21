@@ -392,6 +392,49 @@ class DefensesTest {
         assertTrue(defense.isCapitalShip(100000))
     }
 
+    @Test
+    fun defenseUpdates_multipleChanges_preserveExistingValues() {
+        // Test that demonstrates the fix for Issue #77
+        // Multiple updates should preserve existing values correctly
+        val initialDefense = createDefense(protection = 5, nuclearDampers = 2)
+        
+        // Verify initial state
+        assertEquals(5, initialDefense.armorProtection)
+        assertEquals(2, initialDefense.nuclearDampers)
+        assertEquals(0, initialDefense.mesonScreens)
+        assertEquals(0, initialDefense.blackGlobes)
+        
+        // Simulate updating meson screens while preserving other values
+        val updatedDefense = Defense(
+            shipId = initialDefense.shipId,
+            armorProtection = initialDefense.armorProtection, // preserved
+            nuclearDampers = initialDefense.nuclearDampers,   // preserved  
+            mesonScreens = 3,  // updated
+            blackGlobes = initialDefense.blackGlobes  // preserved
+        ).apply { uid = initialDefense.uid }
+        
+        // Verify update preserved existing values
+        assertEquals(5, updatedDefense.armorProtection)  // preserved
+        assertEquals(2, updatedDefense.nuclearDampers)   // preserved
+        assertEquals(3, updatedDefense.mesonScreens)     // updated
+        assertEquals(0, updatedDefense.blackGlobes)      // preserved
+        
+        // Simulate updating black globes while preserving other values
+        val finalDefense = Defense(
+            shipId = updatedDefense.shipId,
+            armorProtection = updatedDefense.armorProtection, // preserved
+            nuclearDampers = updatedDefense.nuclearDampers,   // preserved  
+            mesonScreens = updatedDefense.mesonScreens,       // preserved
+            blackGlobes = 1  // updated
+        ).apply { uid = updatedDefense.uid }
+        
+        // Verify final state has all updates preserved
+        assertEquals(5, finalDefense.armorProtection)  // still preserved
+        assertEquals(2, finalDefense.nuclearDampers)   // still preserved  
+        assertEquals(3, finalDefense.mesonScreens)     // still preserved
+        assertEquals(1, finalDefense.blackGlobes)      // updated
+    }
+
     private fun createDefense(
         protection: Int = 0,
         nuclearDampers: Int = 0,

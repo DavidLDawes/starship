@@ -45,17 +45,36 @@ class DefensesRepository @Inject constructor(
         mesonScreens: Int? = null,
         blackGlobes: Int? = null
     ) {
-        // Get current defense or create new one
-        val currentDefense = defenseDao.getDefenseForShip(shipId)
-        // Note: This returns Flow<Defense?>, we'll handle this in the ViewModel
+        // Get current defense or create new one with defaults
+        val currentDefense = defenseDao.getDefenseForShipSync(shipId)
         
-        val defense = Defense(
-            shipId = shipId,
-            armorProtection = armorProtection ?: 0,
-            nuclearDampers = nuclearDampers ?: 0,
-            mesonScreens = mesonScreens ?: 0,
-            blackGlobes = blackGlobes ?: 0
-        )
-        defenseDao.insertDefense(defense)
+        val defense = if (currentDefense != null) {
+            // Update existing defense, preserving current values for unspecified fields
+            Defense(
+                shipId = shipId,
+                armorProtection = armorProtection ?: currentDefense.armorProtection,
+                nuclearDampers = nuclearDampers ?: currentDefense.nuclearDampers,
+                mesonScreens = mesonScreens ?: currentDefense.mesonScreens,
+                blackGlobes = blackGlobes ?: currentDefense.blackGlobes
+            ).apply {
+                // Preserve the existing uid for update
+                uid = currentDefense.uid
+            }
+        } else {
+            // Create new defense with specified values, defaulting others to 0
+            Defense(
+                shipId = shipId,
+                armorProtection = armorProtection ?: 0,
+                nuclearDampers = nuclearDampers ?: 0,
+                mesonScreens = mesonScreens ?: 0,
+                blackGlobes = blackGlobes ?: 0
+            )
+        }
+        
+        if (currentDefense != null) {
+            defenseDao.updateDefense(defense)
+        } else {
+            defenseDao.insertDefense(defense)
+        }
     }
 }
