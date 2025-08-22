@@ -32,32 +32,88 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Code Architecture
 
-#### MVVM + Repository Pattern
+#### MVVM + Repository Pattern + Service Layer
 ```
-StarShipScreen (Compose UI) 
+Screen (Compose UI)
   ↓ observes StateFlow
-StarShipViewModel (@HiltViewModel)
-  ↓ calls repository methods  
-StarShipRepository (interface + implementation)
+ViewModel (@HiltViewModel)
+  ↓ calls repository methods + ShipSummaryService
+Repository (interface + implementation) 
   ↓ uses DAO
-StarShipDao (Room DAO)
+DAO (Room DAO)
   ↓ queries
 AppDatabase (Room Database)
 ```
 
+#### Current Screens & ViewModels
+- **StarShipScreen/ViewModel** - Main ship selection and creation
+- **EnginesScreen/ViewModel** - Engine configuration (Power Plants, Jump/Maneuver Drives)
+- **WeaponsScreen/ViewModel** - Weapon systems and turrets
+- **DefensesScreen/ViewModel** - Armor and defensive screens
+- **FittingsScreen/ViewModel** - Sensors and computer systems
+- **CargoScreen/ViewModel** - Cargo allocation (5 types: Cargo, Spares, Cold Storage, Secured, Xeno)
+- **VehiclesScreen/ViewModel** - Vehicle bay configuration
+
 #### Package Structure
-- `ui.starship.*` - Compose screens and ViewModels
-- `data.*` - Repository implementations and interfaces  
+- `ui.starship.*` - Main ship selection screen
+- `ui.engines.*` - Engine configuration screen and logic
+- `ui.weapons.*` - Weapons configuration screen and logic  
+- `ui.defenses.*` - Defenses configuration screen and logic
+- `ui.fittings.*` - Fittings configuration screen and logic
+- `ui.cargo.*` - Cargo configuration screen and logic
+- `ui.vehicles.*` - Vehicles configuration screen and logic
+- `ui.components.*` - Shared UI components (ComprehensiveShipSummaryPanel)
+- `ui.theme.*` - Material3 theming
+- `data.*` - Repository implementations, interfaces, and services
 - `data.local.database.*` - Room entities, DAOs, and database
 - `data.di.*` - Hilt modules for data layer
 - `data.local.di.*` - Hilt modules for database
 
 #### Key Architectural Files
 - `StarShipDesigner.kt` - Application class with `@HiltAndroidApp`
-- `AppDatabase.kt` - Room database with migration support
-- `StarShip.kt` - Room entity and DAO definitions
-- `StarShipRepository.kt` - Repository pattern implementation
+- `AppDatabase.kt` - Room database with migration support (currently version 10)
+- `StarShip.kt`, `Engine.kt`, `Weapon.kt`, `Defense.kt`, `Fitting.kt`, `Cargo.kt` - Room entities and DAOs
+- `StarShipRepository.kt` + domain-specific repositories - Repository pattern implementation
+- `ShipSummaryService.kt` - Centralized service for comprehensive ship data aggregation
+- `ShipSummaryPanel.kt` - Shared UI component for consistent ship summaries across all screens
 - `DatabaseModule.kt` & `DataModule.kt` - Hilt dependency injection modules
+- `Navigation.kt` - Compose navigation setup
+
+#### Ship Summary Architecture (Cross-Screen Feature)
+
+The ship summary system provides consistent, comprehensive ship data across all configuration screens:
+
+**Components:**
+- `ShipSummaryService` - Centralized service that aggregates data from all repositories
+- `ComprehensiveShipSummaryPanel` - Shared UI component for displaying complete ship information  
+- `ShipSummaryData` - UI data class for comprehensive ship summary
+- `ShipSummary` - Domain data class from service layer
+
+**Data Flow:**
+```
+Screen requests ship summary
+  ↓
+ViewModel calls ShipSummaryService.getComprehensiveShipSummary()
+  ↓  
+Service combines data from all repositories (engines, weapons, defenses, fittings, cargo)
+  ↓
+Service calculates totals (tonnage, costs, fuel requirements)
+  ↓
+Returns ShipSummary to ViewModel
+  ↓
+ViewModel converts to ShipSummaryData for UI
+  ↓
+Screen displays ComprehensiveShipSummaryPanel
+```
+
+**Key Features:**
+- **Centralized Data**: Single source of truth for ship totals across all systems
+- **Real-time Updates**: Reactive flows ensure summaries update when any system changes
+- **Consistent UI**: Same summary component used across all configuration screens
+- **Complete Information**: Shows engines, weapons, defenses, fittings, cargo with costs/tonnage
+- **Calculated Values**: Remaining tonnage, total costs, fuel requirements, service intervals
+
+**Usage Pattern:** All configuration screens (Engines, Weapons, Defenses, Fittings, Cargo, Vehicles) use this system to show users the complete ship state while configuring individual systems.
 
 ### Testing Strategy
 
@@ -74,31 +130,82 @@ AppDatabase (Room Database)
 
 ### State Management Pattern
 
-#### UI State
+#### UI State Patterns
+Each screen uses a data class-based UiState pattern:
+
 ```kotlin
-sealed interface StarShipUiState {
-    data object Loading : StarShipUiState
-    data class Success(val starShips: List<StarShip>) : StarShipUiState
-    data class Error(val exception: Throwable) : StarShipUiState
+data class EnginesUiState(
+    val ship: StarShip? = null,
+    val engines: List<Engine> = emptyList(),
+    val powerPlants: List<Engine> = emptyList(),
+    val jumpDrives: List<Engine> = emptyList(),
+    val maneuverDrives: List<Engine> = emptyList(),
+    val fitting: Fitting? = null,
+    val weapons: List<Weapon> = emptyList(),
+    val shipSummary: ShipSummary? = null,  // Comprehensive ship data
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+) {
+    // Helper methods for calculations
+    fun getTotalEngineTonnage(): Float { ... }
+    fun hasRequiredEngines(): Boolean { ... }
 }
 ```
 
 #### ViewModel Pattern
-- Expose `StateFlow<UiState>` for UI observation
+- Expose `StateFlow<UiState>` for UI observation  
 - Use `viewModelScope` for coroutine management
-- Collect Repository `Flow` and transform to UI state
+- Combine multiple repository flows using `combine()`
+- Include `ShipSummaryService` for comprehensive ship data
+- Transform domain data to UI state
+
+#### Common ViewModel Structure
+```kotlin
+@HiltViewModel
+class ScreenViewModel @Inject constructor(
+    private val specificRepository: SpecificRepository,
+    private val starShipRepository: StarShipRepository,
+    private val shipSummaryService: ShipSummaryService
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ScreenUiState(isLoading = true))
+    val uiState: StateFlow<ScreenUiState> = _uiState.asStateFlow()
+
+    fun loadDataForShip(shipId: Int) {
+        viewModelScope.launch {
+            combine(
+                starShipRepository.starShips,
+                specificRepository.getDataForShip(shipId),
+                shipSummaryService.getComprehensiveShipSummary(shipId)
+            ) { ships, specificData, shipSummary ->
+                // Transform to UiState
+            }.collect { _uiState.value = it }
+        }
+    }
+}
+```
 
 ### Room Database Patterns
 
 #### Entity Design
 - Entities use `@PrimaryKey(autoGenerate = true)` with `var uid: Int = 0`
-- DAOs return `Flow<List<T>>` for reactive queries
-- Use `suspend` functions for write operations
+- DAOs return `Flow<List<T>>` for reactive queries and `suspend fun` for write operations
+- Foreign key relationships with CASCADE delete to StarShip
+- Business logic methods in entities for calculations
+
+#### Current Database Entities
+- **StarShip** - Core ship definition (name, tons, tech level, configuration)
+- **Engine** - Power plants, jump drives, maneuver drives with performance ratings
+- **Weapon** - Weapon systems and turret configurations
+- **Defense** - Armor protection and defensive screens (nuclear damper, meson screen, black globe)
+- **Fitting** - Sensors and computer systems
+- **Cargo** - Five cargo types (Cargo, Spares, Cold Storage, Secured Cargo, Xeno Cargo)
 
 #### Database Configuration
 - Schema location: `$projectDir/schemas` for version control
-- Database version: Currently 1
+- **Database version: Currently 10** (was migrated from 9 for Cargo enhancements)
 - Export schema: `true` for migration tracking
+- Uses `fallbackToDestructiveMigration()` for development flexibility
 
 ### Workflow Process
 
@@ -141,12 +248,20 @@ sealed interface StarShipUiState {
 
 ## Important Instructions
 - Use existing architectural patterns and conventions
-- Follow MVVM + Repository pattern with Hilt DI
+- Follow MVVM + Repository + Service pattern with Hilt DI
 - Add unit tests with mocking for UI elements and complex logic
 - Use Room database patterns for data persistence
 - Follow Compose UI patterns with StateFlow observation
 - Always run tests before finalizing work
-- Each new screen should include the Ship's Summary table, and when the new Screen allows adding items that use Tons and cost MCr, those get summed into the Summary correctly
+
+### Ship Summary Requirements (Critical)
+- **ALL configuration screens MUST use `ComprehensiveShipSummaryPanel`** - No local summary implementations
+- **Include `ShipSummaryService`** in ViewModels for comprehensive ship data
+- **Add `shipSummary: ShipSummary?`** field to UiState for complete ship information
+- **Use `combine()`** to collect data from specific repository + `ShipSummaryService`
+- **Show complete data**: engines, weapons, defenses, fittings, cargo with costs and tonnage
+- **Real-time updates**: Summary must reflect all system changes immediately
+- **Consistent positioning**: Summary panels should appear at consistent locations across screens
 
 ### Copyright Management
 
