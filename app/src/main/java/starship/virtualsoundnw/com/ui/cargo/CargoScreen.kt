@@ -69,37 +69,32 @@ fun CargoScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+        // Show loading or error states first
+        if (uiState.isLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                
-                uiState.errorMessage != null -> {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Error: ${uiState.errorMessage}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-                
-                uiState.shipSummary != null -> {
-                    // Ship summary
-                    ShipSummaryPanel(
-                        shipSummary = uiState.shipSummary!!
+            }
+        }
+        
+        if (uiState.errorMessage != null) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Error: ${uiState.errorMessage}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
         }
         
+        // Cargo Configuration comes first (when ship data is available)
         if (uiState.ship != null && !uiState.isLoading) {
             item {
                 // Cargo configuration
@@ -108,6 +103,16 @@ fun CargoScreen(
                     onCargoUpdate = { cargoType, newTons -> 
                         viewModel.updateCargoTonnage(cargoType, newTons) 
                     }
+                )
+            }
+        }
+        
+        // Ship Summary comes second (below cargo configuration)
+        if (uiState.shipSummary != null && !uiState.isLoading) {
+            item {
+                // Ship summary
+                ShipSummaryPanel(
+                    shipSummary = uiState.shipSummary!!
                 )
             }
         }

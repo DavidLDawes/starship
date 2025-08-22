@@ -64,7 +64,7 @@ data class CargoUiState(
     val maxSparesTons: Int get() = ship?.let { it.tons / 100 * 100 } ?: 0
     
     /**
-     * Get available tonnage for a specific cargo type (excluding spares constraint)
+     * Get available tonnage for a specific cargo type
      */
     fun getAvailableTonnageFor(cargoType: CargoType): Int {
         val currentTotalTonnage = cargoTons + sparesTons + coldStorageTons + securedCargoTons + xenoCargoTons
@@ -75,6 +75,14 @@ data class CargoUiState(
             CargoType.SECURED_CARGO -> securedCargoTons
             CargoType.XENO_CARGO -> xenoCargoTons
         }
+        
+        // Special constraint for Spares: maximum 11% of ship tonnage (for service every 12 months)
+        if (cargoType == CargoType.SPARES) {
+            val maxSparesAllowed = ship?.let { (it.tons * 0.11).toInt() } ?: 0
+            val availableFromGeneralTonnage = maxCargoTons - (currentTotalTonnage - currentTypeTonnage)
+            return minOf(maxSparesAllowed, availableFromGeneralTonnage)
+        }
+        
         return maxCargoTons - (currentTotalTonnage - currentTypeTonnage)
     }
     
