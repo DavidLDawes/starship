@@ -18,16 +18,41 @@
 package starship.virtualsoundnw.com.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
 import javax.inject.Inject
 
+/**
+ * Ship summary data including tonnage and cost calculations from all systems
+ */
+data class ShipSummary(
+    val ship: StarShip,
+    val enginesTonnage: Double = 0.0,
+    val enginesCost: Double = 0.0,
+    val weaponsTonnage: Double = 0.0,
+    val weaponsCost: Double = 0.0,
+    val defensesTonnage: Double = 0.0,
+    val defensesCost: Double = 0.0,
+    val fittingsTonnage: Double = 0.0,
+    val fittingsCost: Double = 0.0,
+    val cargoTonnage: Int = 0,
+    val cargoCost: Double = 0.0
+) {
+    val totalUsedTonnage: Double get() = enginesTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage
+    val remainingTonnage: Double get() = ship.tons - totalUsedTonnage
+    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost
+    val totalShipCost: Double get() = ship.hullCost + totalSystemsCost
+}
+
 interface StarShipRepository {
     val starShips: Flow<List<StarShip>>
 
     suspend fun add(starShip: StarShip)
+    
+    fun getShipSummary(shipId: Int): Flow<ShipSummary?>
 }
 
 class DefaultStarShipRepository @Inject constructor(
@@ -39,5 +64,15 @@ class DefaultStarShipRepository @Inject constructor(
 
     override suspend fun add(starShip: StarShip) {
         starShipDao.insertStarShip(starShip)
+    }
+    
+    override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
+        return starShips.map { ships ->
+            ships.find { it.uid == shipId }?.let { ship ->
+                // For now, return a basic ship summary without system calculations
+                // This will be enhanced later when all repositories are properly configured
+                ShipSummary(ship = ship)
+            }
+        }
     }
 }

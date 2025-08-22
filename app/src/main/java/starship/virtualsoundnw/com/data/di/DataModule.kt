@@ -31,6 +31,9 @@ import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.DefaultFittingsRepository
 import starship.virtualsoundnw.com.data.WeaponsRepository
 import starship.virtualsoundnw.com.data.DefaultWeaponsRepository
+import starship.virtualsoundnw.com.data.DefensesRepository
+import starship.virtualsoundnw.com.data.CargoRepository
+import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -71,6 +74,14 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
 
     override suspend fun add(starShip: StarShip) {
         throw NotImplementedError()
+    }
+    
+    override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
+        return flowOf(
+            fakeStarShips.find { it.uid == shipId }?.let { ship ->
+                ShipSummary(ship = ship)
+            }
+        )
     }
 }
 
