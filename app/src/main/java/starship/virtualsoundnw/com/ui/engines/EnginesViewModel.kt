@@ -119,6 +119,20 @@ data class EnginesUiState(
     }
     
     /**
+     * Calculate total weapons tonnage
+     */
+    fun getTotalWeaponsTonnage(): Float {
+        return weapons.sumOf { it.getTotalTonnage().toDouble() }.toFloat()
+    }
+    
+    /**
+     * Calculate total weapons cost
+     */
+    fun getTotalWeaponsCost(): Float {
+        return weapons.sumOf { it.getTotalCost().toDouble() }.toFloat()
+    }
+    
+    /**
      * Check if ship has required engines to proceed to fittings
      * Requires at least 1 power plant and 1 jump drive
      */
@@ -131,7 +145,8 @@ data class EnginesUiState(
 class EnginesViewModel @Inject constructor(
     private val enginesRepository: EnginesRepository,
     private val starShipRepository: StarShipRepository,
-    private val fittingsRepository: FittingsRepository
+    private val fittingsRepository: FittingsRepository,
+    private val weaponsRepository: WeaponsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EnginesUiState(isLoading = true))
@@ -144,12 +159,13 @@ class EnginesViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data with engine data and fittings
+                // Combine ship data with engine data, fittings, and weapons
                 combine(
                     starShipRepository.starShips,
                     enginesRepository.getEnginesForShip(shipId),
-                    fittingsRepository.getFittingForShip(shipId)
-                ) { ships, engines, fitting ->
+                    fittingsRepository.getFittingForShip(shipId),
+                    weaponsRepository.getWeaponsForShip(shipId)
+                ) { ships, engines, fitting, weapons ->
                     val ship = ships.find { it.uid == shipId }
                     val powerPlants = engines.filter { it.type == EngineType.POWER_PLANT }
                     val jumpDrives = engines.filter { it.type == EngineType.JUMP_DRIVE }
@@ -162,6 +178,7 @@ class EnginesViewModel @Inject constructor(
                         jumpDrives = jumpDrives,
                         maneuverDrives = maneuverDrives,
                         fitting = fitting,
+                        weapons = weapons,
                         isLoading = false
                     )
                 }.collect { state ->
