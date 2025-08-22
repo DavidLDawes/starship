@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.CargoType
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 import kotlin.math.roundToInt
@@ -68,43 +69,50 @@ fun CargoScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+        // Show loading or error states first
+        if (uiState.isLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                
-                uiState.errorMessage != null -> {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Error: ${uiState.errorMessage}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-                
-                uiState.shipSummary != null -> {
-                    // Ship summary
-                    ShipSummaryPanel(
-                        shipSummary = uiState.shipSummary!!
+            }
+        }
+        
+        if (uiState.errorMessage != null) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Error: ${uiState.errorMessage}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
         }
         
+        // Cargo Configuration comes first (when ship data is available)
         if (uiState.ship != null && !uiState.isLoading) {
             item {
                 // Cargo configuration
                 CargoConfigurationCard(
                     uiState = uiState,
-                    onCargoUpdate = viewModel::updateCargoTonnage
+                    onCargoUpdate = { cargoType, newTons -> 
+                        viewModel.updateCargoTonnage(cargoType, newTons) 
+                    }
+                )
+            }
+        }
+        
+        // Ship Summary comes second (below cargo configuration)
+        if (uiState.shipSummary != null && !uiState.isLoading) {
+            item {
+                // Ship summary
+                ShipSummaryPanel(
+                    shipSummary = uiState.shipSummary!!
                 )
             }
         }
@@ -123,7 +131,7 @@ fun CargoScreen(
 @Composable
 fun CargoConfigurationCard(
     uiState: CargoUiState,
-    onCargoUpdate: (Int) -> Unit,
+    onCargoUpdate: (CargoType, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -139,52 +147,154 @@ fun CargoConfigurationCard(
                 fontWeight = FontWeight.Bold
             )
             
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Cargo Tons:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${uiState.cargoTons} / ${uiState.maxCargoTons}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Slider(
-                    value = uiState.cargoTons.toFloat(),
-                    onValueChange = { value ->
-                        if (!uiState.isCargoEditingDisabled) {
-                            onCargoUpdate(value.roundToInt())
-                        }
-                    },
-                    valueRange = 0f..uiState.maxCargoTons.toFloat(),
-                    steps = if (uiState.maxCargoTons > 1) uiState.maxCargoTons - 1 else 0,
-                    enabled = !uiState.isCargoEditingDisabled,
-                    modifier = Modifier.fillMaxWidth()
+            if (uiState.isCargoEditingDisabled) {
+                Text(
+                    text = "Cargo editing disabled: No remaining ship tonnage available",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
                 )
-                
-                if (uiState.isCargoEditingDisabled) {
-                    Text(
-                        text = "Cargo editing disabled: No remaining ship tonnage available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else {
-                    Text(
-                        text = "Maximum cargo capacity: ${uiState.maxCargoTons} tons (remaining ship tonnage)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
+            
+            // Regular Cargo
+            CargoTypeSlider(
+                cargoType = CargoType.CARGO,
+                currentTons = uiState.cargoTons,
+                maxTons = uiState.getAvailableTonnageFor(CargoType.CARGO),
+                enabled = !uiState.isCargoEditingDisabled,
+                onValueChange = onCargoUpdate
+            )
+            
+            // Spares with special 1% ship tonnage units
+            CargoTypeSlider(
+                cargoType = CargoType.SPARES,
+                currentTons = uiState.sparesTons,
+                maxTons = uiState.getAvailableTonnageFor(CargoType.SPARES),
+                stepSize = uiState.sparesStepSize,
+                enabled = !uiState.isCargoEditingDisabled,
+                onValueChange = onCargoUpdate,
+                extraInfo = "Service every ${uiState.serviceIntervalMonths} months"
+            )
+            
+            // Cold Storage
+            CargoTypeSlider(
+                cargoType = CargoType.COLD_STORAGE,
+                currentTons = uiState.coldStorageTons,
+                maxTons = uiState.getAvailableTonnageFor(CargoType.COLD_STORAGE),
+                enabled = !uiState.isCargoEditingDisabled,
+                onValueChange = onCargoUpdate
+            )
+            
+            // Secured Cargo
+            CargoTypeSlider(
+                cargoType = CargoType.SECURED_CARGO,
+                currentTons = uiState.securedCargoTons,
+                maxTons = uiState.getAvailableTonnageFor(CargoType.SECURED_CARGO),
+                enabled = !uiState.isCargoEditingDisabled,
+                onValueChange = onCargoUpdate
+            )
+            
+            // Xeno Cargo
+            CargoTypeSlider(
+                cargoType = CargoType.XENO_CARGO,
+                currentTons = uiState.xenoCargoTons,
+                maxTons = uiState.getAvailableTonnageFor(CargoType.XENO_CARGO),
+                enabled = !uiState.isCargoEditingDisabled,
+                onValueChange = onCargoUpdate
+            )
+        }
+    }
+}
+
+@Composable
+fun CargoTypeSlider(
+    cargoType: CargoType,
+    currentTons: Int,
+    maxTons: Int,
+    stepSize: Int = 1,
+    enabled: Boolean = true,
+    extraInfo: String? = null,
+    onValueChange: (CargoType, Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // Header row with type name and current/max tons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "${cargoType.displayName}:",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "$currentTons / $maxTons tons",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        
+        // Cost information
+        if (currentTons > 0) {
+            val cost = when (cargoType) {
+                CargoType.CARGO -> 0f
+                CargoType.SPARES -> currentTons * cargoType.costPerTon
+                CargoType.COLD_STORAGE -> currentTons * cargoType.costPerTon
+                CargoType.SECURED_CARGO -> cargoType.baseCost + (currentTons * cargoType.costPerTon)
+                CargoType.XENO_CARGO -> cargoType.baseCost + (currentTons * cargoType.costPerTon)
+            }
+            Text(
+                text = "Cost: ${String.format("%.3f", cost)} MCr",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        
+        // Extra info (e.g., service interval for spares)
+        extraInfo?.let { info ->
+            Text(
+                text = info,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+        
+        // Slider
+        if (maxTons > 0) {
+            val steps = if (stepSize > 1) {
+                maxOf(0, (maxTons / stepSize) - 1)
+            } else {
+                if (maxTons > 1) maxTons - 1 else 0
+            }
+            
+            Slider(
+                value = currentTons.toFloat(),
+                onValueChange = { value ->
+                    if (enabled) {
+                        val newTons = if (stepSize > 1) {
+                            // Round to nearest step size
+                            ((value.roundToInt() + stepSize / 2) / stepSize) * stepSize
+                        } else {
+                            value.roundToInt()
+                        }
+                        onValueChange(cargoType, newTons.coerceIn(0, maxTons))
+                    }
+                },
+                valueRange = 0f..maxTons.toFloat(),
+                steps = steps,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            Text(
+                text = "No tonnage available",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

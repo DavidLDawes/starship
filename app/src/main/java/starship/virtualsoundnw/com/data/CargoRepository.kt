@@ -57,9 +57,10 @@ class CargoRepository @Inject constructor(
             Cargo(
                 shipId = shipId,
                 cargoTons = if (cargoType == CargoType.CARGO) newTons else 0,
-                frozenCargoTons = if (cargoType == CargoType.FROZEN_CARGO) newTons else 0,
                 sparesTons = if (cargoType == CargoType.SPARES) newTons else 0,
-                secureCargoTons = if (cargoType == CargoType.SECURE_CARGO) newTons else 0
+                coldStorageTons = if (cargoType == CargoType.COLD_STORAGE) newTons else 0,
+                securedCargoTons = if (cargoType == CargoType.SECURED_CARGO) newTons else 0,
+                xenoCargoTons = if (cargoType == CargoType.XENO_CARGO) newTons else 0
             )
         }
         
@@ -76,9 +77,10 @@ class CargoRepository @Inject constructor(
     suspend fun updateCargo(
         shipId: Int,
         cargoTons: Int? = null,
-        frozenCargoTons: Int? = null,
         sparesTons: Int? = null,
-        secureCargoTons: Int? = null
+        coldStorageTons: Int? = null,
+        securedCargoTons: Int? = null,
+        xenoCargoTons: Int? = null
     ) {
         // Get current cargo or create new one with defaults
         val currentCargo = cargoDao.getCargoForShipSync(shipId)
@@ -88,9 +90,10 @@ class CargoRepository @Inject constructor(
             Cargo(
                 shipId = shipId,
                 cargoTons = cargoTons ?: currentCargo.cargoTons,
-                frozenCargoTons = frozenCargoTons ?: currentCargo.frozenCargoTons,
                 sparesTons = sparesTons ?: currentCargo.sparesTons,
-                secureCargoTons = secureCargoTons ?: currentCargo.secureCargoTons
+                coldStorageTons = coldStorageTons ?: currentCargo.coldStorageTons,
+                securedCargoTons = securedCargoTons ?: currentCargo.securedCargoTons,
+                xenoCargoTons = xenoCargoTons ?: currentCargo.xenoCargoTons
             ).apply {
                 // Preserve the existing uid for update
                 uid = currentCargo.uid
@@ -100,9 +103,10 @@ class CargoRepository @Inject constructor(
             Cargo(
                 shipId = shipId,
                 cargoTons = cargoTons ?: 0,
-                frozenCargoTons = frozenCargoTons ?: 0,
                 sparesTons = sparesTons ?: 0,
-                secureCargoTons = secureCargoTons ?: 0
+                coldStorageTons = coldStorageTons ?: 0,
+                securedCargoTons = securedCargoTons ?: 0,
+                xenoCargoTons = xenoCargoTons ?: 0
             )
         }
         

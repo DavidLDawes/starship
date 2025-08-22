@@ -27,23 +27,69 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.CargoType
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.CargoRepository
 import starship.virtualsoundnw.com.data.ShipSummaryService
 import javax.inject.Inject
 
 /**
- * UI state for cargo with ship summary integration
+ * UI state for cargo with ship summary integration and all cargo types
  */
 data class CargoUiState(
     val shipSummary: ShipSummary? = null,
     val cargoTons: Int = 0,
+    val sparesTons: Int = 0,
+    val coldStorageTons: Int = 0,
+    val securedCargoTons: Int = 0,
+    val xenoCargoTons: Int = 0,
     val maxCargoTons: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
     val ship: StarShip? get() = shipSummary?.ship
     val isCargoEditingDisabled: Boolean get() = shipSummary?.let { it.remainingTonnage <= 0 } ?: false
+    val serviceIntervalMonths: Int get() = shipSummary?.let { summary -> 
+        if (summary.ship.tons > 0) {
+            val sparesPercentage = (sparesTons.toFloat() / summary.ship.tons) * 100
+            1 + sparesPercentage.toInt()
+        } else {
+            1
+        }
+    } ?: 1
+    
+    /**
+     * Get maximum spares tonnage in 1% ship tonnage units
+     */
+    val maxSparesTons: Int get() = ship?.let { it.tons / 100 * 100 } ?: 0
+    
+    /**
+     * Get available tonnage for a specific cargo type
+     */
+    fun getAvailableTonnageFor(cargoType: CargoType): Int {
+        val currentTotalTonnage = cargoTons + sparesTons + coldStorageTons + securedCargoTons + xenoCargoTons
+        val currentTypeTonnage = when (cargoType) {
+            CargoType.CARGO -> cargoTons
+            CargoType.SPARES -> sparesTons
+            CargoType.COLD_STORAGE -> coldStorageTons
+            CargoType.SECURED_CARGO -> securedCargoTons
+            CargoType.XENO_CARGO -> xenoCargoTons
+        }
+        
+        // Special constraint for Spares: maximum 11% of ship tonnage (for service every 12 months)
+        if (cargoType == CargoType.SPARES) {
+            val maxSparesAllowed = ship?.let { (it.tons * 0.11).toInt() } ?: 0
+            val availableFromGeneralTonnage = maxCargoTons - (currentTotalTonnage - currentTypeTonnage)
+            return minOf(maxSparesAllowed, availableFromGeneralTonnage)
+        }
+        
+        return maxCargoTons - (currentTotalTonnage - currentTypeTonnage)
+    }
+    
+    /**
+     * Get step size for spares (1% of ship tonnage)
+     */
+    val sparesStepSize: Int get() = ship?.let { maxOf(1, it.tons / 100) } ?: 1
 }
 
 @HiltViewModel
@@ -73,15 +119,14 @@ class CargoViewModel @Inject constructor(
                         return@collect
                     }
                     
+                    // Get current cargo data from the ship summary
+                    val currentCargo = cargoRepository.getCargoForShip(shipSummary.ship.uid).first()
+                    
                     // Calculate maximum cargo tonnage based on remaining tonnage
                     val actualRemainingTonnage = shipSummary.remainingTonnage + shipSummary.cargoTonnage
                     
-                    val (cargoTons, maxCargoTons) = if (actualRemainingTonnage <= 0) {
-                        // If no remaining tonnage, clear cargo in database and disable editing
-                        if (shipSummary.cargoTonnage > 0) {
-                            cargoRepository.updateCargo(shipId = shipSummary.ship.uid, cargoTons = 0)
-                        }
-                        0 to 0
+                    val maxCargoTons = if (actualRemainingTonnage <= 0) {
+                        0
                     } else {
                         // Normal case: use remaining tonnage, fallback to 80% if needed
                         val remainingTonnage = if (shipSummary.remainingTonnage > 0) {
@@ -89,13 +134,16 @@ class CargoViewModel @Inject constructor(
                         } else {
                             (shipSummary.ship.tons * 0.8).toInt()
                         }
-                        val maxTons = maxOf(0, remainingTonnage)
-                        shipSummary.cargoTonnage to maxTons
+                        maxOf(0, remainingTonnage)
                     }
                     
                     _uiState.value = CargoUiState(
                         shipSummary = shipSummary,
-                        cargoTons = cargoTons,
+                        cargoTons = currentCargo?.cargoTons ?: 0,
+                        sparesTons = currentCargo?.sparesTons ?: 0,
+                        coldStorageTons = currentCargo?.coldStorageTons ?: 0,
+                        securedCargoTons = currentCargo?.securedCargoTons ?: 0,
+                        xenoCargoTons = currentCargo?.xenoCargoTons ?: 0,
                         maxCargoTons = maxCargoTons,
                         isLoading = false
                     )
@@ -111,9 +159,9 @@ class CargoViewModel @Inject constructor(
     }
 
     /**
-     * Update cargo tonnage
+     * Update cargo tonnage for a specific cargo type
      */
-    fun updateCargoTonnage(newTons: Int) {
+    fun updateCargoTonnage(cargoType: CargoType, newTons: Int) {
         val currentState = _uiState.value
         val ship = currentState.ship ?: return
         
@@ -122,23 +170,48 @@ class CargoViewModel @Inject constructor(
             return
         }
         
-        val clampedTons = newTons.coerceIn(0, currentState.maxCargoTons)
+        // Special handling for spares - must be in units of 1% ship tonnage
+        val clampedTons = if (cargoType == CargoType.SPARES) {
+            val stepSize = currentState.sparesStepSize
+            val maxSpares = currentState.getAvailableTonnageFor(cargoType)
+            // Round to nearest step size and clamp to available tonnage
+            val roundedTons = (newTons / stepSize) * stepSize
+            roundedTons.coerceIn(0, maxSpares)
+        } else {
+            newTons.coerceIn(0, currentState.getAvailableTonnageFor(cargoType))
+        }
         
         viewModelScope.launch {
             try {
-                // Update cargo in the database - for now just update regular cargo
-                cargoRepository.updateCargo(
+                // Update specific cargo type in the database
+                cargoRepository.updateCargoTonnage(
                     shipId = ship.uid,
-                    cargoTons = clampedTons
+                    cargoType = cargoType,
+                    newTons = clampedTons
                 )
                 
-                // The UI state will be updated automatically through the ship summary flow
+                // Update the UI state immediately for better responsiveness
+                _uiState.value = when (cargoType) {
+                    CargoType.CARGO -> currentState.copy(cargoTons = clampedTons)
+                    CargoType.SPARES -> currentState.copy(sparesTons = clampedTons)
+                    CargoType.COLD_STORAGE -> currentState.copy(coldStorageTons = clampedTons)
+                    CargoType.SECURED_CARGO -> currentState.copy(securedCargoTons = clampedTons)
+                    CargoType.XENO_CARGO -> currentState.copy(xenoCargoTons = clampedTons)
+                }
+                
             } catch (e: Exception) {
                 _uiState.value = currentState.copy(
-                    errorMessage = "Failed to update cargo: ${e.message}"
+                    errorMessage = "Failed to update ${cargoType.displayName.lowercase()}: ${e.message}"
                 )
             }
         }
+    }
+    
+    /**
+     * Legacy method for backward compatibility - updates regular cargo
+     */
+    fun updateCargoTonnage(newTons: Int) {
+        updateCargoTonnage(CargoType.CARGO, newTons)
     }
 
     /**
