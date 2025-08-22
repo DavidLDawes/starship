@@ -123,16 +123,19 @@ sealed interface StarShipUiState {
 2. **Implement Changes**: Make all code changes, add tests, ensure functionality works
 3. **Commit Changes**: `git add .` and `git commit -m "description"`
 4. **Push Branch**: `git push -u origin feature/issue-XX-description`
-5. **Create Pull Request**: Use `gh pr create` or GitHub web interface
+5. **Create Pull Request**: Use `gh pr create` with issue linking keywords:
+   - Include "Closes #XX", "Fixes #XX", or "Resolves #XX" in PR title or body
+   - Example: `gh pr create --title "Fix navigation bug (Fixes #42)" --body "..."`
+   - This automatically links and closes the issue when PR is merged
 6. **Wait for Approval**: Operator reviews and approves the PR
-7. **Operator Merges**: Human operator merges the PR on GitHub (closes associated Issue)
+7. **Operator Merges**: Human operator merges the PR on GitHub (automatically closes linked Issue)
 8. **Switch to Main**: `git checkout main`
 9. **Pull Changes**: `git pull origin main` to get the merged changes locally
 
 #### Why This Process:
 - Maintains clean commit history
 - Enables code review process
-- Automatically links PRs to Issues
+- Automatically links and closes Issues when PRs are merged (using "Closes #XX" keywords)
 - Provides audit trail of all changes
 - Ensures human oversight on all merges
 
