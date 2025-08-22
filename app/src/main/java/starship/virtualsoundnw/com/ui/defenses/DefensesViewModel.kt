@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.DefensesRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.ShipSummaryService
+import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.Defense
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.ArmorType
@@ -42,6 +44,7 @@ data class DefensesUiState(
     val defense: Defense? = null,
     val maxArmorProtection: Int = 0,
     val maxScreenQuantities: Triple<Int, Int, Int> = Triple(0, 0, 0), // Nuclear Damper, Meson Screen, Black Globe
+    val shipSummary: ShipSummary? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -110,7 +113,8 @@ data class DefensesUiState(
 @HiltViewModel
 class DefensesViewModel @Inject constructor(
     private val defensesRepository: DefensesRepository,
-    private val starShipRepository: StarShipRepository
+    private val starShipRepository: StarShipRepository,
+    private val shipSummaryService: ShipSummaryService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DefensesUiState(isLoading = true))
@@ -123,11 +127,12 @@ class DefensesViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data and defenses
+                // Combine ship data, defenses, and comprehensive summary
                 combine(
                     starShipRepository.starShips,
-                    defensesRepository.getDefenseForShip(shipId)
-                ) { ships, defense ->
+                    defensesRepository.getDefenseForShip(shipId),
+                    shipSummaryService.getComprehensiveShipSummary(shipId)
+                ) { ships, defense, shipSummary ->
                     val ship = ships.find { it.uid == shipId }
                     
                     val maxArmorProtection = ship?.let { s ->
@@ -145,6 +150,7 @@ class DefensesViewModel @Inject constructor(
                         defense = defense,
                         maxArmorProtection = maxArmorProtection,
                         maxScreenQuantities = maxScreenQuantities,
+                        shipSummary = shipSummary,
                         isLoading = false
                     )
                 }.collect { state ->

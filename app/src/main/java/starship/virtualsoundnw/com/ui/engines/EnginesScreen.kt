@@ -62,6 +62,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import starship.virtualsoundnw.com.data.local.database.Engine
 import starship.virtualsoundnw.com.data.local.database.EngineType
+import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
+import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
@@ -159,10 +161,23 @@ fun EnginesScreen(
                     }
                     
                     item {
-                        SummaryPanel(
-                            ship = ship,
-                            uiState = uiState
-                        )
+                        uiState.shipSummary?.let { shipSummary ->
+                            ComprehensiveShipSummaryPanel(
+                                summaryData = ShipSummaryData(
+                                    ship = shipSummary.ship,
+                                    enginesTonnage = shipSummary.enginesTonnage,
+                                    enginesCost = shipSummary.enginesCost,
+                                    weaponsTonnage = shipSummary.weaponsTonnage,
+                                    weaponsCost = shipSummary.weaponsCost,
+                                    defensesTonnage = shipSummary.defensesTonnage,
+                                    defensesCost = shipSummary.defensesCost,
+                                    fittingsTonnage = shipSummary.fittingsTonnage,
+                                    fittingsCost = shipSummary.fittingsCost,
+                                    cargoTonnage = shipSummary.cargoTonnage.toDouble(),
+                                    cargoCost = shipSummary.cargoCost
+                                )
+                            )
+                        }
                     }
                     
                     // Next: Fittings button when requirements are met
@@ -747,10 +762,23 @@ private fun EnginesScreenPreview() {
             }
             
             item {
-                SummaryPanel(
-                    ship = sampleShip,
-                    uiState = uiState
-                )
+                uiState.shipSummary?.let { shipSummary ->
+                    ComprehensiveShipSummaryPanel(
+                        summaryData = ShipSummaryData(
+                            ship = shipSummary.ship,
+                            enginesTonnage = shipSummary.enginesTonnage,
+                            enginesCost = shipSummary.enginesCost,
+                            weaponsTonnage = shipSummary.weaponsTonnage,
+                            weaponsCost = shipSummary.weaponsCost,
+                            defensesTonnage = shipSummary.defensesTonnage,
+                            defensesCost = shipSummary.defensesCost,
+                            fittingsTonnage = shipSummary.fittingsTonnage,
+                            fittingsCost = shipSummary.fittingsCost,
+                            cargoTonnage = shipSummary.cargoTonnage.toDouble(),
+                            cargoCost = shipSummary.cargoCost
+                        )
+                    )
+                }
             }
             
             // Next: Fittings button when requirements are met
