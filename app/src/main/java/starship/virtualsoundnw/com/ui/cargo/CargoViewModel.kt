@@ -29,6 +29,7 @@ import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.CargoRepository
+import starship.virtualsoundnw.com.data.ShipSummaryService
 import javax.inject.Inject
 
 /**
@@ -48,7 +49,8 @@ data class CargoUiState(
 @HiltViewModel
 class CargoViewModel @Inject constructor(
     private val starShipRepository: StarShipRepository,
-    private val cargoRepository: CargoRepository
+    private val cargoRepository: CargoRepository,
+    private val shipSummaryService: ShipSummaryService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CargoUiState())
@@ -62,7 +64,7 @@ class CargoViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                starShipRepository.getShipSummary(shipId).collect { shipSummary ->
+                shipSummaryService.getComprehensiveShipSummary(shipId).collect { shipSummary ->
                     if (shipSummary == null) {
                         _uiState.value = CargoUiState(
                             isLoading = false,
