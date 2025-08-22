@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class], version = 10)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class], version = 11)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
@@ -30,6 +30,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun weaponDao(): WeaponDao
     abstract fun defenseDao(): DefenseDao
     abstract fun cargoDao(): CargoDao
+    abstract fun vehicleDao(): VehicleDao
+    abstract fun vehicleAllocationDao(): VehicleAllocationDao
 
     companion object {
         /**

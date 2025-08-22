@@ -21,18 +21,38 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +61,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.Vehicle
+import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
@@ -87,13 +109,23 @@ fun VehiclesScreen(
                                 fittingsTonnage = shipSummary.fittingsTonnage,
                                 fittingsCost = shipSummary.fittingsCost,
                                 cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                                cargoCost = shipSummary.cargoCost
+                                cargoCost = shipSummary.cargoCost,
+                                vehiclesTonnage = shipSummary.vehiclesTonnage,
+                                vehiclesCost = shipSummary.vehiclesCost
                             )
                         )
                     }
                     
                     item {
-                        VehiclesPlaceholderContent()
+                        VehiclesManagementPanel(
+                            vehiclesWithAllocations = uiState.vehiclesWithAllocations,
+                            totalVehicleCount = uiState.totalVehicleCount,
+                            totalVehicleTonnage = uiState.totalVehicleTonnage,
+                            totalVehicleCostMCr = uiState.totalVehicleCostMCr,
+                            onAddVehicle = { viewModel.showAddVehicleDialog() },
+                            onIncrementVehicle = viewModel::incrementVehicle,
+                            onDecrementVehicle = viewModel::decrementVehicle
+                        )
                     }
                 }
             } ?: run {
@@ -107,6 +139,18 @@ fun VehiclesScreen(
                     )
                 }
             }
+        }
+        
+        // Add Vehicle Dialog
+        if (uiState.showAddVehicleDialog) {
+            AddVehicleDialog(
+                availableVehicles = uiState.availableVehicles,
+                onDismiss = { viewModel.hideAddVehicleDialog() },
+                onAddVehicle = { vehicleId ->
+                    viewModel.addVehicle(vehicleId)
+                    viewModel.hideAddVehicleDialog()
+                }
+            )
         }
     }
 }
@@ -139,30 +183,209 @@ fun VehiclesConfigurationHeader(ship: StarShip) {
 }
 
 @Composable
-fun VehiclesPlaceholderContent() {
+fun VehiclesManagementPanel(
+    vehiclesWithAllocations: List<VehicleWithAllocation>,
+    totalVehicleCount: Int,
+    totalVehicleTonnage: Float,
+    totalVehicleCostMCr: Float,
+    onAddVehicle: () -> Unit,
+    onIncrementVehicle: (Int) -> Unit,
+    onDecrementVehicle: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Header with Add Vehicle button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Vehicles",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                FilledTonalButton(
+                    onClick = onAddVehicle
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Vehicles")
+                }
+            }
+            
+            // Summary
+            if (totalVehicleCount > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Total: $totalVehicleCount vehicles",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${String.format("%.1f", totalVehicleTonnage)} tons • ${String.format("%.1f", totalVehicleCostMCr)} MCr",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
+            // Vehicles List
+            if (vehiclesWithAllocations.filter { it.isAllocated }.isNotEmpty()) {
+                HorizontalDivider()
+                
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    vehiclesWithAllocations.filter { it.isAllocated }.forEach { vehicleWithAllocation ->
+                        VehicleAllocationItem(
+                            vehicleWithAllocation = vehicleWithAllocation,
+                            onIncrement = { onIncrementVehicle(vehicleWithAllocation.vehicle.uid) },
+                            onDecrement = { onDecrementVehicle(vehicleWithAllocation.vehicle.uid) }
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "No vehicles configured. Use 'Add Vehicles' to get started.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VehicleAllocationItem(
+    vehicleWithAllocation: VehicleWithAllocation,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Vehicle info
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
-                text = "Coming Soon",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                text = vehicleWithAllocation.vehicle.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
             )
+            Text(
+                text = "${vehicleWithAllocation.vehicle.tons} tons • ${String.format("%.1f", vehicleWithAllocation.vehicle.getCostMCr())} MCr each",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        // Quantity controls
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onDecrement) {
+                Text("-", style = MaterialTheme.typography.titleMedium)
+            }
             
             Text(
-                text = "Vehicle configuration and management features will be available in a future update.",
+                text = "${vehicleWithAllocation.quantity}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            
+            IconButton(onClick = onIncrement) {
+                Text("+", style = MaterialTheme.typography.titleMedium)
+            }
+        }
+        
+        // Extended totals
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = "${String.format("%.1f", vehicleWithAllocation.extendedTonnage)} tons",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "${String.format("%.1f", vehicleWithAllocation.extendedCostMCr)} MCr",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
+}
+
+@Composable
+fun AddVehicleDialog(
+    availableVehicles: List<Vehicle>,
+    onDismiss: () -> Unit,
+    onAddVehicle: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Add Vehicles")
+        },
+        text = {
+            if (availableVehicles.isEmpty()) {
+                Text("No vehicles are available for this ship's tech level.")
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(availableVehicles) { vehicle ->
+                        OutlinedButton(
+                            onClick = { onAddVehicle(vehicle.uid) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = vehicle.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "${vehicle.tons} tons • ${String.format("%.1f", vehicle.getCostMCr())} MCr",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true)

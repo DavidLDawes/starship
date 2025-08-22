@@ -23,44 +23,209 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.ShipSummaryService
+import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.VehiclesRepository
+import starship.virtualsoundnw.com.data.VehiclesDataService
+import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.Vehicle
+import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
 import javax.inject.Inject
 
 /**
  * UI state for the Vehicles screen
  */
 data class VehiclesUiState(
+    val ship: StarShip? = null,
+    val availableVehicles: List<Vehicle> = emptyList(),
+    val vehiclesWithAllocations: List<VehicleWithAllocation> = emptyList(),
     val shipSummary: ShipSummary? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
+    val errorMessage: String? = null,
+    val showAddVehicleDialog: Boolean = false
+) {
+    val allocatedVehicles: List<VehicleWithAllocation> get() = vehiclesWithAllocations.filter { it.isAllocated }
+    val totalVehicleTonnage: Float get() = allocatedVehicles.sumOf { it.extendedTonnage.toDouble() }.toFloat()
+    val totalVehicleCostMCr: Float get() = allocatedVehicles.sumOf { it.extendedCostMCr.toDouble() }.toFloat()
+    val totalVehicleCount: Int get() = allocatedVehicles.sumOf { it.quantity }
+}
 
 @HiltViewModel
 class VehiclesViewModel @Inject constructor(
-    private val shipSummaryService: ShipSummaryService
+    private val starShipRepository: StarShipRepository,
+    private val vehiclesRepository: VehiclesRepository,
+    private val shipSummaryService: ShipSummaryService,
+    private val vehiclesDataService: VehiclesDataService
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(VehiclesUiState())
+    private val _uiState = MutableStateFlow(VehiclesUiState(isLoading = true))
     val uiState: StateFlow<VehiclesUiState> = _uiState.asStateFlow()
+    
+    private var currentShipId: Int = -1
 
     fun loadVehiclesForShip(shipId: Int) {
-        _uiState.value = VehiclesUiState(isLoading = true)
+        currentShipId = shipId
         
         viewModelScope.launch {
             try {
-                shipSummaryService.getComprehensiveShipSummary(shipId).collect { shipSummary ->
-                    _uiState.value = VehiclesUiState(
-                        shipSummary = shipSummary,
-                        isLoading = false,
-                        errorMessage = if (shipSummary == null) "Ship with ID $shipId not found" else null
-                    )
+                // Ensure vehicle catalog is populated first
+                vehiclesDataService.ensureVehicleCatalogPopulated()
+                
+                // Use flatMapLatest to get ship first, then combine with vehicles data
+                starShipRepository.starShips.flatMapLatest { ships ->
+                    val ship = ships.find { it.uid == shipId }
+                    if (ship != null) {
+                        // Now get vehicles and summary with correct tech level
+                        combine(
+                            vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel),
+                            shipSummaryService.getComprehensiveShipSummary(shipId)
+                        ) { vehiclesWithAllocations, shipSummary ->
+                            VehiclesUiState(
+                                ship = ship,
+                                vehiclesWithAllocations = vehiclesWithAllocations,
+                                shipSummary = shipSummary,
+                                isLoading = false,
+                                errorMessage = null
+                            )
+                        }
+                    } else {
+                        flowOf(
+                            VehiclesUiState(
+                                isLoading = false,
+                                errorMessage = "Ship with ID $shipId not found"
+                            )
+                        )
+                    }
+                }.collect { state ->
+                    _uiState.value = state
                 }
             } catch (e: Exception) {
-                _uiState.value = VehiclesUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Failed to load ship summary: ${e.message}"
+                    errorMessage = "Failed to load vehicles: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    private fun getCurrentShipTechLevel() = _uiState.value.ship?.techLevel ?: starship.virtualsoundnw.com.data.local.database.TechLevel.A
+    
+    fun showAddVehicleDialog() {
+        _uiState.value = _uiState.value.copy(showAddVehicleDialog = true)
+        
+        // Load available vehicles for current ship's tech level
+        viewModelScope.launch {
+            try {
+                // Ensure vehicle catalog is populated
+                vehiclesDataService.ensureVehicleCatalogPopulated()
+                val ship = _uiState.value.ship
+                if (ship != null) {
+                    val availableVehicles = vehiclesRepository.getAvailableVehiclesForTechLevel(ship.techLevel).first()
+                    _uiState.value = _uiState.value.copy(availableVehicles = availableVehicles)
+                }
+            } catch (e: Exception) {
+                val ship = _uiState.value.ship
+                val debugInfo = if (ship != null) {
+                    "Ship TL: ${ship.techLevel}"
+                } else {
+                    "No ship loaded"
+                }
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to load available vehicles: ${e.message}. Debug: $debugInfo"
+                )
+            }
+        }
+    }
+    
+    fun hideAddVehicleDialog() {
+        _uiState.value = _uiState.value.copy(showAddVehicleDialog = false)
+    }
+    
+    fun addVehicle(vehicleId: Int) {
+        viewModelScope.launch {
+            try {
+                vehiclesRepository.addVehicleToShip(currentShipId, vehicleId, 1)
+                // No need to manually update UI state - the reactive flow will handle it
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to add vehicle: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun incrementVehicle(vehicleId: Int) {
+        viewModelScope.launch {
+            try {
+                vehiclesRepository.addVehicleToShip(currentShipId, vehicleId, 1)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to increment vehicle: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun decrementVehicle(vehicleId: Int) {
+        viewModelScope.launch {
+            try {
+                vehiclesRepository.removeVehicleFromShip(currentShipId, vehicleId, 1)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to decrement vehicle: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun setVehicleQuantity(vehicleId: Int, quantity: Int) {
+        viewModelScope.launch {
+            try {
+                vehiclesRepository.setVehicleQuantity(currentShipId, vehicleId, quantity)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Failed to set vehicle quantity: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun clearErrorMessage() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+    
+    /**
+     * Debug method to force repopulate vehicles and show debug info
+     */
+    fun debugVehiclesPopulation() {
+        viewModelScope.launch {
+            try {
+                // Force populate vehicles
+                vehiclesDataService.ensureVehicleCatalogPopulated()
+                
+                // Get debug info
+                val allVehicles = vehiclesDataService.getAllVehiclesForDebugging()
+                val ship = _uiState.value.ship
+                val availableForShip = if (ship != null) {
+                    vehiclesDataService.getAvailableVehiclesForTechLevelSync(ship.techLevel)
+                } else {
+                    emptyList()
+                }
+                
+                val debugMessage = "Total vehicles: ${allVehicles.size}, Available for ship: ${availableForShip.size}"
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = debugMessage,
+                    availableVehicles = availableForShip
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Debug failed: ${e.message}"
                 )
             }
         }
