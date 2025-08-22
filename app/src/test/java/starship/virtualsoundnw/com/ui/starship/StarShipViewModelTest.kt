@@ -22,10 +22,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -59,5 +61,13 @@ private class FakeStarShipRepository : StarShipRepository {
 
     override suspend fun add(starShip: StarShip) {
         data.add(0, starShip)
+    }
+    
+    override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
+        return flowOf(
+            data.find { it.uid == shipId }?.let { ship ->
+                ShipSummary(ship = ship)
+            }
+        )
     }
 }
