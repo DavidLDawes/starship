@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "287b015b52c9efefc76344ddc5a3ea52",
+    "identityHash": "b100f54946784160a9fedc36c7f7524c",
     "entities": [
       {
         "tableName": "StarShip",
@@ -306,7 +306,7 @@
       },
       {
         "tableName": "cargo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shipId` INTEGER NOT NULL, `cargoTons` INTEGER NOT NULL, `frozenCargoTons` INTEGER NOT NULL, `sparesTons` INTEGER NOT NULL, `secureCargoTons` INTEGER NOT NULL, `uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`shipId`) REFERENCES `StarShip`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`shipId` INTEGER NOT NULL, `cargoTons` INTEGER NOT NULL, `sparesTons` INTEGER NOT NULL, `coldStorageTons` INTEGER NOT NULL, `securedCargoTons` INTEGER NOT NULL, `xenoCargoTons` INTEGER NOT NULL, `uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`shipId`) REFERENCES `StarShip`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "shipId",
@@ -321,20 +321,26 @@
             "notNull": true
           },
           {
-            "fieldPath": "frozenCargoTons",
-            "columnName": "frozenCargoTons",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "sparesTons",
             "columnName": "sparesTons",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "secureCargoTons",
-            "columnName": "secureCargoTons",
+            "fieldPath": "coldStorageTons",
+            "columnName": "coldStorageTons",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "securedCargoTons",
+            "columnName": "securedCargoTons",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "xenoCargoTons",
+            "columnName": "xenoCargoTons",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -379,7 +385,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '287b015b52c9efefc76344ddc5a3ea52')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b100f54946784160a9fedc36c7f7524c')"
     ]
   }
 }

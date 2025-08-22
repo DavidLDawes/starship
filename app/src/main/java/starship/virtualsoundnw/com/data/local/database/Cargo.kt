@@ -30,7 +30,7 @@ import androidx.room.Index
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Cargo types with their cost specifications according to Issue #82
+ * Cargo types with their cost specifications according to Issue #90
  */
 enum class CargoType(
     val displayName: String,
@@ -38,9 +38,10 @@ enum class CargoType(
     val costPerTon: Float       // Cost per ton in MCr
 ) {
     CARGO("Cargo", 0f, 0f),                         // Free
-    FROZEN_CARGO("Frozen Cargo", 0.1f, 0.01f),     // 0.1 MCr base + 0.01 MCr/ton
-    SPARES("Spares", 0f, 0.1f),                     // 0.1 MCr/ton
-    SECURE_CARGO("Secure Cargo", 0f, 0.2f)         // 0.2 MCr/ton
+    SPARES("Spares", 0f, 0.05f),                    // 0.05 MCr/ton
+    COLD_STORAGE("Cold Storage", 0f, 0.005f),       // 0.005 MCr/ton
+    SECURED_CARGO("Secured Cargo", 1f, 0.1f),       // 1 MCr base + 0.1 MCr/ton
+    XENO_CARGO("Xeno Cargo", 5f, 0.25f)            // 5 MCr base + 0.25 MCr/ton
 }
 
 /**
@@ -61,9 +62,10 @@ enum class CargoType(
 data class Cargo(
     val shipId: Int,
     val cargoTons: Int = 0,         // Regular cargo tonnage (free)
-    val frozenCargoTons: Int = 0,   // Frozen cargo tonnage (0.1 MCr base + 0.01 MCr/ton)
-    val sparesTons: Int = 0,        // Spares tonnage (0.1 MCr/ton)  
-    val secureCargoTons: Int = 0    // Secure cargo tonnage (0.2 MCr/ton)
+    val sparesTons: Int = 0,        // Spares tonnage (0.05 MCr/ton) - allocated in 1% ship tonnage units
+    val coldStorageTons: Int = 0,   // Cold storage tonnage (0.005 MCr/ton)
+    val securedCargoTons: Int = 0,  // Secured cargo tonnage (1 MCr base + 0.1 MCr/ton)
+    val xenoCargoTons: Int = 0      // Xeno cargo tonnage (5 MCr base + 0.25 MCr/ton)
 ) {
     @PrimaryKey(autoGenerate = true)
     var uid: Int = 0
@@ -72,7 +74,7 @@ data class Cargo(
      * Calculate total tonnage used by all cargo types
      */
     fun getTotalTonnage(): Int {
-        return cargoTons + frozenCargoTons + sparesTons + secureCargoTons
+        return cargoTons + sparesTons + coldStorageTons + securedCargoTons + xenoCargoTons
     }
     
     /**
@@ -81,9 +83,10 @@ data class Cargo(
     fun getCostForCargoType(cargoType: CargoType, tons: Int): Float {
         return when (cargoType) {
             CargoType.CARGO -> 0f  // Free
-            CargoType.FROZEN_CARGO -> cargoType.baseCost + (tons * cargoType.costPerTon)
             CargoType.SPARES -> tons * cargoType.costPerTon
-            CargoType.SECURE_CARGO -> tons * cargoType.costPerTon
+            CargoType.COLD_STORAGE -> tons * cargoType.costPerTon
+            CargoType.SECURED_CARGO -> if (tons > 0) cargoType.baseCost + (tons * cargoType.costPerTon) else 0f
+            CargoType.XENO_CARGO -> if (tons > 0) cargoType.baseCost + (tons * cargoType.costPerTon) else 0f
         }
     }
     
@@ -92,11 +95,12 @@ data class Cargo(
      */
     fun getTotalCargoCost(): Float {
         val cargoCost = getCostForCargoType(CargoType.CARGO, cargoTons)
-        val frozenCargoCost = if (frozenCargoTons > 0) getCostForCargoType(CargoType.FROZEN_CARGO, frozenCargoTons) else 0f
         val sparesCost = getCostForCargoType(CargoType.SPARES, sparesTons)
-        val secureCargoCost = getCostForCargoType(CargoType.SECURE_CARGO, secureCargoTons)
+        val coldStorageCost = getCostForCargoType(CargoType.COLD_STORAGE, coldStorageTons)
+        val securedCargoCost = getCostForCargoType(CargoType.SECURED_CARGO, securedCargoTons)
+        val xenoCargoCost = getCostForCargoType(CargoType.XENO_CARGO, xenoCargoTons)
         
-        return cargoCost + frozenCargoCost + sparesCost + secureCargoCost
+        return cargoCost + sparesCost + coldStorageCost + securedCargoCost + xenoCargoCost
     }
     
     /**
@@ -105,9 +109,10 @@ data class Cargo(
     fun getTonnageForCargoType(cargoType: CargoType): Int {
         return when (cargoType) {
             CargoType.CARGO -> cargoTons
-            CargoType.FROZEN_CARGO -> frozenCargoTons
             CargoType.SPARES -> sparesTons
-            CargoType.SECURE_CARGO -> secureCargoTons
+            CargoType.COLD_STORAGE -> coldStorageTons
+            CargoType.SECURED_CARGO -> securedCargoTons
+            CargoType.XENO_CARGO -> xenoCargoTons
         }
     }
     
@@ -117,10 +122,21 @@ data class Cargo(
     fun withUpdatedTonnage(cargoType: CargoType, newTons: Int): Cargo {
         return when (cargoType) {
             CargoType.CARGO -> copy(cargoTons = newTons)
-            CargoType.FROZEN_CARGO -> copy(frozenCargoTons = newTons)
             CargoType.SPARES -> copy(sparesTons = newTons)
-            CargoType.SECURE_CARGO -> copy(secureCargoTons = newTons)
+            CargoType.COLD_STORAGE -> copy(coldStorageTons = newTons)
+            CargoType.SECURED_CARGO -> copy(securedCargoTons = newTons)
+            CargoType.XENO_CARGO -> copy(xenoCargoTons = newTons)
         }
+    }
+    
+    /**
+     * Calculate service interval in months based on spares tonnage
+     * Service every 1 month + 1 month per 1% of ship tonnage allocated to Spares
+     */
+    fun getServiceIntervalMonths(shipTonnage: Int): Int {
+        if (shipTonnage <= 0) return 1
+        val sparesPercentage = (sparesTons.toFloat() / shipTonnage) * 100
+        return 1 + sparesPercentage.toInt()
     }
 }
 
@@ -155,8 +171,10 @@ data class CargoCalculation(
     val totalTonnage: Int get() = cargo?.getTotalTonnage() ?: 0
     val totalCost: Float get() = cargo?.getTotalCargoCost() ?: 0f
     val cargoTons: Int get() = cargo?.cargoTons ?: 0
-    val frozenCargoTons: Int get() = cargo?.frozenCargoTons ?: 0
     val sparesTons: Int get() = cargo?.sparesTons ?: 0
-    val secureCargoTons: Int get() = cargo?.secureCargoTons ?: 0
+    val coldStorageTons: Int get() = cargo?.coldStorageTons ?: 0
+    val securedCargoTons: Int get() = cargo?.securedCargoTons ?: 0
+    val xenoCargoTons: Int get() = cargo?.xenoCargoTons ?: 0
     val availableTonnage: Int get() = ship.tons - totalTonnage // Simplified - would need to account for other systems
+    val serviceIntervalMonths: Int get() = cargo?.getServiceIntervalMonths(ship.tons) ?: 1
 }
