@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.ArmorType
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
+import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -120,11 +122,24 @@ fun DefensesScreen(
                     DefensesSummaryCard(uiState)
                 }
                 
-                uiState.ship?.let { ship ->
+                uiState.shipSummary?.let { shipSummary ->
                     item {
-                        SummaryPanel(
-                            ship = ship,
-                            uiState = uiState
+                        ComprehensiveShipSummaryPanel(
+                            summaryData = ShipSummaryData(
+                                ship = shipSummary.ship,
+                                enginesTonnage = shipSummary.enginesTonnage,
+                                enginesCost = shipSummary.enginesCost,
+                                weaponsTonnage = shipSummary.weaponsTonnage,
+                                weaponsCost = shipSummary.weaponsCost,
+                                defensesTonnage = shipSummary.defensesTonnage,
+                                defensesCost = shipSummary.defensesCost,
+                                fittingsTonnage = shipSummary.fittingsTonnage,
+                                fittingsCost = shipSummary.fittingsCost,
+                                cargoTonnage = shipSummary.cargoTonnage.toDouble(),
+                                cargoCost = shipSummary.cargoCost,
+                                vehiclesTonnage = shipSummary.vehiclesTonnage,
+                                vehiclesCost = shipSummary.vehiclesCost
+                            )
                         )
                     }
                 }
@@ -364,214 +379,6 @@ fun DefensesSummaryCard(uiState: DefensesUiState) {
     }
 }
 
-@Composable
-fun SummaryPanel(
-    ship: StarShip,
-    uiState: DefensesUiState
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Ship Summary",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-            
-            val armorTons = uiState.getArmorTonnage()
-            val armorCost = uiState.getArmorCost()
-            val screenTons = uiState.getScreenTonnage()
-            val screenCost = uiState.getScreenCost()
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Ship Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${ship.tons} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Armor Type:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = uiState.getCurrentArmorType().displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Armor Protection:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${uiState.getCurrentArmorProtection()}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Armor Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.2f", armorTons)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Armor Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.2f", armorCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            // Show screen information for capital ships
-            if (uiState.isCapitalShip()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Nuclear Dampers:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${uiState.getCurrentNuclearDampers()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Meson Screens:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${uiState.getCurrentMesonScreens()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Black Globes:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${uiState.getCurrentBlackGlobes()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Screen Tonnage:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${String.format("%.2f", screenTons)} tons",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Screen Cost:",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "${String.format("%.2f", screenCost)} MCr",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Hull Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.2f", ship.hullCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Defenses Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.2f", ship.hullCost + armorCost + screenCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun DefensesNavigationButtons(
