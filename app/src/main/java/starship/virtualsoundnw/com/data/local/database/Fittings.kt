@@ -148,16 +148,16 @@ data class Fitting(
     /**
      * Calculate total fittings tonnage including bridge
      */
-    fun getTotalTonnage(shipTonnage: Int): Float {
-        val bridgeTonnage = calculateBridgeTonnage(shipTonnage)
+    fun getTotalTonnage(shipTonnage: Int, sections: Int = 1): Float {
+        val bridgeTonnage = calculateBridgeTonnage(shipTonnage, sections)
         return sensorType.tons + bridgeTonnage
     }
     
     /**
      * Calculate total fittings cost including bridge
      */
-    fun getTotalCost(shipTonnage: Int): Float {
-        val bridgeCost = calculateBridgeCost(shipTonnage)
+    fun getTotalCost(shipTonnage: Int, sections: Int = 1): Float {
+        val bridgeCost = calculateBridgeCost(shipTonnage, sections)
         return sensorType.cost + computerModel.cost + bridgeCost
     }
     
@@ -179,12 +179,12 @@ data class Fitting(
     /**
      * Get bridge tonnage based on ship size and capital ship status
      */
-    fun getBridgeTonnage(shipTonnage: Int): Float = calculateBridgeTonnage(shipTonnage)
+    fun getBridgeTonnage(shipTonnage: Int, sections: Int = 1): Float = calculateBridgeTonnage(shipTonnage, sections)
     
     /**
      * Get bridge cost (0.1 MCr per ton)
      */
-    fun getBridgeCost(shipTonnage: Int): Float = calculateBridgeCost(shipTonnage)
+    fun getBridgeCost(shipTonnage: Int, sections: Int = 1): Float = calculateBridgeCost(shipTonnage, sections)
 }
 
 @Dao
@@ -203,8 +203,8 @@ interface FittingDao {
 }
 
 // Helper calculation functions
-private fun calculateBridgeTonnage(shipTonnage: Int): Float {
-    return if (shipTonnage > 2000) {
+private fun calculateBridgeTonnage(shipTonnage: Int, sections: Int = 1): Float {
+    val baseBridgeTonnage = if (shipTonnage > 2000) {
         // Capital ships use 0.5% of ship tonnage
         shipTonnage * 0.005f
     } else {
@@ -216,10 +216,13 @@ private fun calculateBridgeTonnage(shipTonnage: Int): Float {
             else -> shipTonnage * 0.005f // Fallback to percentage (shouldn't happen)
         }
     }
+    
+    // Multiply by sections for capital ships (Issue #102)
+    return baseBridgeTonnage * sections
 }
 
-private fun calculateBridgeCost(shipTonnage: Int): Float {
-    val bridgeTonnage = calculateBridgeTonnage(shipTonnage)
+private fun calculateBridgeCost(shipTonnage: Int, sections: Int = 1): Float {
+    val bridgeTonnage = calculateBridgeTonnage(shipTonnage, sections)
     return bridgeTonnage * 0.1f // 0.1 MCr per ton
 }
 
@@ -235,8 +238,8 @@ data class FittingsCalculation(
     val sensorTonnage: Float get() = fitting?.getSensorTonnage() ?: 0f
     val sensorCost: Float get() = fitting?.getSensorCost() ?: 0f
     val computerCost: Float get() = fitting?.getComputerCost() ?: 0f
-    val bridgeTonnage: Float get() = calculateBridgeTonnage(ship.tons)
-    val bridgeCost: Float get() = calculateBridgeCost(ship.tons)
+    val bridgeTonnage: Float get() = calculateBridgeTonnage(ship.tons, ship.sections)
+    val bridgeCost: Float get() = calculateBridgeCost(ship.tons, ship.sections)
     val totalFittingsTonnage: Float get() = sensorTonnage + bridgeTonnage
     val totalFittingsCost: Float get() = sensorCost + computerCost + bridgeCost
 }

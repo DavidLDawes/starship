@@ -129,14 +129,14 @@ data class WeaponsUiState(
      * Calculate total fittings tonnage
      */
     fun getTotalFittingsTonnage(): Float = ship?.let { ship ->
-        fitting?.getTotalTonnage(ship.tons) ?: (ship.tons * 0.005f) // Just bridge if no fitting
+        fitting?.getTotalTonnage(ship.tons, ship.sections) ?: (ship.tons * 0.005f * ship.sections) // Just bridge if no fitting
     } ?: 0f
     
     /**
      * Calculate total fittings cost
      */
     fun getTotalFittingsCost(): Float = ship?.let { ship ->
-        fitting?.getTotalCost(ship.tons) ?: (ship.tons * 0.005f * 0.1f) // Just bridge if no fitting
+        fitting?.getTotalCost(ship.tons, ship.sections) ?: (ship.tons * 0.005f * ship.sections * 0.1f) // Just bridge if no fitting
     } ?: 0f
     
     /**

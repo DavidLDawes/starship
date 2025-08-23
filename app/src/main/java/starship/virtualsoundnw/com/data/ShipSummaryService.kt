@@ -98,8 +98,8 @@ class ShipSummaryService @Inject constructor(
                     (d.getArmorCost(ship.tons, ship.configuration, ship.techLevel) + d.getScreenCost(ship.hullCode)).toDouble()
                 } ?: 0.0
                 
-                val fittingsTonnage = fitting?.getTotalTonnage(ship.tons)?.toDouble() ?: 0.0
-                val fittingsCost = fitting?.getTotalCost(ship.tons)?.toDouble() ?: 0.0
+                val fittingsTonnage = fitting?.getTotalTonnage(ship.tons, ship.sections)?.toDouble() ?: 0.0
+                val fittingsCost = fitting?.getTotalCost(ship.tons, ship.sections)?.toDouble() ?: 0.0
                 
                 val cargoTonnage = cargo?.getTotalTonnage()?.toDouble() ?: 0.0
                 val cargoCost = cargo?.getTotalCargoCost()?.toDouble() ?: 0.0
