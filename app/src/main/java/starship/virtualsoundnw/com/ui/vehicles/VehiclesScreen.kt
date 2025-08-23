@@ -71,7 +71,8 @@ import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 fun VehiclesScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
-    onNavigateToDefenses: (Int) -> Unit = {},
+    onNavigateToCargo: (Int) -> Unit = {},
+    onNavigateToDrones: (Int) -> Unit = {},
     viewModel: VehiclesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -125,6 +126,14 @@ fun VehiclesScreen(
                             onAddVehicle = { viewModel.showAddVehicleDialog() },
                             onIncrementVehicle = viewModel::incrementVehicle,
                             onDecrementVehicle = viewModel::decrementVehicle
+                        )
+                    }
+                    
+                    item {
+                        VehiclesNavigationButtons(
+                            shipId = shipId,
+                            onNavigateToCargo = onNavigateToCargo,
+                            onNavigateToDrones = onNavigateToDrones
                         )
                     }
                 }
@@ -386,6 +395,34 @@ fun AddVehicleDialog(
         },
         modifier = modifier
     )
+}
+
+@Composable
+fun VehiclesNavigationButtons(
+    shipId: Int,
+    onNavigateToCargo: (Int) -> Unit,
+    onNavigateToDrones: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        OutlinedButton(
+            onClick = { onNavigateToCargo(shipId) }
+        ) {
+            Text("Back: Cargo")
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Button(
+            onClick = { onNavigateToDrones(shipId) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Next: Drones")
+        }
+    }
 }
 
 @Preview(showBackground = true)
