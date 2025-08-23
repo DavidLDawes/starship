@@ -63,6 +63,8 @@ import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.SensorType
 import starship.virtualsoundnw.com.data.local.database.ComputerModel
 import starship.virtualsoundnw.com.data.local.database.Fitting
+import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
+import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -133,10 +135,26 @@ fun FittingsScreen(
                     }
                     
                     item {
-                        ShipSummaryPanel(
-                            ship = ship,
-                            uiState = uiState
-                        )
+                        uiState.shipSummary?.let { shipSummary ->
+                            ComprehensiveShipSummaryPanel(
+                                summaryData = ShipSummaryData(
+                                    ship = shipSummary.ship,
+                                    enginesTonnage = shipSummary.enginesTonnage,
+                                    enginesCost = shipSummary.enginesCost,
+                                    fuelTonnage = shipSummary.fuelTonnage,
+                                    weaponsTonnage = shipSummary.weaponsTonnage,
+                                    weaponsCost = shipSummary.weaponsCost,
+                                    defensesTonnage = shipSummary.defensesTonnage,
+                                    defensesCost = shipSummary.defensesCost,
+                                    fittingsTonnage = shipSummary.fittingsTonnage,
+                                    fittingsCost = shipSummary.fittingsCost,
+                                    cargoTonnage = shipSummary.cargoTonnage.toDouble(),
+                                    cargoCost = shipSummary.cargoCost,
+                                    vehiclesTonnage = shipSummary.vehiclesTonnage,
+                                    vehiclesCost = shipSummary.vehiclesCost
+                                )
+                            )
+                        }
                     }
                     
                     item {
@@ -605,209 +623,6 @@ private fun FittingsScreenPreview() {
                     shipId = 1,
                     onNavigateToEngines = { },
                     onNavigateToWeapons = { }
-                )
-            }
-        }
-    }
-}@Composable
-fun ShipSummaryPanel(
-    ship: StarShip,
-    uiState: FittingsUiState
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Ship Summary",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-            
-            val totalEngineTons = uiState.getTotalEngineTonnage()
-            val totalEngineCost = uiState.getTotalEngineCost()
-            val fuelTons = uiState.getFuelRequirement()
-            val fittingsTons = uiState.getTotalFittingsTonnage()
-            val fittingsCost = uiState.getTotalFittingsCost()
-            val weaponsTons = uiState.getTotalWeaponsTonnage()
-            val weaponsCost = uiState.getTotalWeaponsCost()
-            val remainingTons = uiState.getRemainingTonnage()
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Ship Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${ship.tons} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Engine Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", totalEngineTons)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Fuel Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", fuelTons)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Fittings Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", fittingsTons)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Weapons Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", weaponsTons)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            HorizontalDivider()
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Remaining Tonnage:",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${String.format("%.1f", remainingTons)} tons",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = if (remainingTons >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Hull Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", ship.hullCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Engine Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", totalEngineCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Fittings Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.2f", fittingsCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Weapons Cost:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", weaponsCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            HorizontalDivider()
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Cost:",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${String.format("%.1f", ship.hullCost + totalEngineCost + fittingsCost + weaponsCost)} MCr",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

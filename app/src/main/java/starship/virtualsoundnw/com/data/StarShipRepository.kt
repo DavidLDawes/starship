@@ -32,6 +32,7 @@ data class ShipSummary(
     val ship: StarShip,
     val enginesTonnage: Double = 0.0,
     val enginesCost: Double = 0.0,
+    val fuelTonnage: Double = 0.0,
     val weaponsTonnage: Double = 0.0,
     val weaponsCost: Double = 0.0,
     val defensesTonnage: Double = 0.0,
@@ -43,7 +44,7 @@ data class ShipSummary(
     val vehiclesTonnage: Double = 0.0,
     val vehiclesCost: Double = 0.0
 ) {
-    val totalUsedTonnage: Double get() = enginesTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage
+    val totalUsedTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage
     val remainingTonnage: Double get() = ship.tons - totalUsedTonnage
     val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost
     val totalShipCost: Double get() = ship.hullCost + totalSystemsCost

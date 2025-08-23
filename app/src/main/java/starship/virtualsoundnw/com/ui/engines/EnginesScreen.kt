@@ -167,6 +167,7 @@ fun EnginesScreen(
                                     ship = shipSummary.ship,
                                     enginesTonnage = shipSummary.enginesTonnage,
                                     enginesCost = shipSummary.enginesCost,
+                                    fuelTonnage = shipSummary.fuelTonnage,
                                     weaponsTonnage = shipSummary.weaponsTonnage,
                                     weaponsCost = shipSummary.weaponsCost,
                                     defensesTonnage = shipSummary.defensesTonnage,
@@ -174,7 +175,9 @@ fun EnginesScreen(
                                     fittingsTonnage = shipSummary.fittingsTonnage,
                                     fittingsCost = shipSummary.fittingsCost,
                                     cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                                    cargoCost = shipSummary.cargoCost
+                                    cargoCost = shipSummary.cargoCost,
+                                    vehiclesTonnage = shipSummary.vehiclesTonnage,
+                                    vehiclesCost = shipSummary.vehiclesCost
                                 )
                             )
                         }
@@ -768,6 +771,7 @@ private fun EnginesScreenPreview() {
                             ship = shipSummary.ship,
                             enginesTonnage = shipSummary.enginesTonnage,
                             enginesCost = shipSummary.enginesCost,
+                            fuelTonnage = shipSummary.fuelTonnage,
                             weaponsTonnage = shipSummary.weaponsTonnage,
                             weaponsCost = shipSummary.weaponsCost,
                             defensesTonnage = shipSummary.defensesTonnage,
@@ -775,7 +779,9 @@ private fun EnginesScreenPreview() {
                             fittingsTonnage = shipSummary.fittingsTonnage,
                             fittingsCost = shipSummary.fittingsCost,
                             cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                            cargoCost = shipSummary.cargoCost
+                            cargoCost = shipSummary.cargoCost,
+                            vehiclesTonnage = shipSummary.vehiclesTonnage,
+                            vehiclesCost = shipSummary.vehiclesCost
                         )
                     )
                 }
