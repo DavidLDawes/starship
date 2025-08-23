@@ -49,6 +49,7 @@ import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.CargoType
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -242,12 +243,12 @@ fun CargoTypeSlider(
             val cost = when (cargoType) {
                 CargoType.CARGO -> 0f
                 CargoType.SPARES -> currentTons * cargoType.costPerTon
-                CargoType.COLD_STORAGE -> currentTons * cargoType.costPerTon
-                CargoType.SECURED_CARGO -> cargoType.baseCost + (currentTons * cargoType.costPerTon)
-                CargoType.XENO_CARGO -> cargoType.baseCost + (currentTons * cargoType.costPerTon)
+                CargoType.COLD_STORAGE -> cargoType.baseCost + currentTons * cargoType.costPerTon
+                CargoType.SECURED_CARGO -> cargoType.baseCost + currentTons * cargoType.costPerTon
+                CargoType.XENO_CARGO -> cargoType.baseCost + currentTons * cargoType.costPerTon
             }
             Text(
-                text = "Cost: ${String.format("%.3f", cost)} MCr",
+                text = "Cost: ${String.format(Locale("EN"), "%.3f", cost)} MCr",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )

@@ -38,15 +38,15 @@ class CargoTest {
         val cargoType = CargoType.SPARES
         assertEquals("Spares", cargoType.displayName)
         assertEquals(0f, cargoType.baseCost, 0.001f)
-        assertEquals(0.05f, cargoType.costPerTon, 0.001f)
+        assertEquals(0.1f, cargoType.costPerTon, 0.001f)
     }
 
     @Test
     fun cargoType_coldStorage_hasCorrectSpecifications() {
         val cargoType = CargoType.COLD_STORAGE
         assertEquals("Cold Storage", cargoType.displayName)
-        assertEquals(0f, cargoType.baseCost, 0.001f)
-        assertEquals(0.005f, cargoType.costPerTon, 0.001f)
+        assertEquals(0.1f, cargoType.baseCost, 0.001f)
+        assertEquals(0.01f, cargoType.costPerTon, 0.001f)
     }
 
     @Test
@@ -54,7 +54,7 @@ class CargoTest {
         val cargoType = CargoType.SECURED_CARGO
         assertEquals("Secured Cargo", cargoType.displayName)
         assertEquals(1f, cargoType.baseCost, 0.001f)
-        assertEquals(0.1f, cargoType.costPerTon, 0.001f)
+        assertEquals(0.2f, cargoType.costPerTon, 0.001f)
     }
 
     @Test
@@ -109,26 +109,26 @@ class CargoTest {
     fun getCostForCargoType_spares_calculatesCorrectly() {
         val cargo = createCargo()
         // 0.05 MCr per ton
-        assertEquals(10 * 0.05f, cargo.getCostForCargoType(CargoType.SPARES, 10), 0.001f)
-        assertEquals(25 * 0.05f, cargo.getCostForCargoType(CargoType.SPARES, 25), 0.001f)
-        assertEquals(0 * 0.05f, cargo.getCostForCargoType(CargoType.SPARES, 0), 0.001f)
+        assertEquals(10 * 0.1f, cargo.getCostForCargoType(CargoType.SPARES, 10), 0.001f)
+        assertEquals(25 * 0.1f, cargo.getCostForCargoType(CargoType.SPARES, 25), 0.001f)
+        assertEquals(0 * 0.1f, cargo.getCostForCargoType(CargoType.SPARES, 0), 0.001f)
     }
 
     @Test
     fun getCostForCargoType_coldStorage_calculatesCorrectly() {
         val cargo = createCargo()
         // 0.005 MCr per ton
-        assertEquals(10 * 0.005f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 10), 0.001f)
-        assertEquals(50 * 0.005f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 50), 0.001f)
-        assertEquals(0 * 0.005f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 0), 0.001f)
+        assertEquals(10 * 0.01f + 0.1F, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 10), 0.001f)
+        assertEquals(50 * 0.01f + 0.1F, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 50), 0.001f)
+        assertEquals(0 * 0.01f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 0), 0.001f)
     }
 
     @Test
     fun getCostForCargoType_securedCargo_calculatesCorrectly() {
         val cargo = createCargo()
         // Base cost 1.0 + (tons * 0.1) when tons > 0
-        assertEquals(1.0f + (10 * 0.1f), cargo.getCostForCargoType(CargoType.SECURED_CARGO, 10), 0.001f)
-        assertEquals(1.0f + (30 * 0.1f), cargo.getCostForCargoType(CargoType.SECURED_CARGO, 30), 0.001f)
+        assertEquals(1.0f + (10 * 0.2f), cargo.getCostForCargoType(CargoType.SECURED_CARGO, 10), 0.001f)
+        assertEquals(1.0f + (30 * 0.2f), cargo.getCostForCargoType(CargoType.SECURED_CARGO, 30), 0.001f)
         assertEquals(0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 0), 0.001f)
     }
 
@@ -156,9 +156,9 @@ class CargoTest {
         val cargoWithXeno = createCargo(xenoCargoTons = 5)
         
         assertEquals(0f, cargoWithRegular.getTotalCargoCost(), 0.001f) // Free
-        assertEquals(10 * 0.05f, cargoWithSpares.getTotalCargoCost(), 0.001f) // 0.5
-        assertEquals(20 * 0.005f, cargoWithColdStorage.getTotalCargoCost(), 0.001f) // 0.1
-        assertEquals(1.0f + (15 * 0.1f), cargoWithSecured.getTotalCargoCost(), 0.001f) // 2.5
+        assertEquals(10 * 0.1f, cargoWithSpares.getTotalCargoCost(), 0.001f) // 0.5
+        assertEquals(20 * 0.01f + 0.1f, cargoWithColdStorage.getTotalCargoCost(), 0.001f) // 0.1
+        assertEquals(1.0f + (15 * 0.2f), cargoWithSecured.getTotalCargoCost(), 0.001f) // 2.5
         assertEquals(5.0f + (5 * 0.25f), cargoWithXeno.getTotalCargoCost(), 0.001f) // 6.25
     }
 
@@ -166,13 +166,13 @@ class CargoTest {
     fun getTotalCargoCost_multipleCargoTypes_sumsCostsCorrectly() {
         val cargo = createCargo(
             cargoTons = 50,        // 0 MCr (free)
-            sparesTons = 20,       // 20 * 0.05 = 1.0 MCr
-            coldStorageTons = 100, // 100 * 0.005 = 0.5 MCr
-            securedCargoTons = 5,  // 1.0 + (5 * 0.1) = 1.5 MCr
+            sparesTons = 20,       // 20 * 0.1 = 2.0 MCr
+            coldStorageTons = 100, // 100 * 0.01 + .1 = 1.1 MCr
+            securedCargoTons = 5,  // 1.0 + (5 * 0.2) = 2 MCr
             xenoCargoTons = 2      // 5.0 + (2 * 0.25) = 5.5 MCr
         )
         
-        val expectedTotal = 0f + 1.0f + 0.5f + 1.5f + 5.5f // 8.5 MCr
+        val expectedTotal = 0f + 2.0f + 1.1f + 2f + 5.5f // 10.6 MCr
         assertEquals(expectedTotal, cargo.getTotalCargoCost(), 0.001f)
     }
 
@@ -251,11 +251,11 @@ class CargoTest {
             cargoTons = 100,       // 0 MCr
             coldStorageTons = 20,  // 0.1 + (20 * 0.01) = 0.3 MCr
             sparesTons = 10,       // 10 * 0.1 = 1.0 MCr
-            securedCargoTons = 5    // 5 * 0.2 = 1.0 MCr
+            securedCargoTons = 5    // 1 + 5 * 0.2 = 2 MCr
         )
         
         val calculation = CargoCalculation(ship, cargo)
-        assertEquals(2.3f, calculation.totalCost, 0.001f)
+        assertEquals(3.3f, calculation.totalCost, 0.001f)
     }
 
     @Test
@@ -292,20 +292,20 @@ class CargoTest {
             cargoTons = 200,       // Standard cargo (free)
             coldStorageTons = 50,  // Frozen goods: 0.1 + (50 * 0.01) = 0.6 MCr
             sparesTons = 20,       // Ship spares: 20 * 0.1 = 2.0 MCr
-            securedCargoTons = 10   // Valuable goods: 10 * 0.2 = 2.0 MCr
+            securedCargoTons = 10   // Valuable goods: 1 + 10 * 0.2 = 3.0 MCr
         )
         
         val calculation = CargoCalculation(ship, cargo)
         
         assertEquals(280, calculation.totalTonnage)
-        assertEquals(4.6f, calculation.totalCost, 0.001f) // 0 + 0.6 + 2.0 + 2.0
+        assertEquals(5.6f, calculation.totalCost, 0.001f) // 0 + 0.6 + 2.0 + 3.0
         assertEquals(720, calculation.availableTonnage) // 1000 - 280
         
         // Test individual cargo type calculations
         assertEquals(0f, cargo.getCostForCargoType(CargoType.CARGO, 200), 0.001f)
         assertEquals(0.6f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 50), 0.001f)
         assertEquals(2.0f, cargo.getCostForCargoType(CargoType.SPARES, 20), 0.001f)
-        assertEquals(2.0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 10), 0.001f)
+        assertEquals(3.0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 10), 0.001f)
     }
 
     @Test
@@ -316,20 +316,20 @@ class CargoTest {
             cargoTons = 100,        // Regular cargo (free)
             coldStorageTons = 200,  // Medical supplies: 0.1 + (200 * 0.01) = 2.1 MCr
             sparesTons = 150,       // Large spare parts inventory: 150 * 0.1 = 15.0 MCr
-            securedCargoTons = 50    // High-value electronics: 50 * 0.2 = 10.0 MCr
+            securedCargoTons = 50    // High-value electronics: 1 + 50 * 0.2 = 11.0 MCr
         )
         
         val calculation = CargoCalculation(ship, cargo)
         
         assertEquals(500, calculation.totalTonnage)
-        assertEquals(27.1f, calculation.totalCost, 0.001f) // 0 + 2.1 + 15.0 + 10.0
+        assertEquals(28.1f, calculation.totalCost, 0.001f) // 0 + 2.1 + 15.0 + 11.0
         assertEquals(4500, calculation.availableTonnage)
         
         // Verify that the cost breakdown matches expectations
         assertEquals(0f, cargo.getCostForCargoType(CargoType.CARGO, 100), 0.001f)
         assertEquals(2.1f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 200), 0.001f)
         assertEquals(15.0f, cargo.getCostForCargoType(CargoType.SPARES, 150), 0.001f)
-        assertEquals(10.0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 50), 0.001f)
+        assertEquals(11.0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 50), 0.001f)
     }
 
     @Test
@@ -343,7 +343,7 @@ class CargoTest {
         // Regular cargo is always free
         assertEquals(0f, cargo.getCostForCargoType(CargoType.CARGO, 0), 0.001f)
         // Frozen cargo has base cost even with zero tonnage when explicitly requested
-        assertEquals(0.1f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 0), 0.001f)
+        assertEquals(0f, cargo.getCostForCargoType(CargoType.COLD_STORAGE, 0), 0.001f)
         // Spares and secure cargo are per-ton only
         assertEquals(0f, cargo.getCostForCargoType(CargoType.SPARES, 0), 0.001f)
         assertEquals(0f, cargo.getCostForCargoType(CargoType.SECURED_CARGO, 0), 0.001f)
