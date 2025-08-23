@@ -177,7 +177,7 @@ data class Fitting(
     fun getComputerCost(): Float = computerModel.cost
     
     /**
-     * Get bridge tonnage (0.5% of ship tonnage)
+     * Get bridge tonnage based on ship size and capital ship status
      */
     fun getBridgeTonnage(shipTonnage: Int): Float = calculateBridgeTonnage(shipTonnage)
     
@@ -204,7 +204,18 @@ interface FittingDao {
 
 // Helper calculation functions
 private fun calculateBridgeTonnage(shipTonnage: Int): Float {
-    return shipTonnage * 0.005f // 0.5% of ship tonnage
+    return if (shipTonnage > 2000) {
+        // Capital ships use 0.5% of ship tonnage
+        shipTonnage * 0.005f
+    } else {
+        // Non-capital ships use tiered system
+        when {
+            shipTonnage <= 200 -> 10f
+            shipTonnage <= 1000 -> 20f  // 300-1000 tons
+            shipTonnage <= 2000 -> 40f  // 1100-2000 tons
+            else -> shipTonnage * 0.005f // Fallback to percentage (shouldn't happen)
+        }
+    }
 }
 
 private fun calculateBridgeCost(shipTonnage: Int): Float {
