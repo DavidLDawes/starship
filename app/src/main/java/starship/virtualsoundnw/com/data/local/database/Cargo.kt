@@ -38,9 +38,9 @@ enum class CargoType(
     val costPerTon: Float       // Cost per ton in MCr
 ) {
     CARGO("Cargo", 0f, 0f),                         // Free
-    SPARES("Spares", 0f, 0.05f),                    // 0.05 MCr/ton
-    COLD_STORAGE("Cold Storage", 0f, 0.005f),       // 0.005 MCr/ton
-    SECURED_CARGO("Secured Cargo", 1f, 0.1f),       // 1 MCr base + 0.1 MCr/ton
+    SPARES("Spares", 0f, 0.1f),                    // 0.1 MCr/ton
+    COLD_STORAGE("Cold Storage", 0.1f, 0.01f),       // 0.01 MCr/ton
+    SECURED_CARGO("Secured Cargo", 1f, 0.2f),       // 1 MCr base + 0.2 MCr/ton
     XENO_CARGO("Xeno Cargo", 5f, 0.25f)            // 5 MCr base + 0.25 MCr/ton
 }
 
@@ -84,7 +84,7 @@ data class Cargo(
         return when (cargoType) {
             CargoType.CARGO -> 0f  // Free
             CargoType.SPARES -> tons * cargoType.costPerTon
-            CargoType.COLD_STORAGE -> tons * cargoType.costPerTon
+            CargoType.COLD_STORAGE ->  if (tons > 0) cargoType.baseCost + (tons * cargoType.costPerTon) else 0f
             CargoType.SECURED_CARGO -> if (tons > 0) cargoType.baseCost + (tons * cargoType.costPerTon) else 0f
             CargoType.XENO_CARGO -> if (tons > 0) cargoType.baseCost + (tons * cargoType.costPerTon) else 0f
         }
