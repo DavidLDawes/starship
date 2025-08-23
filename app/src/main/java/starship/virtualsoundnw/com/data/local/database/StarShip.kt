@@ -53,6 +53,8 @@ data class StarShip(
     
     val hullCode: String get() = calculateHullCode(tons)
     
+    val sections: Int get() = calculateSections(hullCode)
+    
     val shipDesignation: String get() = if (isCapitalShip) "Capital Ship" else "Ship"
 }
 
@@ -188,5 +190,30 @@ private fun calculateHullCode(tons: Int): String {
         // For tonnages not exactly matching the table, return "Unknown"
         // This handles edge cases like 150 tons, 2500 tons, etc.
         else -> "Unknown"
+    }
+}
+
+/**
+ * Calculate number of sections for capital ships based on Hull Code according to Issue #102 specifications
+ */
+private fun calculateSections(hullCode: String): Int {
+    return when (hullCode) {
+        // CA to CE: 2 sections
+        "CA", "CB", "CC", "CD", "CE" -> 2
+        
+        // CF to CK: 3 sections
+        "CF", "CG", "CH", "CJ", "CK" -> 3
+        
+        // CL to CQ: 4 sections
+        "CL", "CM", "CN", "CP", "CQ" -> 4
+        
+        // CR to CV: 5 sections
+        "CR", "CS", "CT", "CU", "CV" -> 5
+        
+        // CW to CZ: 6 sections
+        "CW", "CX", "CY", "CZ" -> 6
+        
+        // Non-capital ships always have 1 section
+        else -> 1
     }
 }

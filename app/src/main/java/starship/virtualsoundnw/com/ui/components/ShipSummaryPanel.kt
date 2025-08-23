@@ -96,6 +96,24 @@ fun ComprehensiveShipSummaryPanel(
                 )
             }
             
+            // Sections (for capital ships)
+            if (summaryData.ship.sections > 1) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Sections:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "${summaryData.ship.sections}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
             // Engines
             Row(
                 modifier = Modifier.fillMaxWidth(),

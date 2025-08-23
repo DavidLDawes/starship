@@ -76,28 +76,28 @@ data class FittingsUiState(
      * Get bridge tonnage
      */
     fun getBridgeTonnage(): Float = ship?.let { s -> 
-        fitting?.getBridgeTonnage(s.tons) ?: (s.tons * 0.005f) 
+        fitting?.getBridgeTonnage(s.tons, s.sections) ?: (s.tons * 0.005f * s.sections) 
     } ?: 0f
     
     /**
      * Get bridge cost
      */
     fun getBridgeCost(): Float = ship?.let { s -> 
-        fitting?.getBridgeCost(s.tons) ?: (s.tons * 0.005f * 0.1f) 
+        fitting?.getBridgeCost(s.tons, s.sections) ?: (s.tons * 0.005f * s.sections * 0.1f) 
     } ?: 0f
     
     /**
      * Calculate total fittings tonnage
      */
     fun getTotalFittingsTonnage(): Float = ship?.let { s ->
-        fitting?.getTotalTonnage(s.tons) ?: (s.tons * 0.005f) // Just bridge if no fitting
+        fitting?.getTotalTonnage(s.tons, s.sections) ?: (s.tons * 0.005f * s.sections) // Just bridge if no fitting
     } ?: 0f
     
     /**
      * Calculate total fittings cost
      */
     fun getTotalFittingsCost(): Float = ship?.let { s ->
-        fitting?.getTotalCost(s.tons) ?: (s.tons * 0.005f * 0.1f) // Just bridge if no fitting
+        fitting?.getTotalCost(s.tons, s.sections) ?: (s.tons * 0.005f * s.sections * 0.1f) // Just bridge if no fitting
     } ?: 0f
     
     /**

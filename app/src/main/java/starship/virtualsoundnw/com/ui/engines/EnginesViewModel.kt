@@ -92,7 +92,7 @@ data class EnginesUiState(
      */
     fun getFittingsTonnage(): Float {
         return ship?.let { ship ->
-            fitting?.getTotalTonnage(ship.tons) ?: (ship.tons * 0.005f) // Just bridge if no fitting
+            fitting?.getTotalTonnage(ship.tons, ship.sections) ?: (ship.tons * 0.005f * ship.sections) // Just bridge if no fitting
         } ?: 0f
     }
     
@@ -101,7 +101,7 @@ data class EnginesUiState(
      */
     fun getFittingsCost(): Float {
         return ship?.let { ship ->
-            fitting?.getTotalCost(ship.tons) ?: (ship.tons * 0.005f * 0.1f) // Just bridge if no fitting
+            fitting?.getTotalCost(ship.tons, ship.sections) ?: (ship.tons * 0.005f * ship.sections * 0.1f) // Just bridge if no fitting
         } ?: 0f
     }
     
