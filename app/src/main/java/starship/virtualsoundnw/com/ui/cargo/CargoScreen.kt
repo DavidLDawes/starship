@@ -48,6 +48,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.CargoType
 import starship.virtualsoundnw.com.data.ShipSummary
+import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
+import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -111,9 +113,23 @@ fun CargoScreen(
         // Ship Summary comes second (below cargo configuration)
         if (uiState.shipSummary != null && !uiState.isLoading) {
             item {
-                // Ship summary
-                ShipSummaryPanel(
-                    shipSummary = uiState.shipSummary!!
+                ComprehensiveShipSummaryPanel(
+                    summaryData = ShipSummaryData(
+                        ship = uiState.shipSummary!!.ship,
+                        enginesTonnage = uiState.shipSummary!!.enginesTonnage,
+                        enginesCost = uiState.shipSummary!!.enginesCost,
+                        fuelTonnage = uiState.shipSummary!!.fuelTonnage,
+                        weaponsTonnage = uiState.shipSummary!!.weaponsTonnage,
+                        weaponsCost = uiState.shipSummary!!.weaponsCost,
+                        defensesTonnage = uiState.shipSummary!!.defensesTonnage,
+                        defensesCost = uiState.shipSummary!!.defensesCost,
+                        fittingsTonnage = uiState.shipSummary!!.fittingsTonnage,
+                        fittingsCost = uiState.shipSummary!!.fittingsCost,
+                        cargoTonnage = uiState.shipSummary!!.cargoTonnage.toDouble(),
+                        cargoCost = uiState.shipSummary!!.cargoCost,
+                        vehiclesTonnage = uiState.shipSummary!!.vehiclesTonnage,
+                        vehiclesCost = uiState.shipSummary!!.vehiclesCost
+                    )
                 )
             }
         }
@@ -328,155 +344,6 @@ fun CargoNavigationButtons(
     }
 }
 
-@Composable
-fun ShipSummaryPanel(
-    shipSummary: ShipSummary
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Ship Summary",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Ship Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${shipSummary.ship.tons} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Engines:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", shipSummary.enginesTonnage)} tons (${String.format("%.1f", shipSummary.enginesCost)} MCr)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Weapons:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", shipSummary.weaponsTonnage)} tons (${String.format("%.1f", shipSummary.weaponsCost)} MCr)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Defenses:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", shipSummary.defensesTonnage)} tons (${String.format("%.1f", shipSummary.defensesCost)} MCr)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Fittings:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${String.format("%.1f", shipSummary.fittingsTonnage)} tons (${String.format("%.1f", shipSummary.fittingsCost)} MCr)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Cargo:",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${shipSummary.cargoTonnage} tons (${String.format("%.1f", shipSummary.cargoCost)} MCr)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            // Totals section
-            Text(
-                text = "Totals",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Remaining Tonnage:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${String.format("%.1f", shipSummary.remainingTonnage)} tons",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Total Cost:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${String.format("%.2f", shipSummary.totalShipCost)} MCr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
