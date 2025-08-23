@@ -48,10 +48,12 @@ data class ShipSummaryData(
     val fittingsTonnage: Double = 0.0,
     val fittingsCost: Double = 0.0,
     val cargoTonnage: Double = 0.0,
-    val cargoCost: Double = 0.0
+    val cargoCost: Double = 0.0,
+    val vehiclesTonnage: Double = 0.0,
+    val vehiclesCost: Double = 0.0
 ) {
-    val totalSystemsTonnage: Double get() = enginesTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage
-    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + ship.hullCost
+    val totalSystemsTonnage: Double get() = enginesTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage
+    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost + ship.hullCost
     val remainingTonnage: Double get() = ship.tons - totalSystemsTonnage
 }
 
@@ -168,6 +170,22 @@ fun ComprehensiveShipSummaryPanel(
                 )
                 Text(
                     text = "${String.format("%.0f", summaryData.cargoTonnage)} tons (${String.format("%.1f", summaryData.cargoCost)} MCr)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            // Vehicles
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Vehicles:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", summaryData.vehiclesTonnage)} tons (${String.format("%.1f", summaryData.vehiclesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )

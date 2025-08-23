@@ -19,12 +19,16 @@ package starship.virtualsoundnw.com.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Engine
 import starship.virtualsoundnw.com.data.local.database.Weapon
 import starship.virtualsoundnw.com.data.local.database.Defense
 import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.Cargo
+import starship.virtualsoundnw.com.data.local.database.VehicleAllocation
+import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
 import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
@@ -42,36 +46,39 @@ class ShipSummaryService @Inject constructor(
     private val weaponsRepository: WeaponsRepository,
     private val defensesRepository: DefensesRepository,
     private val fittingsRepository: FittingsRepository,
-    private val cargoRepository: CargoRepository
+    private val cargoRepository: CargoRepository,
+    private val vehiclesRepository: VehiclesRepository
 ) {
     
     /**
      * Get comprehensive ship summary with all system data
      */
     fun getComprehensiveShipSummary(shipId: Int): Flow<ShipSummary?> {
-        return combine(
-            starShipRepository.starShips,
-            enginesRepository.getEnginesForShip(shipId),
-            weaponsRepository.getWeaponsForShip(shipId),
-            defensesRepository.getDefenseForShip(shipId),
-            fittingsRepository.getFittingForShip(shipId),
-            cargoRepository.getCargoForShip(shipId)
-        ) { flows ->
-            val ships = flows[0] as List<StarShip>
-            val engines = flows[1] as List<Engine>
-            val weapons = flows[2] as List<Weapon>
-            val defenses = flows[3] as Defense?
-            val fitting = flows[4] as Fitting?
-            val cargo = flows[5] as Cargo?
-            
-            ships.find { it.uid == shipId }?.let { ship ->
+        return starShipRepository.starShips.flatMapLatest { ships ->
+            val ship = ships.find { it.uid == shipId }
+            if (ship != null) {
+                combine(
+                    combine(
+                        enginesRepository.getEnginesForShip(shipId),
+                        weaponsRepository.getWeaponsForShip(shipId),
+                        defensesRepository.getDefenseForShip(shipId)
+                    ) { engines, weapons, defenses -> Triple(engines, weapons, defenses) },
+                    combine(
+                        fittingsRepository.getFittingForShip(shipId),
+                        cargoRepository.getCargoForShip(shipId),
+                        vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel)
+                    ) { fitting, cargo, vehiclesWithAllocations -> Triple(fitting, cargo, vehiclesWithAllocations) }
+                ) { systemsA, systemsB ->
+                val (engines, weapons, defenses) = systemsA
+                val (fitting, cargo, vehiclesWithAllocations) = systemsB
+                
                 // Calculate engine tonnage including fuel
                 val baseEnginesTonnage = engines.sumOf { it.getTonnage(ship.tons).toDouble() }
                 val enginesCost = engines.sumOf { it.getTotalCost(ship.tons, ship.techLevel).toDouble() }
                 
                 // Calculate fuel requirement
                 val jumpPerformance = engines.filter { it.type == EngineType.JUMP_DRIVE }
-                    .maxOfOrNull { it.performance } ?: 0
+                    .maxOfOrNull { it.performance.toInt() } ?: 0
                 val hasAntimatterPowerPlant = engines.filter { it.type == EngineType.POWER_PLANT }
                     .any { engine -> 
                         PowerPlantType.getBestAvailableForTechLevel(ship.techLevel) == 
@@ -95,8 +102,12 @@ class ShipSummaryService @Inject constructor(
                 val fittingsTonnage = fitting?.getTotalTonnage(ship.tons)?.toDouble() ?: 0.0
                 val fittingsCost = fitting?.getTotalCost(ship.tons)?.toDouble() ?: 0.0
                 
-                val cargoTonnage = cargo?.getTotalTonnage() ?: 0
+                val cargoTonnage = cargo?.getTotalTonnage()?.toDouble() ?: 0.0
                 val cargoCost = cargo?.getTotalCargoCost()?.toDouble() ?: 0.0
+                
+                // Calculate vehicles tonnage and cost
+                val vehiclesTonnage = vehiclesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
+                val vehiclesCost = vehiclesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
                 
                 ShipSummary(
                     ship = ship,
@@ -108,9 +119,14 @@ class ShipSummaryService @Inject constructor(
                     defensesCost = defensesCost,
                     fittingsTonnage = fittingsTonnage,
                     fittingsCost = fittingsCost,
-                    cargoTonnage = cargoTonnage,
-                    cargoCost = cargoCost
+                    cargoTonnage = cargoTonnage.toInt(),
+                    cargoCost = cargoCost,
+                    vehiclesTonnage = vehiclesTonnage,
+                    vehiclesCost = vehiclesCost
                 )
+                }
+            } else {
+                flowOf(null)
             }
         }
     }
