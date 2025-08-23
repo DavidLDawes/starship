@@ -72,11 +72,11 @@ class ShipSummaryService @Inject constructor(
                 val (engines, weapons, defenses) = systemsA
                 val (fitting, cargo, vehiclesWithAllocations) = systemsB
                 
-                // Calculate engine tonnage including fuel
-                val baseEnginesTonnage = engines.sumOf { it.getTonnage(ship.tons).toDouble() }
+                // Calculate engine tonnage (without fuel)
+                val enginesTonnage = engines.sumOf { it.getTonnage(ship.tons).toDouble() }
                 val enginesCost = engines.sumOf { it.getTotalCost(ship.tons, ship.techLevel).toDouble() }
                 
-                // Calculate fuel requirement
+                // Calculate fuel requirement separately
                 val jumpPerformance = engines.filter { it.type == EngineType.JUMP_DRIVE }
                     .maxOfOrNull { it.performance.toInt() } ?: 0
                 val hasAntimatterPowerPlant = engines.filter { it.type == EngineType.POWER_PLANT }
@@ -87,7 +87,6 @@ class ShipSummaryService @Inject constructor(
                 val fuelTonnage = calculateFuelRequirement(
                     jumpPerformance, ship.tons, hasAntimatterPowerPlant
                 ).toDouble()
-                val totalEnginesTonnage = baseEnginesTonnage + fuelTonnage
                 
                 val weaponsTonnage = weapons.sumOf { it.getTotalTonnage().toDouble() }
                 val weaponsCost = weapons.sumOf { it.getTotalCost().toDouble() }
@@ -111,8 +110,9 @@ class ShipSummaryService @Inject constructor(
                 
                 ShipSummary(
                     ship = ship,
-                    enginesTonnage = totalEnginesTonnage,
+                    enginesTonnage = enginesTonnage,
                     enginesCost = enginesCost,
+                    fuelTonnage = fuelTonnage,
                     weaponsTonnage = weaponsTonnage,
                     weaponsCost = weaponsCost,
                     defensesTonnage = defensesTonnage,

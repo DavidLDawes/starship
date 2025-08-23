@@ -84,6 +84,7 @@ fun DronesScreen(
                                 ship = shipSummary.ship,
                                 enginesTonnage = shipSummary.enginesTonnage,
                                 enginesCost = shipSummary.enginesCost,
+                                fuelTonnage = shipSummary.fuelTonnage,
                                 weaponsTonnage = shipSummary.weaponsTonnage,
                                 weaponsCost = shipSummary.weaponsCost,
                                 defensesTonnage = shipSummary.defensesTonnage,

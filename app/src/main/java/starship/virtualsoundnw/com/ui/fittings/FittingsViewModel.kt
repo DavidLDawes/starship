@@ -29,6 +29,8 @@ import starship.virtualsoundnw.com.data.FittingsRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.EnginesRepository
 import starship.virtualsoundnw.com.data.WeaponsRepository
+import starship.virtualsoundnw.com.data.ShipSummaryService
+import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Engine
@@ -51,6 +53,7 @@ data class FittingsUiState(
     val weapons: List<Weapon> = emptyList(),
     val availableComputers: List<ComputerModel> = emptyList(),
     val maxJumpPerformance: Int = 0,
+    val shipSummary: ShipSummary? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -166,7 +169,8 @@ class FittingsViewModel @Inject constructor(
     private val fittingsRepository: FittingsRepository,
     private val starShipRepository: StarShipRepository,
     private val enginesRepository: EnginesRepository,
-    private val weaponsRepository: WeaponsRepository
+    private val weaponsRepository: WeaponsRepository,
+    private val shipSummaryService: ShipSummaryService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FittingsUiState(isLoading = true))
@@ -179,13 +183,14 @@ class FittingsViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Combine ship data, engines, weapons, and fittings
+                // Combine ship data, engines, weapons, fittings, and ship summary
                 combine(
                     starShipRepository.starShips,
                     enginesRepository.getEnginesForShip(shipId),
                     weaponsRepository.getWeaponsForShip(shipId),
-                    fittingsRepository.getFittingForShip(shipId)
-                ) { ships, engines, weapons, fitting ->
+                    fittingsRepository.getFittingForShip(shipId),
+                    shipSummaryService.getComprehensiveShipSummary(shipId)
+                ) { ships, engines, weapons, fitting, shipSummary ->
                     val ship = ships.find { it.uid == shipId }
                     val maxJumpPerformance = engines
                         .filter { it.type == EngineType.JUMP_DRIVE }
@@ -206,6 +211,7 @@ class FittingsViewModel @Inject constructor(
                         weapons = weapons,
                         availableComputers = availableComputers,
                         maxJumpPerformance = maxJumpPerformance,
+                        shipSummary = shipSummary,
                         isLoading = false
                     )
                 }.collect { state ->
