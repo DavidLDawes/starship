@@ -122,8 +122,8 @@ fun DronesScreen(
                                 cargoCost = shipSummary.cargoCost,
                                 vehiclesTonnage = shipSummary.vehiclesTonnage,
                                 vehiclesCost = shipSummary.vehiclesCost,
-                                dronesTonnage = uiState.totalDroneTonnage.toDouble(),
-                                dronesCost = uiState.totalDroneCostMCr.toDouble()
+                                dronesTonnage = shipSummary.dronesTonnage,
+                                dronesCost = shipSummary.dronesCost
                             )
                         )
                     }

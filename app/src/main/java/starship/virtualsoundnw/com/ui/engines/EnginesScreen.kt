@@ -177,7 +177,9 @@ fun EnginesScreen(
                                     cargoTonnage = shipSummary.cargoTonnage.toDouble(),
                                     cargoCost = shipSummary.cargoCost,
                                     vehiclesTonnage = shipSummary.vehiclesTonnage,
-                                    vehiclesCost = shipSummary.vehiclesCost
+                                    vehiclesCost = shipSummary.vehiclesCost,
+                                    dronesTonnage = shipSummary.dronesTonnage,
+                                    dronesCost = shipSummary.dronesCost
                                 )
                             )
                         }
@@ -781,7 +783,9 @@ private fun EnginesScreenPreview() {
                             cargoTonnage = shipSummary.cargoTonnage.toDouble(),
                             cargoCost = shipSummary.cargoCost,
                             vehiclesTonnage = shipSummary.vehiclesTonnage,
-                            vehiclesCost = shipSummary.vehiclesCost
+                            vehiclesCost = shipSummary.vehiclesCost,
+                            dronesTonnage = shipSummary.dronesTonnage,
+                            dronesCost = shipSummary.dronesCost
                         )
                     )
                 }

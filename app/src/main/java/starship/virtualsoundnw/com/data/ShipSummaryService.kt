@@ -29,6 +29,7 @@ import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.Cargo
 import starship.virtualsoundnw.com.data.local.database.VehicleAllocation
 import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
+import starship.virtualsoundnw.com.data.local.database.DroneWithAllocation
 import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.calculateFuelRequirement
@@ -47,7 +48,8 @@ class ShipSummaryService @Inject constructor(
     private val defensesRepository: DefensesRepository,
     private val fittingsRepository: FittingsRepository,
     private val cargoRepository: CargoRepository,
-    private val vehiclesRepository: VehiclesRepository
+    private val vehiclesRepository: VehiclesRepository,
+    private val dronesRepository: DronesRepository
 ) {
     
     /**
@@ -66,11 +68,17 @@ class ShipSummaryService @Inject constructor(
                     combine(
                         fittingsRepository.getFittingForShip(shipId),
                         cargoRepository.getCargoForShip(shipId),
-                        vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel)
-                    ) { fitting, cargo, vehiclesWithAllocations -> Triple(fitting, cargo, vehiclesWithAllocations) }
+                        combine(
+                            vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel),
+                            dronesRepository.getDronesWithAllocationsForShip(shipId, ship.techLevel)
+                        ) { vehicles, drones -> Pair(vehicles, drones) }
+                    ) { fitting, cargo, vehiclesDrones -> 
+                        Triple(fitting, cargo, vehiclesDrones) 
+                    }
                 ) { systemsA, systemsB ->
                 val (engines, weapons, defenses) = systemsA
-                val (fitting, cargo, vehiclesWithAllocations) = systemsB
+                val (fitting, cargo, vehiclesDrones) = systemsB
+                val (vehiclesWithAllocations, dronesWithAllocations) = vehiclesDrones
                 
                 // Calculate engine tonnage (without fuel)
                 val enginesTonnage = engines.sumOf { it.getTonnage(ship.tons).toDouble() }
@@ -108,6 +116,10 @@ class ShipSummaryService @Inject constructor(
                 val vehiclesTonnage = vehiclesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
                 val vehiclesCost = vehiclesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
                 
+                // Calculate drones tonnage and cost
+                val dronesTonnage = dronesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
+                val dronesCost = dronesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
+                
                 ShipSummary(
                     ship = ship,
                     enginesTonnage = enginesTonnage,
@@ -122,7 +134,9 @@ class ShipSummaryService @Inject constructor(
                     cargoTonnage = cargoTonnage.toInt(),
                     cargoCost = cargoCost,
                     vehiclesTonnage = vehiclesTonnage,
-                    vehiclesCost = vehiclesCost
+                    vehiclesCost = vehiclesCost,
+                    dronesTonnage = dronesTonnage,
+                    dronesCost = dronesCost
                 )
                 }
             } else {
