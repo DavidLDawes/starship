@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class], version = 11)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class], version = 12)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
@@ -32,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cargoDao(): CargoDao
     abstract fun vehicleDao(): VehicleDao
     abstract fun vehicleAllocationDao(): VehicleAllocationDao
+    abstract fun droneDao(): DroneDao
 
     companion object {
         /**
@@ -74,6 +75,50 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Step 5: Recreate the index
                 database.execSQL("CREATE UNIQUE INDEX index_cargo_shipId ON cargo(shipId)")
+            }
+        }
+        
+        /**
+         * Migration from version 11 to 12: Add Drone and DroneAllocation tables
+         */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create drones table
+                database.execSQL("""
+                    CREATE TABLE drones (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        tons REAL NOT NULL,
+                        costMCr REAL NOT NULL,
+                        minimumTechLevel TEXT
+                    )
+                """.trimIndent())
+                
+                // Create drone_allocations table
+                database.execSQL("""
+                    CREATE TABLE drone_allocations (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        shipId INTEGER NOT NULL,
+                        droneId INTEGER NOT NULL,
+                        quantity INTEGER NOT NULL DEFAULT 1,
+                        FOREIGN KEY(shipId) REFERENCES StarShip(uid) ON DELETE CASCADE,
+                        FOREIGN KEY(droneId) REFERENCES drones(uid) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                
+                // Create indices
+                database.execSQL("CREATE INDEX index_drone_allocations_shipId ON drone_allocations(shipId)")
+                database.execSQL("CREATE INDEX index_drone_allocations_droneId ON drone_allocations(droneId)")
+                database.execSQL("CREATE UNIQUE INDEX index_drone_allocations_shipId_droneId ON drone_allocations(shipId, droneId)")
+                
+                // Insert predefined drones from Issue #106
+                database.execSQL("""
+                    INSERT INTO drones (name, tons, costMCr, minimumTechLevel) VALUES
+                    ('Centurion Security Robot', 0.5, 0.12, 'C'),
+                    ('Robodog Assault Bot', 0.5, 0.012, NULL),
+                    ('Fury Helicopter Gunship', 8.0, 1.2, NULL),
+                    ('ATLAS Combat Droid', 1.0, 0.024, NULL)
+                """.trimIndent())
             }
         }
     }

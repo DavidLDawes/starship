@@ -19,24 +19,42 @@ package starship.virtualsoundnw.com.ui.drones
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -74,7 +92,16 @@ fun DronesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    DronesPlaceholderCard()
+                    DronesManagementPanel(
+                        dronesWithAllocations = uiState.dronesWithAllocations,
+                        availableDrones = uiState.availableDrones,
+                        totalCount = uiState.totalDroneCount,
+                        totalTonnage = uiState.totalDroneTonnage,
+                        totalCost = uiState.totalDroneCostMCr,
+                        onShowAddDroneDialog = viewModel::showAddDroneDialog,
+                        onIncrementDrone = viewModel::incrementDrone,
+                        onDecrementDrone = viewModel::decrementDrone
+                    )
                 }
                 
                 uiState.shipSummary?.let { shipSummary ->
@@ -94,7 +121,9 @@ fun DronesScreen(
                                 cargoTonnage = shipSummary.cargoTonnage.toDouble(),
                                 cargoCost = shipSummary.cargoCost,
                                 vehiclesTonnage = shipSummary.vehiclesTonnage,
-                                vehiclesCost = shipSummary.vehiclesCost
+                                vehiclesCost = shipSummary.vehiclesCost,
+                                dronesTonnage = uiState.totalDroneTonnage.toDouble(),
+                                dronesCost = uiState.totalDroneCostMCr.toDouble()
                             )
                         )
                     }
@@ -109,26 +138,278 @@ fun DronesScreen(
                 }
             }
         }
+        
+        // Add Drone Dialog
+        if (uiState.showAddDroneDialog) {
+            AddDroneDialog(
+                availableDrones = uiState.availableDrones,
+                onDroneSelected = { droneId ->
+                    viewModel.addDrone(droneId)
+                    viewModel.hideAddDroneDialog()
+                },
+                onDismiss = viewModel::hideAddDroneDialog
+            )
+        }
+        
+        // Error Dialog
+        uiState.errorMessage?.let { errorMessage ->
+            AlertDialog(
+                onDismissRequest = viewModel::clearError,
+                title = { Text("Error") },
+                text = { Text(errorMessage) },
+                confirmButton = {
+                    TextButton(onClick = viewModel::clearError) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
-fun DronesPlaceholderCard(
+fun DronesManagementPanel(
+    dronesWithAllocations: List<starship.virtualsoundnw.com.data.local.database.DroneWithAllocation>,
+    availableDrones: List<starship.virtualsoundnw.com.data.local.database.Drone>,
+    totalCount: Int,
+    totalTonnage: Float,
+    totalCost: Float,
+    onShowAddDroneDialog: () -> Unit,
+    onIncrementDrone: (Int) -> Unit,
+    onDecrementDrone: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth()
     ) {
-        Text(
-            text = "Coming Soon",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(64.dp)
-        )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header with Add Drone button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Drones",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                FilledTonalButton(
+                    onClick = onShowAddDroneDialog,
+                    enabled = availableDrones.isNotEmpty()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Drones")
+                }
+            }
+            
+            // Summary
+            if (totalCount > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Total: $totalCount drones",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${String.format("%.1f", totalTonnage)} tons • ${String.format("%.3f", totalCost)} MCr",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            // Drone List - Only show drones with quantity > 0
+            val activeDrones = dronesWithAllocations.filter { it.quantity > 0 }
+            if (activeDrones.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Text(
+                        text = "No drones configured. Use 'Add Drone' to get started.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp)
+                    )
+                }
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    activeDrones.forEach { droneWithAllocation ->
+                        DroneAllocationItem(
+                            droneWithAllocation = droneWithAllocation,
+                            onIncrement = { onIncrementDrone(droneWithAllocation.drone.uid) },
+                            onDecrement = { onDecrementDrone(droneWithAllocation.drone.uid) }
+                        )
+                    }
+                }
+            }
+        }
     }
+}
+
+@Composable
+fun DroneAllocationItem(
+    droneWithAllocation: starship.virtualsoundnw.com.data.local.database.DroneWithAllocation,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Drone info
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = droneWithAllocation.drone.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "${droneWithAllocation.drone.tons} tons • ${String.format("%.3f", droneWithAllocation.drone.costMCr)} MCr each",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        // Quantity controls
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onDecrement) {
+                Text("-", style = MaterialTheme.typography.titleMedium)
+            }
+            
+            Text(
+                text = "${droneWithAllocation.quantity}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            
+            IconButton(onClick = onIncrement) {
+                Text("+", style = MaterialTheme.typography.titleMedium)
+            }
+        }
+        
+        // Extended totals
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = "${String.format("%.1f", droneWithAllocation.extendedTonnage)} tons",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "${String.format("%.3f", droneWithAllocation.extendedCostMCr)} MCr",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun AddDroneDialog(
+    availableDrones: List<starship.virtualsoundnw.com.data.local.database.Drone>,
+    onDroneSelected: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedDrone by remember { mutableStateOf<starship.virtualsoundnw.com.data.local.database.Drone?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Drone") },
+        text = {
+            Column {
+                Text(
+                    text = "Select a drone type to add to your ship:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                // Dropdown for drone selection
+                Box {
+                    OutlinedButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = selectedDrone?.name ?: "Choose Drone Type",
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                    }
+                    
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        availableDrones.forEach { drone ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = drone.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "${drone.tons} tons, ${String.format("%.3f", drone.costMCr)} MCr",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedDrone = drone
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    selectedDrone?.let { drone ->
+                        onDroneSelected(drone.uid)
+                    }
+                },
+                enabled = selectedDrone != null
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
