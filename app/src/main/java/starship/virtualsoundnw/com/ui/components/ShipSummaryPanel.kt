@@ -51,10 +51,12 @@ data class ShipSummaryData(
     val cargoTonnage: Double = 0.0,
     val cargoCost: Double = 0.0,
     val vehiclesTonnage: Double = 0.0,
-    val vehiclesCost: Double = 0.0
+    val vehiclesCost: Double = 0.0,
+    val dronesTonnage: Double = 0.0,
+    val dronesCost: Double = 0.0
 ) {
-    val totalSystemsTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage
-    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost + ship.hullCost
+    val totalSystemsTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage + dronesTonnage
+    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost + dronesCost + ship.hullCost
     val remainingTonnage: Double get() = ship.tons - totalSystemsTonnage
 }
 
@@ -221,6 +223,22 @@ fun ComprehensiveShipSummaryPanel(
                 )
                 Text(
                     text = "${String.format("%.1f", summaryData.vehiclesTonnage)} tons (${String.format("%.1f", summaryData.vehiclesCost)} MCr)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            // Drones
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Drones:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${String.format("%.1f", summaryData.dronesTonnage)} tons (${String.format("%.1f", summaryData.dronesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )

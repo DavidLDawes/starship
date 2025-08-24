@@ -33,6 +33,7 @@ import starship.virtualsoundnw.com.data.local.database.DefenseDao
 import starship.virtualsoundnw.com.data.local.database.CargoDao
 import starship.virtualsoundnw.com.data.local.database.VehicleDao
 import starship.virtualsoundnw.com.data.local.database.VehicleAllocationDao
+import starship.virtualsoundnw.com.data.local.database.DroneDao
 import javax.inject.Singleton
 
 
@@ -78,6 +79,11 @@ class DatabaseModule {
     fun provideVehicleAllocationDao(appDatabase: AppDatabase): VehicleAllocationDao {
         return appDatabase.vehicleAllocationDao()
     }
+    
+    @Provides
+    fun provideDroneDao(appDatabase: AppDatabase): DroneDao {
+        return appDatabase.droneDao()
+    }
 
     @Provides
     @Singleton
@@ -86,6 +92,9 @@ class DatabaseModule {
             appContext,
             AppDatabase::class.java,
             "StarShip"
+        ).addMigrations(
+            AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_11_12
         ).fallbackToDestructiveMigration()
          .build()
     }
