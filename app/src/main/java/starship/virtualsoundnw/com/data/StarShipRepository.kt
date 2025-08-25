@@ -20,6 +20,7 @@ package starship.virtualsoundnw.com.data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.data.local.database.CrewManifest
 import starship.virtualsoundnw.com.data.local.database.StarShipDao
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
@@ -44,7 +45,8 @@ data class ShipSummary(
     val vehiclesTonnage: Double = 0.0,
     val vehiclesCost: Double = 0.0,
     val dronesTonnage: Double = 0.0,
-    val dronesCost: Double = 0.0
+    val dronesCost: Double = 0.0,
+    val crewManifest: CrewManifest? = null
 ) {
     val totalUsedTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage + dronesTonnage
     val remainingTonnage: Double get() = ship.tons - totalUsedTonnage
