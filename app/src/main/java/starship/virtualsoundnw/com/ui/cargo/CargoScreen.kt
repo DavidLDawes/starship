@@ -128,7 +128,9 @@ fun CargoScreen(
                         cargoTonnage = uiState.shipSummary!!.cargoTonnage.toDouble(),
                         cargoCost = uiState.shipSummary!!.cargoCost,
                         vehiclesTonnage = uiState.shipSummary!!.vehiclesTonnage,
-                        vehiclesCost = uiState.shipSummary!!.vehiclesCost
+                        vehiclesCost = uiState.shipSummary!!.vehiclesCost,
+                        dronesTonnage = uiState.shipSummary!!.dronesTonnage,
+                        dronesCost = uiState.shipSummary!!.dronesCost
                     )
                 )
             }
