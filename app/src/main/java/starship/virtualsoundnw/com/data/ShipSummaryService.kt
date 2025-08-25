@@ -17,6 +17,7 @@
 
 package starship.virtualsoundnw.com.data
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -40,6 +41,7 @@ import javax.inject.Singleton
  * Centralized service for calculating comprehensive ship summaries
  * across all systems without creating circular dependencies
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ShipSummaryService @Inject constructor(
     private val starShipRepository: StarShipRepository,

@@ -17,6 +17,7 @@
 
 package starship.virtualsoundnw.com.data
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -30,6 +31,7 @@ import kotlin.math.ceil
 /**
  * Service for calculating crew requirements based on ship systems and configuration
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class CrewCalculationService @Inject constructor(
     private val starShipRepository: StarShipRepository,

@@ -17,6 +17,7 @@
 
 package starship.virtualsoundnw.com.data
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -52,6 +53,7 @@ data class DetailedShipTableData(
 /**
  * Service for generating detailed ship table data with all individual components
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class DetailedShipTableService @Inject constructor(
     private val starShipRepository: StarShipRepository,
