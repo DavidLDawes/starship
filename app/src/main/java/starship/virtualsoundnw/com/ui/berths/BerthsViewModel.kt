@@ -29,9 +29,11 @@ import starship.virtualsoundnw.com.data.ShipSummaryService
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.BerthsRepository
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.CrewCalculationService
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Berths
 import starship.virtualsoundnw.com.data.local.database.BerthType
+import starship.virtualsoundnw.com.data.local.database.CrewManifest
 import javax.inject.Inject
 
 /**
@@ -41,6 +43,7 @@ data class BerthsUiState(
     val ship: StarShip? = null,
     val berths: Berths? = null,
     val shipSummary: ShipSummary? = null,
+    val crewManifest: CrewManifest? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
@@ -68,13 +71,63 @@ data class BerthsUiState(
      * Check if berth editing should be disabled
      */
     val isBerthEditingDisabled: Boolean get() = remainingTonnage <= 0 && (berths?.getTotalTonnage() ?: 0f) == 0f
+    
+    /**
+     * Get total crew count from crew manifest
+     */
+    val totalCrewCount: Int get() = crewManifest?.totalCrewCount ?: 0
+    
+    /**
+     * Calculate minimum crew berths required (Crew/2 + 1)
+     */
+    val minimumCrewBerths: Int get() = if (totalCrewCount <= 0) 0 else (totalCrewCount / 2) + 1
+    
+    /**
+     * Get current total crew berths (staterooms + luxury staterooms)
+     */
+    val currentCrewBerths: Int get() = staterooms + luxuryStaterooms
+    
+    /**
+     * Check if current berths meet minimum crew requirements
+     */
+    val meetsMinimumCrewBerths: Boolean get() = currentCrewBerths >= minimumCrewBerths
+    
+    /**
+     * Check if a berth count reduction would violate minimum crew berths
+     */
+    fun wouldViolateMinimumBerths(berthType: BerthType, newCount: Int): Boolean {
+        val currentBerths = berths ?: return false
+        val testBerths = currentBerths.withUpdatedCount(berthType, newCount)
+        return testBerths.getTotalCrewBerths() < minimumCrewBerths
+    }
+    
+    /**
+     * Get minimum count for a berth type considering crew requirements
+     */
+    fun getMinimumCountFor(berthType: BerthType): Int {
+        if (minimumCrewBerths <= 0) return 0
+        
+        return when (berthType) {
+            BerthType.STATEROOMS -> {
+                // Minimum staterooms = minimum crew berths - luxury staterooms
+                val minStaterooms = minimumCrewBerths - luxuryStaterooms
+                maxOf(0, minStaterooms)
+            }
+            BerthType.LUXURY_STATEROOMS -> {
+                // Luxury staterooms can be reduced to 0 if there are enough staterooms
+                0
+            }
+            else -> 0 // Low passage and emergency low don't count toward crew berths
+        }
+    }
 }
 
 @HiltViewModel
 class BerthsViewModel @Inject constructor(
     private val shipSummaryService: ShipSummaryService,
     private val berthsRepository: BerthsRepository,
-    private val starShipRepository: StarShipRepository
+    private val starShipRepository: StarShipRepository,
+    private val crewCalculationService: CrewCalculationService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BerthsUiState(isLoading = true))
@@ -90,17 +143,36 @@ class BerthsViewModel @Inject constructor(
                 combine(
                     starShipRepository.starShips,
                     shipSummaryService.getComprehensiveShipSummary(shipId),
-                    berthsRepository.getBerthsForShip(shipId)
-                ) { ships, shipSummary, berths ->
+                    berthsRepository.getBerthsForShip(shipId),
+                    crewCalculationService.getCrewManifest(shipId)
+                ) { ships, shipSummary, berths, crewManifest ->
                     val ship = ships.find { it.uid == shipId }
-                    Triple(ship, shipSummary, berths)
-                }.collect { (ship, shipSummary, berths) ->
-                    _uiState.value = BerthsUiState(
+                    
+                    // Auto-adjust berths if crew requirements have changed
+                    val adjustedBerths = berths?.let { b ->
+                        crewManifest?.let { crew ->
+                            if (!b.meetsMinimumCrewBerths(crew.totalCrewCount)) {
+                                b.ensureMinimumCrewBerths(crew.totalCrewCount)
+                            } else {
+                                b
+                            }
+                        } ?: b
+                    }
+                    
+                    // If berths were adjusted, save them
+                    if (adjustedBerths != berths && adjustedBerths != null) {
+                        berthsRepository.insertBerths(adjustedBerths)
+                    }
+                    
+                    BerthsUiState(
                         ship = ship,
-                        berths = berths,
+                        berths = adjustedBerths ?: berths,
                         shipSummary = shipSummary,
+                        crewManifest = crewManifest,
                         isLoading = false
                     )
+                }.collect { uiState ->
+                    _uiState.value = uiState
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -114,10 +186,40 @@ class BerthsViewModel @Inject constructor(
     fun updateBerthCount(berthType: BerthType, newCount: Int) {
         viewModelScope.launch {
             try {
-                val currentBerths = _uiState.value.berths ?: Berths(shipId = currentShipId)
-                val updatedBerths = currentBerths.withUpdatedCount(berthType, newCount)
+                val currentState = _uiState.value
+                val currentBerths = currentState.berths ?: Berths(shipId = currentShipId)
+                val totalCrewCount = currentState.totalCrewCount
                 
-                berthsRepository.insertBerths(updatedBerths)
+                // Handle special logic for crew berths (staterooms + luxury staterooms)
+                var finalBerths = when (berthType) {
+                    BerthType.STATEROOMS -> {
+                        // Don't allow reducing staterooms below minimum if at minimum crew berths
+                        val minStaterooms = currentState.getMinimumCountFor(BerthType.STATEROOMS)
+                        val adjustedCount = maxOf(newCount, minStaterooms)
+                        currentBerths.withUpdatedCount(berthType, adjustedCount)
+                    }
+                    
+                    BerthType.LUXURY_STATEROOMS -> {
+                        // When reducing luxury staterooms, add staterooms if needed to maintain minimum
+                        val tempBerths = currentBerths.withUpdatedCount(berthType, newCount)
+                        val minimumCrewBerths = if (totalCrewCount <= 0) 0 else (totalCrewCount / 2) + 1
+                        
+                        if (tempBerths.getTotalCrewBerths() < minimumCrewBerths) {
+                            // Add staterooms to compensate
+                            val stateroomsNeeded = minimumCrewBerths - tempBerths.getTotalCrewBerths()
+                            tempBerths.copy(staterooms = tempBerths.staterooms + stateroomsNeeded)
+                        } else {
+                            tempBerths
+                        }
+                    }
+                    
+                    else -> {
+                        // Low passage and emergency low have no minimum constraints
+                        currentBerths.withUpdatedCount(berthType, newCount)
+                    }
+                }
+                
+                berthsRepository.insertBerths(finalBerths)
                 
                 // UI state will be updated automatically through the flow
             } catch (e: Exception) {
