@@ -181,8 +181,10 @@ fun BerthsConfigurationCard(
                 berthType = BerthType.STATEROOMS,
                 currentCount = uiState.staterooms,
                 maxCount = uiState.getAvailableTonnageFor(BerthType.STATEROOMS),
+                minCount = uiState.getMinimumCountFor(BerthType.STATEROOMS),
                 enabled = !uiState.isBerthEditingDisabled,
-                onValueChange = onBerthUpdate
+                onValueChange = onBerthUpdate,
+                extraInfo = if (uiState.totalCrewCount > 0) "Minimum crew berths: ${uiState.minimumCrewBerths} (Crew: ${uiState.totalCrewCount})" else null
             )
             
             // Luxury Staterooms
@@ -190,8 +192,10 @@ fun BerthsConfigurationCard(
                 berthType = BerthType.LUXURY_STATEROOMS,
                 currentCount = uiState.luxuryStaterooms,
                 maxCount = uiState.getAvailableTonnageFor(BerthType.LUXURY_STATEROOMS),
+                minCount = uiState.getMinimumCountFor(BerthType.LUXURY_STATEROOMS),
                 enabled = !uiState.isBerthEditingDisabled,
-                onValueChange = onBerthUpdate
+                onValueChange = onBerthUpdate,
+                extraInfo = if (uiState.currentCrewBerths == uiState.minimumCrewBerths && uiState.minimumCrewBerths > 0) "At minimum crew berths - reducing will add staterooms" else null
             )
             
             // Low Passage
@@ -220,7 +224,9 @@ fun BerthTypeSlider(
     berthType: BerthType,
     currentCount: Int,
     maxCount: Int,
+    minCount: Int = 0,
     enabled: Boolean = true,
+    extraInfo: String? = null,
     onValueChange: (BerthType, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -238,7 +244,7 @@ fun BerthTypeSlider(
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = "$currentCount / $maxCount berths",
+                text = if (minCount > 0) "$currentCount berths ($minCount-$maxCount)" else "$currentCount / $maxCount berths",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -275,23 +281,45 @@ fun BerthTypeSlider(
             )
         }
         
+        // Extra info (e.g., crew requirements)
+        extraInfo?.let { info ->
+            Text(
+                text = info,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        
         // Slider
         if (maxCount > 0) {
-            val steps = if (maxCount > 1) maxCount - 1 else 0
+            val effectiveMin = maxOf(0, minCount)
+            val effectiveMax = maxOf(effectiveMin, maxCount)
+            val steps = if (effectiveMax > effectiveMin) effectiveMax - effectiveMin else 0
             
             Slider(
                 value = currentCount.toFloat(),
                 onValueChange = { value ->
                     if (enabled) {
-                        val newCount = value.roundToInt().coerceIn(0, maxCount)
+                        val newCount = value.roundToInt().coerceIn(effectiveMin, effectiveMax)
                         onValueChange(berthType, newCount)
                     }
                 },
-                valueRange = 0f..maxCount.toFloat(),
+                valueRange = effectiveMin.toFloat()..effectiveMax.toFloat(),
                 steps = steps,
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth()
             )
+            
+            if (minCount > 0) {
+                Text(
+                    text = "Minimum: $minCount (crew requirement)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                )
+            }
         } else {
             Text(
                 text = "No tonnage available",

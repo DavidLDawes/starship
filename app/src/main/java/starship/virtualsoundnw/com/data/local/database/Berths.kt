@@ -132,6 +132,47 @@ data class Berths(
     fun getTotalStateroomsForStewards(): Int {
         return staterooms + luxuryStaterooms
     }
+    
+    /**
+     * Calculate total crew berths (staterooms + luxury staterooms)
+     */
+    fun getTotalCrewBerths(): Int {
+        return staterooms + luxuryStaterooms
+    }
+    
+    /**
+     * Calculate minimum crew berths required based on total crew count
+     * Formula: (total crew / 2) + 1, rounded up
+     */
+    fun calculateMinimumCrewBerths(totalCrewCount: Int): Int {
+        if (totalCrewCount <= 0) return 0
+        return (totalCrewCount / 2) + 1
+    }
+    
+    /**
+     * Check if current crew berths meet minimum requirements
+     */
+    fun meetsMinimumCrewBerths(totalCrewCount: Int): Boolean {
+        val minimumRequired = calculateMinimumCrewBerths(totalCrewCount)
+        return getTotalCrewBerths() >= minimumRequired
+    }
+    
+    /**
+     * Adjust staterooms to meet minimum crew berth requirements
+     * Returns a new Berths instance with adjusted staterooms if needed
+     */
+    fun ensureMinimumCrewBerths(totalCrewCount: Int): Berths {
+        val minimumRequired = calculateMinimumCrewBerths(totalCrewCount)
+        val currentCrewBerths = getTotalCrewBerths()
+        
+        if (currentCrewBerths >= minimumRequired) {
+            return this // Already meets requirements
+        }
+        
+        // Need to add staterooms to meet minimum
+        val stateroomsNeeded = minimumRequired - currentCrewBerths
+        return copy(staterooms = staterooms + stateroomsNeeded)
+    }
 }
 
 @Dao
