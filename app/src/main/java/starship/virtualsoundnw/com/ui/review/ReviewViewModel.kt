@@ -28,6 +28,8 @@ import kotlinx.coroutines.launch
 import starship.virtualsoundnw.com.data.ShipSummaryService
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.StarShipRepository
+import starship.virtualsoundnw.com.data.DetailedShipTableService
+import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import javax.inject.Inject
 
@@ -37,6 +39,7 @@ import javax.inject.Inject
 data class ReviewUiState(
     val ship: StarShip? = null,
     val shipSummary: ShipSummary? = null,
+    val detailedTableData: DetailedShipTableData? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -44,7 +47,8 @@ data class ReviewUiState(
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
     private val shipSummaryService: ShipSummaryService,
-    private val starShipRepository: StarShipRepository
+    private val starShipRepository: StarShipRepository,
+    private val detailedShipTableService: DetailedShipTableService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState(isLoading = true))
@@ -55,14 +59,16 @@ class ReviewViewModel @Inject constructor(
             try {
                 combine(
                     starShipRepository.starShips,
-                    shipSummaryService.getComprehensiveShipSummary(shipId)
-                ) { ships, shipSummary ->
+                    shipSummaryService.getComprehensiveShipSummary(shipId),
+                    detailedShipTableService.getDetailedShipTable(shipId)
+                ) { ships, shipSummary, detailedTableData ->
                     val ship = ships.find { it.uid == shipId }
-                    Pair(ship, shipSummary)
-                }.collect { (ship, shipSummary) ->
+                    Triple(ship, shipSummary, detailedTableData)
+                }.collect { (ship, shipSummary, detailedTableData) ->
                     _uiState.value = ReviewUiState(
                         ship = ship,
                         shipSummary = shipSummary,
+                        detailedTableData = detailedTableData,
                         isLoading = false
                     )
                 }
