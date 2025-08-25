@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.DetailedShipTable
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -62,33 +63,10 @@ fun ReviewScreen(
                         ReviewHeader(ship = shipSummary.ship)
                     }
                     
-                    item {
-                        ReviewComingSoonCard()
-                    }
-                    
-                    item {
-                        ComprehensiveShipSummaryPanel(
-                            summaryData = ShipSummaryData(
-                                ship = shipSummary.ship,
-                                enginesTonnage = shipSummary.enginesTonnage,
-                                enginesCost = shipSummary.enginesCost,
-                                fuelTonnage = shipSummary.fuelTonnage,
-                                weaponsTonnage = shipSummary.weaponsTonnage,
-                                weaponsCost = shipSummary.weaponsCost,
-                                defensesTonnage = shipSummary.defensesTonnage,
-                                defensesCost = shipSummary.defensesCost,
-                                fittingsTonnage = shipSummary.fittingsTonnage,
-                                fittingsCost = shipSummary.fittingsCost,
-                                cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                                cargoCost = shipSummary.cargoCost,
-                                vehiclesTonnage = shipSummary.vehiclesTonnage,
-                                vehiclesCost = shipSummary.vehiclesCost,
-                                dronesTonnage = shipSummary.dronesTonnage,
-                                dronesCost = shipSummary.dronesCost,
-                                berthsTonnage = shipSummary.berthsTonnage,
-                                berthsCost = shipSummary.berthsCost
-                            )
-                        )
+                    uiState.detailedTableData?.let { tableData ->
+                        item {
+                            DetailedShipTable(tableData = tableData)
+                        }
                     }
                     
                     item {
@@ -130,32 +108,6 @@ private fun ReviewHeader(ship: StarShip) {
                 text = "${ship.name} (${ship.tons} tons, TL ${ship.techLevel})",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun ReviewComingSoonCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Coming Soon",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Ship review and validation features will be available here.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
             )
         }
     }
