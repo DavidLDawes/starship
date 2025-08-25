@@ -213,21 +213,27 @@ class CrewCalculationService @Inject constructor(
     /**
      * Calculate weapons crew requirements
      * - 1 Gunner per up to 10 turrets of single type
+     * - Hardpoints (empty mounting points) do not require gunners
      */
     private fun calculateWeaponsCrew(weapons: List<Weapon>): List<CrewMember> {
         val crew = mutableListOf<CrewMember>()
         
-        // Group weapons by type to count turrets  
-        val turretsByType = weapons.groupBy { "${it.weaponType.name} ${it.turretType.name}" }
+        // Filter out hardpoints (empty mounting points) - only actual turrets with weapons need gunners
+        val actualTurrets = weapons.filter { 
+            it.turretType != TurretType.HARDPOINT && it.weaponType != WeaponType.NONE 
+        }
+        
+        // Group actual turrets by weapon and turret type
+        val turretsByType = actualTurrets.groupBy { "${it.weaponType.name} ${it.turretType.name}" }
         
         turretsByType.forEach { (weaponTypeKey, weaponGroup) ->
-            val turretCount = weaponGroup.size // Each weapon represents one turret
+            val turretCount = weaponGroup.size // Each weapon represents one armed turret
             if (turretCount > 0) {
                 val gunnersNeeded = ceil(turretCount / 10.0).toInt()
                 crew.add(CrewMember(
                     type = CrewType.GUNNER,
                     quantity = gunnersNeeded,
-                    assignment = "$weaponTypeKey ($turretCount turrets)"
+                    assignment = "$weaponTypeKey ($turretCount armed turrets)"
                 ))
             }
         }
