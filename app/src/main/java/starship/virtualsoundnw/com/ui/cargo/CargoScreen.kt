@@ -130,7 +130,9 @@ fun CargoScreen(
                         vehiclesTonnage = uiState.shipSummary!!.vehiclesTonnage,
                         vehiclesCost = uiState.shipSummary!!.vehiclesCost,
                         dronesTonnage = uiState.shipSummary!!.dronesTonnage,
-                        dronesCost = uiState.shipSummary!!.dronesCost
+                        dronesCost = uiState.shipSummary!!.dronesCost,
+                        berthsTonnage = uiState.shipSummary!!.berthsTonnage,
+                        berthsCost = uiState.shipSummary!!.berthsCost
                     )
                 )
             }

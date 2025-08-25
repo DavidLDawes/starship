@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class], version = 12)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class, Berths::class], version = 13)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
@@ -33,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
     abstract fun vehicleAllocationDao(): VehicleAllocationDao
     abstract fun droneDao(): DroneDao
+    abstract fun berthsDao(): BerthsDao
 
     companion object {
         /**
@@ -119,6 +120,29 @@ abstract class AppDatabase : RoomDatabase() {
                     ('Fury Helicopter Gunship', 8.0, 1.2, NULL),
                     ('ATLAS Combat Droid', 1.0, 0.024, NULL)
                 """.trimIndent())
+            }
+        }
+        
+        /**
+         * Migration from version 12 to 13: Add Berths table
+         */
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create berths table
+                database.execSQL("""
+                    CREATE TABLE berths (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        shipId INTEGER NOT NULL,
+                        staterooms INTEGER NOT NULL DEFAULT 0,
+                        luxuryStaterooms INTEGER NOT NULL DEFAULT 0,
+                        lowPassage INTEGER NOT NULL DEFAULT 0,
+                        emergencyLow INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(shipId) REFERENCES StarShip(uid) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                
+                // Create unique index on shipId
+                database.execSQL("CREATE UNIQUE INDEX index_berths_shipId ON berths(shipId)")
             }
         }
     }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import starship.virtualsoundnw.com.data.BerthsRepository
 import starship.virtualsoundnw.com.data.local.database.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,7 +38,8 @@ class CrewCalculationService @Inject constructor(
     private val defensesRepository: DefensesRepository,
     private val cargoRepository: CargoRepository,
     private val vehiclesRepository: VehiclesRepository,
-    private val dronesRepository: DronesRepository
+    private val dronesRepository: DronesRepository,
+    private val berthsRepository: BerthsRepository
 ) {
     
     /**
@@ -56,12 +58,18 @@ class CrewCalculationService @Inject constructor(
                     combine(
                         cargoRepository.getCargoForShip(shipId),
                         vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel),
-                        dronesRepository.getDronesWithAllocationsForShip(shipId, ship.techLevel)
-                    ) { cargo, vehicles, drones -> Triple(cargo, vehicles, drones) }
+                        dronesRepository.getDronesWithAllocationsForShip(shipId, ship.techLevel),
+                        berthsRepository.getBerthsForShip(shipId)
+                    ) { cargo, vehicles, drones, berths -> 
+                        listOf(cargo, vehicles, drones, berths) 
+                    }
                 ) { systemsA, systemsB ->
                     val (engines, weapons, defense) = systemsA
-                    val (cargo, vehicles, drones) = systemsB
-                    calculateCrewManifest(ship, engines, weapons, defense, cargo, vehicles, drones)
+                    val cargo = systemsB[0] as Cargo?
+                    val vehicles = systemsB[1] as List<VehicleWithAllocation>
+                    val drones = systemsB[2] as List<DroneWithAllocation>
+                    val berths = systemsB[3] as Berths?
+                    calculateCrewManifest(ship, engines, weapons, defense, cargo, vehicles, drones, berths)
                 }
             } else {
                 flowOf(null)
@@ -76,7 +84,8 @@ class CrewCalculationService @Inject constructor(
         defense: Defense?,
         cargo: Cargo?,
         vehicles: List<VehicleWithAllocation>,
-        drones: List<DroneWithAllocation>
+        drones: List<DroneWithAllocation>,
+        berths: Berths?
     ): CrewManifest {
         return CrewManifest(
             engineCrew = calculateEngineCrew(ship, engines),
@@ -86,7 +95,7 @@ class CrewCalculationService @Inject constructor(
             cargoCrew = calculateCargoCrew(cargo),
             vehicleCrew = calculateVehicleCrew(vehicles),
             droneCrew = calculateDroneCrew(drones),
-            berthsCrew = calculateBerthsCrew(ship) // TODO: Implement when berths data is available
+            berthsCrew = calculateBerthsCrew(berths)
         )
     }
     
@@ -338,11 +347,22 @@ class CrewCalculationService @Inject constructor(
     /**
      * Calculate berths crew requirements
      * - 1 Steward per 8 Staterooms + Luxury Staterooms
-     * TODO: Implement when berths data model is available
      */
-    private fun calculateBerthsCrew(ship: StarShip): List<CrewMember> {
-        // TODO: This will need to be implemented once we have a Berths data model
-        // For now, return empty list
-        return emptyList()
+    private fun calculateBerthsCrew(berths: Berths?): List<CrewMember> {
+        val crew = mutableListOf<CrewMember>()
+        
+        berths?.let { b ->
+            val totalStateroomsForStewards = b.getTotalStateroomsForStewards()
+            if (totalStateroomsForStewards > 0) {
+                val stewardsNeeded = ceil(totalStateroomsForStewards / 8.0).toInt()
+                crew.add(CrewMember(
+                    type = CrewType.STEWARD,
+                    quantity = stewardsNeeded,
+                    assignment = "Stateroom service ($totalStateroomsForStewards staterooms)"
+                ))
+            }
+        }
+        
+        return crew
     }
 }

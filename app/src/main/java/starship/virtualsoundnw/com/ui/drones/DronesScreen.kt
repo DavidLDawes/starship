@@ -123,7 +123,9 @@ fun DronesScreen(
                                 vehiclesTonnage = shipSummary.vehiclesTonnage,
                                 vehiclesCost = shipSummary.vehiclesCost,
                                 dronesTonnage = shipSummary.dronesTonnage,
-                                dronesCost = shipSummary.dronesCost
+                                dronesCost = shipSummary.dronesCost,
+                                berthsTonnage = shipSummary.berthsTonnage,
+                                berthsCost = shipSummary.berthsCost
                             )
                         )
                     }
