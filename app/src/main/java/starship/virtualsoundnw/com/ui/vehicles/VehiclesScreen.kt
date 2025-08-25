@@ -98,6 +98,18 @@ fun VehiclesScreen(
                     }
                     
                     item {
+                        VehiclesManagementPanel(
+                            vehiclesWithAllocations = uiState.vehiclesWithAllocations,
+                            totalVehicleCount = uiState.totalVehicleCount,
+                            totalVehicleTonnage = uiState.totalVehicleTonnage,
+                            totalVehicleCostMCr = uiState.totalVehicleCostMCr,
+                            onAddVehicle = { viewModel.showAddVehicleDialog() },
+                            onIncrementVehicle = viewModel::incrementVehicle,
+                            onDecrementVehicle = viewModel::decrementVehicle
+                        )
+                    }
+                    
+                    item {
                         ComprehensiveShipSummaryPanel(
                             summaryData = ShipSummaryData(
                                 ship = shipSummary.ship,
@@ -117,18 +129,6 @@ fun VehiclesScreen(
                                 dronesTonnage = shipSummary.dronesTonnage,
                                 dronesCost = shipSummary.dronesCost
                             )
-                        )
-                    }
-                    
-                    item {
-                        VehiclesManagementPanel(
-                            vehiclesWithAllocations = uiState.vehiclesWithAllocations,
-                            totalVehicleCount = uiState.totalVehicleCount,
-                            totalVehicleTonnage = uiState.totalVehicleTonnage,
-                            totalVehicleCostMCr = uiState.totalVehicleCostMCr,
-                            onAddVehicle = { viewModel.showAddVehicleDialog() },
-                            onIncrementVehicle = viewModel::incrementVehicle,
-                            onDecrementVehicle = viewModel::decrementVehicle
                         )
                     }
                     
