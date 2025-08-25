@@ -50,6 +50,7 @@ class ShipSummaryService @Inject constructor(
     private val cargoRepository: CargoRepository,
     private val vehiclesRepository: VehiclesRepository,
     private val dronesRepository: DronesRepository,
+    private val berthsRepository: BerthsRepository,
     private val crewCalculationService: CrewCalculationService
 ) {
     
@@ -71,16 +72,17 @@ class ShipSummaryService @Inject constructor(
                         cargoRepository.getCargoForShip(shipId),
                         combine(
                             vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel),
-                            dronesRepository.getDronesWithAllocationsForShip(shipId, ship.techLevel)
-                        ) { vehicles, drones -> Pair(vehicles, drones) }
-                    ) { fitting, cargo, vehiclesDrones -> 
-                        Triple(fitting, cargo, vehiclesDrones) 
+                            dronesRepository.getDronesWithAllocationsForShip(shipId, ship.techLevel),
+                            berthsRepository.getBerthsForShip(shipId)
+                        ) { vehicles, drones, berths -> Triple(vehicles, drones, berths) }
+                    ) { fitting, cargo, vehiclesDronesBerths -> 
+                        Triple(fitting, cargo, vehiclesDronesBerths) 
                     },
                     crewCalculationService.getCrewManifest(shipId)
                 ) { systemsA, systemsB, crewManifest ->
                 val (engines, weapons, defenses) = systemsA
-                val (fitting, cargo, vehiclesDrones) = systemsB
-                val (vehiclesWithAllocations, dronesWithAllocations) = vehiclesDrones
+                val (fitting, cargo, vehiclesDronesBerths) = systemsB
+                val (vehiclesWithAllocations, dronesWithAllocations, berths) = vehiclesDronesBerths
                 
                 // Calculate engine tonnage (without fuel)
                 val enginesTonnage = engines.sumOf { it.getTonnage(ship.tons).toDouble() }
@@ -122,6 +124,10 @@ class ShipSummaryService @Inject constructor(
                 val dronesTonnage = dronesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
                 val dronesCost = dronesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
                 
+                // Calculate berths tonnage and cost
+                val berthsTonnage = berths?.getTotalTonnage()?.toDouble() ?: 0.0
+                val berthsCost = berths?.getTotalBerthsCost()?.toDouble() ?: 0.0
+                
                 ShipSummary(
                     ship = ship,
                     enginesTonnage = enginesTonnage,
@@ -139,6 +145,8 @@ class ShipSummaryService @Inject constructor(
                     vehiclesCost = vehiclesCost,
                     dronesTonnage = dronesTonnage,
                     dronesCost = dronesCost,
+                    berthsTonnage = berthsTonnage,
+                    berthsCost = berthsCost,
                     crewManifest = crewManifest
                 )
                 }

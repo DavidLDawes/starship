@@ -35,6 +35,8 @@ import starship.virtualsoundnw.com.data.DefensesRepository
 import starship.virtualsoundnw.com.data.CargoRepository
 import starship.virtualsoundnw.com.data.DronesRepository
 import starship.virtualsoundnw.com.data.DronesRepositoryImpl
+import starship.virtualsoundnw.com.data.BerthsRepository
+import starship.virtualsoundnw.com.data.DefaultBerthsRepository
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
@@ -75,6 +77,12 @@ interface DataModule {
     fun bindsDronesRepository(
         dronesRepository: DronesRepositoryImpl
     ): DronesRepository
+    
+    @Singleton
+    @Binds
+    fun bindsBerthsRepository(
+        berthsRepository: DefaultBerthsRepository
+    ): BerthsRepository
 }
 
 class FakeStarShipRepository @Inject constructor() : StarShipRepository {

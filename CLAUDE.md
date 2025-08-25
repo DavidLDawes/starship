@@ -53,6 +53,8 @@ AppDatabase (Room Database)
 - **FittingsScreen/ViewModel** - Sensors and computer systems
 - **CargoScreen/ViewModel** - Cargo allocation (5 types: Cargo, Spares, Cold Storage, Secured, Xeno)
 - **VehiclesScreen/ViewModel** - Vehicle bay configuration
+- **DronesScreen/ViewModel** - Drone complement configuration
+- **BerthsScreen/ViewModel** - Crew manifest and berths allocation with comprehensive crew calculations
 
 #### Package Structure
 - `ui.starship.*` - Main ship selection screen
@@ -62,19 +64,22 @@ AppDatabase (Room Database)
 - `ui.fittings.*` - Fittings configuration screen and logic
 - `ui.cargo.*` - Cargo configuration screen and logic
 - `ui.vehicles.*` - Vehicles configuration screen and logic
+- `ui.drones.*` - Drones configuration screen and logic
+- `ui.berths.*` - Berths and crew manifest screen and logic
 - `ui.components.*` - Shared UI components (ComprehensiveShipSummaryPanel)
 - `ui.theme.*` - Material3 theming
-- `data.*` - Repository implementations, interfaces, and services
+- `data.*` - Repository implementations, interfaces, and services (including CrewCalculationService)
 - `data.local.database.*` - Room entities, DAOs, and database
 - `data.di.*` - Hilt modules for data layer
 - `data.local.di.*` - Hilt modules for database
 
 #### Key Architectural Files
 - `StarShipDesigner.kt` - Application class with `@HiltAndroidApp`
-- `AppDatabase.kt` - Room database with migration support (currently version 10)
-- `StarShip.kt`, `Engine.kt`, `Weapon.kt`, `Defense.kt`, `Fitting.kt`, `Cargo.kt` - Room entities and DAOs
+- `AppDatabase.kt` - Room database with migration support (currently version 13)
+- `StarShip.kt`, `Engine.kt`, `Weapon.kt`, `Defense.kt`, `Fitting.kt`, `Cargo.kt`, `Berths.kt`, `Crew.kt` - Room entities and DAOs
 - `StarShipRepository.kt` + domain-specific repositories - Repository pattern implementation
 - `ShipSummaryService.kt` - Centralized service for comprehensive ship data aggregation
+- `CrewCalculationService.kt` - Comprehensive crew calculation service with complex business logic
 - `ShipSummaryPanel.kt` - Shared UI component for consistent ship summaries across all screens
 - `DatabaseModule.kt` & `DataModule.kt` - Hilt dependency injection modules
 - `Navigation.kt` - Compose navigation setup
@@ -95,9 +100,9 @@ Screen requests ship summary
   ↓
 ViewModel calls ShipSummaryService.getComprehensiveShipSummary()
   ↓  
-Service combines data from all repositories (engines, weapons, defenses, fittings, cargo)
+Service combines data from all repositories (engines, weapons, defenses, fittings, cargo, vehicles, drones, crew)
   ↓
-Service calculates totals (tonnage, costs, fuel requirements)
+Service calculates totals (tonnage, costs, fuel requirements, crew manifest)
   ↓
 Returns ShipSummary to ViewModel
   ↓
@@ -110,10 +115,34 @@ Screen displays ComprehensiveShipSummaryPanel
 - **Centralized Data**: Single source of truth for ship totals across all systems
 - **Real-time Updates**: Reactive flows ensure summaries update when any system changes
 - **Consistent UI**: Same summary component used across all configuration screens
-- **Complete Information**: Shows engines, weapons, defenses, fittings, cargo with costs/tonnage
-- **Calculated Values**: Remaining tonnage, total costs, fuel requirements, service intervals
+- **Complete Information**: Shows engines, weapons, defenses, fittings, cargo, vehicles, drones with costs/tonnage
+- **Calculated Values**: Remaining tonnage, total costs, fuel requirements, service intervals, crew requirements
 
-**Usage Pattern:** All configuration screens (Engines, Weapons, Defenses, Fittings, Cargo, Vehicles) use this system to show users the complete ship state while configuring individual systems.
+**Usage Pattern:** All configuration screens (Engines, Weapons, Defenses, Fittings, Cargo, Vehicles, Drones, Berths) use this system to show users the complete ship state while configuring individual systems.
+
+#### Crew Calculation Architecture
+
+The crew system provides comprehensive crew requirement calculations based on ship systems and configuration:
+
+**Components:**
+- `CrewCalculationService` - Service that calculates crew requirements from all ship systems
+- `Crew.kt` - Data models including CrewType enum, CrewMember, and CrewManifest
+- `BerthsScreen/ViewModel` - UI for displaying complete crew manifest with assignments
+
+**Crew Calculation Rules:**
+- **Engine Crew**: 1 Engineer per 100 tons of engines (combined or separate by type based on ship size)
+- **Bridge Crew**: Pilot/Navigator for small ships, separate roles plus command crew for capital ships
+- **Weapons Crew**: 1 Gunner per 10 armed turrets of same type (excludes hardpoints)
+- **Defense Crew**: 1 Gunner per 100 tons of defensive screens
+- **Cargo Crew**: 1 Security for secured cargo, 1 Xeno Handler per 25 tons of xeno cargo
+- **Vehicle Crew**: 1 Service per 3 vehicles
+- **Drone Crew**: 1 Service per 10 drones
+
+**Key Features:**
+- **Reactive Calculations**: Crew requirements automatically update when ship systems change
+- **Detailed Assignments**: Each crew member has specific assignment descriptions
+- **Ship Size Scaling**: Different crew requirements based on ship tonnage (100-200t, 300-2000t, 2000t+)
+- **System Integration**: Combines data from all repositories to calculate complete crew manifest
 
 ### Testing Strategy
 
@@ -200,10 +229,14 @@ class ScreenViewModel @Inject constructor(
 - **Defense** - Armor protection and defensive screens (nuclear damper, meson screen, black globe)
 - **Fitting** - Sensors and computer systems
 - **Cargo** - Five cargo types (Cargo, Spares, Cold Storage, Secured Cargo, Xeno Cargo)
+- **VehicleAllocation** - Vehicle bay allocations with quantities and tech level constraints
+- **DroneAllocation** - Drone complement allocations with quantities and tech level constraints
+- **Berths** - Berth allocations (Staterooms, Luxury Staterooms, Low Passage, Emergency Low) with tonnage and cost calculations
+- **Crew** - Crew data models (CrewType enum, CrewMember, CrewManifest) for comprehensive crew calculations
 
 #### Database Configuration
 - Schema location: `$projectDir/schemas` for version control
-- **Database version: Currently 10** (was migrated from 9 for Cargo enhancements)
+- **Database version: Currently 13** (migrated from 10 to 11 for VehicleAllocation/DroneAllocation entities, then to 12 for crew system support, then to 13 for Berths entities)
 - Export schema: `true` for migration tracking
 - Uses `fallbackToDestructiveMigration()` for development flexibility
 
@@ -259,7 +292,7 @@ class ScreenViewModel @Inject constructor(
 - **Include `ShipSummaryService`** in ViewModels for comprehensive ship data
 - **Add `shipSummary: ShipSummary?`** field to UiState for complete ship information
 - **Use `combine()`** to collect data from specific repository + `ShipSummaryService`
-- **Show complete data**: engines, weapons, defenses, fittings, cargo with costs and tonnage
+- **Show complete data**: engines, weapons, defenses, fittings, cargo, vehicles, drones with costs and tonnage
 - **Real-time updates**: Summary must reflect all system changes immediately
 - **Consistent positioning**: Summary panels should appear at consistent locations across screens
 
