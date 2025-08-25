@@ -49,7 +49,8 @@ class ShipSummaryService @Inject constructor(
     private val fittingsRepository: FittingsRepository,
     private val cargoRepository: CargoRepository,
     private val vehiclesRepository: VehiclesRepository,
-    private val dronesRepository: DronesRepository
+    private val dronesRepository: DronesRepository,
+    private val crewCalculationService: CrewCalculationService
 ) {
     
     /**
@@ -74,8 +75,9 @@ class ShipSummaryService @Inject constructor(
                         ) { vehicles, drones -> Pair(vehicles, drones) }
                     ) { fitting, cargo, vehiclesDrones -> 
                         Triple(fitting, cargo, vehiclesDrones) 
-                    }
-                ) { systemsA, systemsB ->
+                    },
+                    crewCalculationService.getCrewManifest(shipId)
+                ) { systemsA, systemsB, crewManifest ->
                 val (engines, weapons, defenses) = systemsA
                 val (fitting, cargo, vehiclesDrones) = systemsB
                 val (vehiclesWithAllocations, dronesWithAllocations) = vehiclesDrones
@@ -136,7 +138,8 @@ class ShipSummaryService @Inject constructor(
                     vehiclesTonnage = vehiclesTonnage,
                     vehiclesCost = vehiclesCost,
                     dronesTonnage = dronesTonnage,
-                    dronesCost = dronesCost
+                    dronesCost = dronesCost,
+                    crewManifest = crewManifest
                 )
                 }
             } else {
