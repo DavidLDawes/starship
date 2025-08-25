@@ -34,6 +34,7 @@ import starship.virtualsoundnw.com.ui.cargo.CargoScreen
 import starship.virtualsoundnw.com.ui.vehicles.VehiclesScreen
 import starship.virtualsoundnw.com.ui.drones.DronesScreen
 import starship.virtualsoundnw.com.ui.berths.BerthsScreen
+import starship.virtualsoundnw.com.ui.review.ReviewScreen
 
 @Composable
 fun MainNavigation() {
@@ -140,7 +141,23 @@ fun MainNavigation() {
             val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
             BerthsScreen(
                 shipId = shipId,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
+                onNavigateToDrones = { shipId ->
+                    navController.navigate("drones/$shipId")
+                },
+                onNavigateToReview = { shipId ->
+                    navController.navigate("review/$shipId")
+                }
+            )
+        }
+        composable("review/{shipId}") { backStackEntry ->
+            val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
+            ReviewScreen(
+                shipId = shipId,
+                modifier = Modifier.padding(16.dp),
+                onNavigateToBerths = { shipId ->
+                    navController.navigate("berths/$shipId")
+                }
             )
         }
     }

@@ -43,6 +43,8 @@ import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 fun BerthsScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
+    onNavigateToDrones: (Int) -> Unit = {},
+    onNavigateToReview: (Int) -> Unit = {},
     viewModel: BerthsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -98,6 +100,14 @@ fun BerthsScreen(
                                 berthsTonnage = shipSummary.berthsTonnage,
                                 berthsCost = shipSummary.berthsCost
                             )
+                        )
+                    }
+                    
+                    item {
+                        BerthsNavigationButtons(
+                            shipId = shipId,
+                            onNavigateToDrones = onNavigateToDrones,
+                            onNavigateToReview = onNavigateToReview
                         )
                     }
                 }
@@ -288,6 +298,34 @@ fun BerthTypeSlider(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+fun BerthsNavigationButtons(
+    shipId: Int,
+    onNavigateToDrones: (Int) -> Unit,
+    onNavigateToReview: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        OutlinedButton(
+            onClick = { onNavigateToDrones(shipId) }
+        ) {
+            Text("Back: Drones")
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Button(
+            onClick = { onNavigateToReview(shipId) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Next: Review")
         }
     }
 }
