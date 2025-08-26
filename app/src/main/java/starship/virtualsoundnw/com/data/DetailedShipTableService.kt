@@ -17,6 +17,7 @@
 
 package starship.virtualsoundnw.com.data
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -52,6 +53,7 @@ data class DetailedShipTableData(
 /**
  * Service for generating detailed ship table data with all individual components
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class DetailedShipTableService @Inject constructor(
     private val starShipRepository: StarShipRepository,
@@ -207,19 +209,78 @@ class DetailedShipTableService @Inject constructor(
         val rows = mutableListOf<ShipTableRow>()
         var isFirstInCategory = true
         
-        weapons.forEach { weapon ->
-            if (weapon.weaponType != WeaponType.NONE) {
-                val weaponName = weapon.getDesignation()
+        // Filter out weapons with no weapon type
+        val activeWeapons = weapons.filter { it.weaponType != WeaponType.NONE }
+        
+        // Group hardpoints separately
+        val hardpoints = activeWeapons.filter { it.turretType == TurretType.HARDPOINT }
+        val regularWeapons = activeWeapons.filter { it.turretType != TurretType.HARDPOINT }
+        
+        // Add hardpoints as a single group if any exist
+        if (hardpoints.isNotEmpty()) {
+            val sampleHardpoint = hardpoints.first()
+            val count = hardpoints.size
+            val totalTons = count * sampleHardpoint.getTotalTonnage()
+            val totalCost = count * sampleHardpoint.getTotalCost()
+            
+            rows.add(ShipTableRow(
+                category = if (isFirstInCategory) "Weapons" else "",
+                item = "${count}x Hard Points",
+                tons = totalTons.toDouble(),
+                costMCr = totalCost.toDouble(),
+                crew = 0,
+                isFirstInCategory = isFirstInCategory
+            ))
+            isFirstInCategory = false
+        }
+        
+        // Group identical weapons for banking
+        val weaponGroups = regularWeapons.groupBy { 
+            // Group by turret type and weapon type combination
+            "${it.turretType.name}_${it.weaponType.name}"
+        }
+        
+        weaponGroups.forEach { (_, weaponList) ->
+            if (weaponList.isNotEmpty()) {
+                val sampleWeapon = weaponList.first()
+                val totalCount = weaponList.size
                 
-                rows.add(ShipTableRow(
-                    category = if (isFirstInCategory) "Weapons" else "",
-                    item = weaponName,
-                    tons = weapon.getTotalTonnage().toDouble(),
-                    costMCr = weapon.getTotalCost().toDouble(),
-                    crew = 0, // Crew assigned by weapon group, not individual weapons
-                    isFirstInCategory = isFirstInCategory
-                ))
-                isFirstInCategory = false
+                // Create banks of 10
+                val fullBanks = totalCount / 10
+                val remainder = totalCount % 10
+                
+                // Add full banks of 10
+                repeat(fullBanks) {
+                    val bankSize = 10
+                    val bankTons = bankSize * sampleWeapon.getTotalTonnage()
+                    val bankCost = bankSize * sampleWeapon.getTotalCost()
+                    
+                    rows.add(ShipTableRow(
+                        category = if (isFirstInCategory) "Weapons" else "",
+                        item = "${bankSize}x ${sampleWeapon.getDesignation()} (Bank)",
+                        tons = bankTons.toDouble(),
+                        costMCr = bankCost.toDouble(),
+                        crew = 1, // 1 gunner per bank of 10
+                        isFirstInCategory = isFirstInCategory
+                    ))
+                    isFirstInCategory = false
+                }
+                
+                // Add remainder if any
+                if (remainder > 0) {
+                    val remainderTons = remainder * sampleWeapon.getTotalTonnage()
+                    val remainderCost = remainder * sampleWeapon.getTotalCost()
+                    
+                    rows.add(ShipTableRow(
+                        category = if (isFirstInCategory) "Weapons" else "",
+                        item = "${remainder}x ${sampleWeapon.getDesignation()}",
+                        tons = remainderTons.toDouble(),
+                        costMCr = remainderCost.toDouble(),
+                        crew = 1, // 1 gunner for remainder group
+                        isFirstInCategory = isFirstInCategory
+                    ))
+                    isFirstInCategory = false
+                }
             }
         }
         
