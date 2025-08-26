@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class, Berths::class], version = 13)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class, Berths::class], version = 14)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
@@ -143,6 +143,41 @@ abstract class AppDatabase : RoomDatabase() {
                 
                 // Create unique index on shipId
                 database.execSQL("CREATE UNIQUE INDEX index_berths_shipId ON berths(shipId)")
+            }
+        }
+        
+        /**
+         * Migration from version 13 to 14: Add unique constraint on ship name
+         */
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create new starship table with unique name constraint
+                database.execSQL("""
+                    CREATE TABLE starship_new (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        tons INTEGER NOT NULL,
+                        techLevel TEXT NOT NULL,
+                        configuration TEXT NOT NULL
+                    )
+                """.trimIndent())
+                
+                // Copy data from old table to new table
+                database.execSQL("""
+                    INSERT INTO starship_new (uid, name, description, tons, techLevel, configuration)
+                    SELECT uid, name, description, tons, techLevel, configuration
+                    FROM starship
+                """.trimIndent())
+                
+                // Drop the old table
+                database.execSQL("DROP TABLE starship")
+                
+                // Rename the new table to the original name
+                database.execSQL("ALTER TABLE starship_new RENAME TO starship")
+                
+                // Create the unique index on name (case-insensitive)
+                database.execSQL("CREATE UNIQUE INDEX index_starship_name ON starship(name COLLATE NOCASE)")
             }
         }
     }
