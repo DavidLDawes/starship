@@ -39,7 +39,8 @@ enum class CrewType {
     // Support crew
     STEWARD,
     SERVICE,
-    XENO_HANDLER
+    XENO_HANDLER,
+    FREIGHT
 }
 
 /**
@@ -63,6 +64,7 @@ data class CrewMember(
         CrewType.STEWARD -> "Steward"
         CrewType.SERVICE -> "Service"
         CrewType.XENO_HANDLER -> "Xeno Handler"
+        CrewType.FREIGHT -> "Freight"
     }
     
     val description: String get() = "$quantity $displayName${if (quantity > 1) "s" else ""} - $assignment"

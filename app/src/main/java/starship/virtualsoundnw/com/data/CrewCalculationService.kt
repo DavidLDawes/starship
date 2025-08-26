@@ -89,15 +89,30 @@ class CrewCalculationService @Inject constructor(
         drones: List<DroneWithAllocation>,
         berths: Berths?
     ): CrewManifest {
+        // Calculate all crew except stewards first
+        val engineCrew = calculateEngineCrew(ship, engines)
+        val bridgeCrew = calculateBridgeCrew(ship)
+        val weaponsCrew = calculateWeaponsCrew(weapons)
+        val defenseCrew = calculateDefenseCrew(defense)
+        val cargoCrew = calculateCargoCrew(cargo)
+        val vehicleCrew = calculateVehicleCrew(vehicles)
+        val droneCrew = calculateDroneCrew(drones)
+        
+        // Calculate stewards based on total crew + passengers (Issue #76)
+        val berthsCrew = calculateBerthsCrew(
+            berths, 
+            engineCrew + bridgeCrew + weaponsCrew + defenseCrew + cargoCrew + vehicleCrew + droneCrew
+        )
+        
         return CrewManifest(
-            engineCrew = calculateEngineCrew(ship, engines),
-            bridgeCrew = calculateBridgeCrew(ship),
-            weaponsCrew = calculateWeaponsCrew(weapons),
-            defenseCrew = calculateDefenseCrew(defense),
-            cargoCrew = calculateCargoCrew(cargo),
-            vehicleCrew = calculateVehicleCrew(vehicles),
-            droneCrew = calculateDroneCrew(drones),
-            berthsCrew = calculateBerthsCrew(berths)
+            engineCrew = engineCrew,
+            bridgeCrew = bridgeCrew,
+            weaponsCrew = weaponsCrew,
+            defenseCrew = defenseCrew,
+            cargoCrew = cargoCrew,
+            vehicleCrew = vehicleCrew,
+            droneCrew = droneCrew,
+            berthsCrew = berthsCrew
         )
     }
     
@@ -150,10 +165,10 @@ class CrewCalculationService @Inject constructor(
     }
     
     /**
-     * Calculate bridge crew requirements
-     * - 100-200 tons: 1 Pilot/Navigator
+     * Calculate bridge crew requirements (Issue #76)
+     * - 100-200 tons: 1 Pilot/Navigator combined
      * - 300+ tons: 1 Pilot + 1 Navigator  
-     * - Capital ships: Add 1 Commander + 2 Security per section + 1 Sensor Ops + 1 Comms + 1 Computer Ops
+     * - Capital ships: 1 Captain + 2 Comms + 2 Sensors + 1 Computer for 8 Bridge Crew total
      */
     private fun calculateBridgeCrew(ship: StarShip): List<CrewMember> {
         val crew = mutableListOf<CrewMember>()
@@ -179,11 +194,11 @@ class CrewCalculationService @Inject constructor(
                 ))
             }
             else -> {
-                // Capital ship crew
+                // Capital ship bridge crew (Issue #76): Captain + 2 Comms + 2 Sensors + Computer = 8 total
                 crew.add(CrewMember(
                     type = CrewType.COMMANDER,
                     quantity = 1,
-                    assignment = "Capital ship command"
+                    assignment = "Captain - capital ship command"
                 ))
                 crew.add(CrewMember(
                     type = CrewType.PILOT,
@@ -196,19 +211,14 @@ class CrewCalculationService @Inject constructor(
                     assignment = "Navigation and astrogation"
                 ))
                 crew.add(CrewMember(
-                    type = CrewType.SECURITY,
-                    quantity = 2 * ship.sections,
-                    assignment = "Security (2 per ${ship.sections} sections)"
+                    type = CrewType.COMMS,
+                    quantity = 2,
+                    assignment = "Communications operations"
                 ))
                 crew.add(CrewMember(
                     type = CrewType.SENSOR_OPS,
-                    quantity = 1,
+                    quantity = 2,
                     assignment = "Sensor operations"
-                ))
-                crew.add(CrewMember(
-                    type = CrewType.COMMS,
-                    quantity = 1,
-                    assignment = "Communications"
                 ))
                 crew.add(CrewMember(
                     type = CrewType.COMPUTER_OPS,
@@ -276,6 +286,7 @@ class CrewCalculationService @Inject constructor(
     
     /**
      * Calculate cargo crew requirements
+     * - 1 Freight if total cargo > 100 tons
      * - 1 Security if Secured Cargo > 0
      * - 1 Xeno per 25 tons of Xeno Cargo
      */
@@ -283,6 +294,16 @@ class CrewCalculationService @Inject constructor(
         val crew = mutableListOf<CrewMember>()
         
         cargo?.let { c ->
+            // Freight for general cargo operations (Issue #76)
+            val totalCargo = c.cargoTons + c.coldStorageTons + c.sparesTons + c.securedCargoTons + c.xenoCargoTons
+            if (totalCargo > 100) {
+                crew.add(CrewMember(
+                    type = CrewType.FREIGHT,
+                    quantity = 1,
+                    assignment = "Cargo operations (${totalCargo} tons total)"
+                ))
+            }
+            
             // Security for secured cargo
             if (c.securedCargoTons > 0) {
                 crew.add(CrewMember(
@@ -307,19 +328,27 @@ class CrewCalculationService @Inject constructor(
     }
     
     /**
-     * Calculate vehicle crew requirements
-     * - 1 Service per 3 vehicles (rounded up)
+     * Calculate vehicle crew requirements (Issue #76)
+     * - 1 Pilot per vehicle
+     * - 1 Service per vehicle
      */
     private fun calculateVehicleCrew(vehicles: List<VehicleWithAllocation>): List<CrewMember> {
         val crew = mutableListOf<CrewMember>()
         
         val totalVehicles = vehicles.sumOf { it.quantity }
         if (totalVehicles > 0) {
-            val serviceNeeded = ceil(totalVehicles / 3.0).toInt()
+            // Pilots for vehicles
+            crew.add(CrewMember(
+                type = CrewType.PILOT,
+                quantity = totalVehicles,
+                assignment = "Vehicle pilots ($totalVehicles vehicles)"
+            ))
+            
+            // Service for vehicles
             crew.add(CrewMember(
                 type = CrewType.SERVICE,
-                quantity = serviceNeeded,
-                assignment = "Vehicle maintenance ($totalVehicles vehicles)"
+                quantity = totalVehicles,
+                assignment = "Vehicle service ($totalVehicles vehicles)"
             ))
         }
         
@@ -327,19 +356,21 @@ class CrewCalculationService @Inject constructor(
     }
     
     /**
-     * Calculate drone crew requirements
-     * - 1 Service per 10 drones (rounded up)
+     * Calculate drone crew requirements (Issue #76)
+     * - 1 Service per 100 tons of drones (rounded up)
      */
     private fun calculateDroneCrew(drones: List<DroneWithAllocation>): List<CrewMember> {
         val crew = mutableListOf<CrewMember>()
         
-        val totalDrones = drones.sumOf { it.quantity }
-        if (totalDrones > 0) {
-            val serviceNeeded = ceil(totalDrones / 10.0).toInt()
+        val totalDroneTonnage = drones.sumOf { 
+            it.drone.tons.toDouble() * it.quantity 
+        }
+        if (totalDroneTonnage > 0) {
+            val serviceNeeded = ceil(totalDroneTonnage / 100.0).toInt()
             crew.add(CrewMember(
                 type = CrewType.SERVICE,
                 quantity = serviceNeeded,
-                assignment = "Drone maintenance ($totalDrones drones)"
+                assignment = "Drone maintenance (${totalDroneTonnage} tons)"
             ))
         }
         
@@ -347,21 +378,39 @@ class CrewCalculationService @Inject constructor(
     }
     
     /**
-     * Calculate berths crew requirements
-     * - 1 Steward per 8 Staterooms + Luxury Staterooms
+     * Calculate berths crew requirements (Issue #76)
+     * - 1 Steward per 8 total (crew + passengers), rounded up
+     * - Passengers = (Staterooms + Luxury Staterooms) - Total Crew
      */
-    private fun calculateBerthsCrew(berths: Berths?): List<CrewMember> {
+    private fun calculateBerthsCrew(berths: Berths?, otherCrew: List<CrewMember>): List<CrewMember> {
         val crew = mutableListOf<CrewMember>()
         
         berths?.let { b ->
-            val totalStateroomsForStewards = b.getTotalStateroomsForStewards()
-            if (totalStateroomsForStewards > 0) {
-                val stewardsNeeded = ceil(totalStateroomsForStewards / 8.0).toInt()
-                crew.add(CrewMember(
-                    type = CrewType.STEWARD,
-                    quantity = stewardsNeeded,
-                    assignment = "Stateroom service ($totalStateroomsForStewards staterooms)"
-                ))
+            val totalStaterooms = b.staterooms + b.luxuryStaterooms
+            val totalOtherCrew = otherCrew.sumOf { it.quantity }
+            
+            if (totalStaterooms > 0) {
+                // Calculate stewards iteratively to handle circular dependency
+                var stewardsNeeded = 0
+                var totalCrewIncludingStewards: Int
+                
+                do {
+                    val previousStewards = stewardsNeeded
+                    totalCrewIncludingStewards = totalOtherCrew + stewardsNeeded
+                    val passengers = maxOf(0, totalStaterooms - totalCrewIncludingStewards)
+                    val totalCrewAndPassengers = totalCrewIncludingStewards + passengers
+                    stewardsNeeded = ceil(totalCrewAndPassengers / 8.0).toInt()
+                } while (stewardsNeeded != previousStewards && stewardsNeeded < 50) // Safety limit
+                
+                if (stewardsNeeded > 0) {
+                    val totalCrewFinal = totalOtherCrew + stewardsNeeded
+                    val passengersFinal = maxOf(0, totalStaterooms - totalCrewFinal)
+                    crew.add(CrewMember(
+                        type = CrewType.STEWARD,
+                        quantity = stewardsNeeded,
+                        assignment = "Service for ${totalCrewFinal} crew + ${passengersFinal} passengers"
+                    ))
+                }
             }
         }
         

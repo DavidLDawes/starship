@@ -62,7 +62,8 @@ class DetailedShipTableService @Inject constructor(
     private val defensesRepository: DefensesRepository,
     private val fittingsRepository: FittingsRepository,
     private val cargoRepository: CargoRepository,
-    private val berthsRepository: BerthsRepository
+    private val berthsRepository: BerthsRepository,
+    private val crewCalculationService: CrewCalculationService
 ) {
     
     fun getDetailedShipTable(shipId: Int): Flow<DetailedShipTableData?> {
