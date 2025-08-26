@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -77,6 +78,7 @@ fun StarShipScreen(
                 items = state.data,
                 onSave = viewModel::addStarShip,
                 onNavigateToEngines = onNavigateToEngines,
+                onDelete = viewModel::deleteStarShip,
                 modifier = modifier
             )
         }
@@ -88,6 +90,7 @@ internal fun StarShipScreen(
     items: List<StarShip>,
     onSave: (starShip: StarShip) -> Unit,
     onNavigateToEngines: (Int) -> Unit = {},
+    onDelete: (StarShip) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isFormMinimized by remember { mutableStateOf(false) }
@@ -146,6 +149,7 @@ internal fun StarShipScreen(
                     ShipListItem(
                         ship = ship,
                         onNavigateToEngines = onNavigateToEngines,
+                        onDelete = onDelete,
                         onClick = {
                             if (!isFormMinimized) {
                                 isFormMinimized = true
@@ -293,6 +297,7 @@ private fun ShipInputForm(
 private fun ShipListItem(
     ship: StarShip,
     onNavigateToEngines: (Int) -> Unit,
+    onDelete: (StarShip) -> Unit,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -315,12 +320,53 @@ private fun ShipListItem(
             Text(text = "Ship Code: ${ship.hullCode}")
             Text(text = "Hull Cost: ${ship.hullCost} MCr")
             
-            // Navigation button
-            OutlinedButton(
-                onClick = { onNavigateToEngines(ship.uid) },
-                modifier = Modifier.padding(top = 8.dp)
+            // Navigation and action buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Configure Engines")
+                OutlinedButton(
+                    onClick = { onNavigateToEngines(ship.uid) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Configure Engines")
+                }
+                
+                var showDeleteDialog by remember { mutableStateOf(false) }
+                
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Delete")
+                }
+                
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Delete Ship") },
+                        text = { Text("Are you sure you want to delete '${ship.name}'? This action cannot be undone.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showDeleteDialog = false
+                                    onDelete(ship)
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = { showDeleteDialog = false }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
         }
     }

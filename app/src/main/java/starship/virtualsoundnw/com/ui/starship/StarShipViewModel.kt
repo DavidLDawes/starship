@@ -50,6 +50,12 @@ class StarShipViewModel @Inject constructor(
             starShipRepository.add(starShip)
         }
     }
+    
+    fun deleteStarShip(starShip: StarShip) {
+        viewModelScope.launch {
+            starShipRepository.delete(starShip)
+        }
+    }
 }
 
 sealed interface StarShipUiState {

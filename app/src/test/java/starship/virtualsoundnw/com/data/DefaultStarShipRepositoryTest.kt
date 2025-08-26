@@ -67,4 +67,8 @@ private class FakeStarShipDao : StarShipDao {
     override suspend fun insertStarShip(item: StarShip) {
         data.add(0, item)
     }
+    
+    override suspend fun deleteStarShip(item: StarShip) {
+        data.remove(item)
+    }
 }

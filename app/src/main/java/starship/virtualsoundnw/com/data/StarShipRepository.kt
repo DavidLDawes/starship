@@ -61,6 +61,8 @@ interface StarShipRepository {
 
     suspend fun add(starShip: StarShip)
     
+    suspend fun delete(starShip: StarShip)
+    
     fun getShipSummary(shipId: Int): Flow<ShipSummary?>
 }
 
@@ -73,6 +75,10 @@ class DefaultStarShipRepository @Inject constructor(
 
     override suspend fun add(starShip: StarShip) {
         starShipDao.insertStarShip(starShip)
+    }
+    
+    override suspend fun delete(starShip: StarShip) {
+        starShipDao.deleteStarShip(starShip)
     }
     
     override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
