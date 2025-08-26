@@ -63,6 +63,10 @@ private class FakeStarShipRepository : StarShipRepository {
         data.add(0, starShip)
     }
     
+    override suspend fun delete(starShip: StarShip) {
+        data.remove(starShip)
+    }
+    
     override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
         return flowOf(
             data.find { it.uid == shipId }?.let { ship ->

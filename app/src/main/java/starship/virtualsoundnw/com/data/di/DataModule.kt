@@ -92,6 +92,10 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
         throw NotImplementedError()
     }
     
+    override suspend fun delete(starShip: StarShip) {
+        throw NotImplementedError()
+    }
+    
     override fun getShipSummary(shipId: Int): Flow<ShipSummary?> {
         return flowOf(
             fakeStarShips.find { it.uid == shipId }?.let { ship ->

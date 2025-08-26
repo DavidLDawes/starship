@@ -18,6 +18,7 @@
 package starship.virtualsoundnw.com.data.local.database
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.PrimaryKey
@@ -65,6 +66,9 @@ interface StarShipDao {
 
     @Insert
     suspend fun insertStarShip(item: StarShip)
+    
+    @Delete
+    suspend fun deleteStarShip(item: StarShip)
 }
 
 // Helper functions for ship calculations
