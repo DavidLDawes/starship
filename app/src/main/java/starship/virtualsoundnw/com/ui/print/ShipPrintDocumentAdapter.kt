@@ -32,6 +32,7 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.ShipTableRow
+import starship.virtualsoundnw.com.ui.utils.RoundingUtils
 import java.io.FileOutputStream
 import java.io.IOException
 
@@ -200,8 +201,8 @@ class ShipPrintDocumentAdapter(
             }
             
             val category = if (row.isFirstInCategory) row.category else ""
-            val rowText = String.format("%-20s %-25s %10.1f %12.3f %8d", 
-                category, row.item, row.tons, row.costMCr, row.crew)
+            val rowText = String.format("%-20s %-25s %10.1f %12.1f %8d", 
+                category, row.item, RoundingUtils.roundUpTons(row.tons), RoundingUtils.roundUpMCr(row.costMCr), row.crew)
             canvas.drawText(rowText, margin, yPos, bodyPaint)
             yPos += 18f
         }
@@ -211,13 +212,13 @@ class ShipPrintDocumentAdapter(
         canvas.drawLine(margin, yPos, margin + contentWidth, yPos, linePaint)
         yPos += 20f
         
-        val totalsText = String.format("%-20s %-25s %10.1f %12.3f %8d", 
-            "", "TOTALS", tableData.totalTons, tableData.totalCostMCr, tableData.totalCrew)
+        val totalsText = String.format("%-20s %-25s %10.1f %12.1f %8d", 
+            "", "TOTALS", RoundingUtils.roundUpTons(tableData.totalTons), RoundingUtils.roundUpMCr(tableData.totalCostMCr), tableData.totalCrew)
         canvas.drawText(totalsText, margin, yPos, headerPaint)
         yPos += 25f
         
         // Draw remaining tons
-        val remainingText = String.format("Remaining Tons: %.1f", tableData.remainingTons)
+        val remainingText = String.format("Remaining Tons: %.1f", RoundingUtils.roundUpTons(tableData.remainingTons))
         canvas.drawText(remainingText, margin, yPos, bodyPaint)
     }
 
