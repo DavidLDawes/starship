@@ -103,4 +103,12 @@ private class FakeStarShipRepository(
             Result.success(newShip)
         }
     }
+    
+    override suspend fun doesShipNameExist(name: String): Boolean {
+        return false // Simple implementation for tests
+    }
+    
+    override suspend fun addWithNameValidation(starShip: StarShip): Result<StarShip> {
+        return Result.success(starShip) // Simple implementation for tests
+    }
 }

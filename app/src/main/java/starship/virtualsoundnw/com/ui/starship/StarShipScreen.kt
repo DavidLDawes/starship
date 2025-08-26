@@ -58,6 +58,7 @@ import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
 import starship.virtualsoundnw.com.data.local.database.displayName
+import starship.virtualsoundnw.com.ui.starship.FormErrorState
 
 @Composable
 fun StarShipScreen(
@@ -66,6 +67,8 @@ fun StarShipScreen(
     onNavigateToEngines: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val formErrorState by viewModel.formErrorState.collectAsStateWithLifecycle()
+    
     when (val state = uiState) {
         is StarShipUiState.Loading -> {
             Text("Loading...")
@@ -79,6 +82,8 @@ fun StarShipScreen(
                 onSave = viewModel::addStarShip,
                 onNavigateToEngines = onNavigateToEngines,
                 onDelete = viewModel::deleteStarShip,
+                formErrorState = formErrorState,
+                onClearFormError = viewModel::clearFormError,
                 modifier = modifier
             )
         }
@@ -91,6 +96,8 @@ internal fun StarShipScreen(
     onSave: (starShip: StarShip) -> Unit,
     onNavigateToEngines: (Int) -> Unit = {},
     onDelete: (StarShip) -> Unit = {},
+    formErrorState: FormErrorState? = null,
+    onClearFormError: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isFormMinimized by remember { mutableStateOf(false) }
@@ -127,7 +134,9 @@ internal fun StarShipScreen(
                         onSave = { ship ->
                             onSave(ship)
                             isFormMinimized = true // Minimize after saving
-                        }
+                        },
+                        formErrorState = formErrorState,
+                        onClearFormError = onClearFormError
                     )
                 }
             }
@@ -164,7 +173,9 @@ internal fun StarShipScreen(
 
 @Composable
 private fun ShipInputForm(
-    onSave: (starShip: StarShip) -> Unit
+    onSave: (starShip: StarShip) -> Unit,
+    formErrorState: FormErrorState? = null,
+    onClearFormError: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -183,8 +194,18 @@ private fun ShipInputForm(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = { 
+                name = it
+                // Clear form errors when user starts typing
+                if (formErrorState?.nameError != null) {
+                    onClearFormError()
+                }
+            },
             label = { Text("Ship Name") },
+            isError = formErrorState?.nameError != null,
+            supportingText = formErrorState?.nameError?.let { error ->
+                { Text(error, color = MaterialTheme.colorScheme.error) }
+            },
             modifier = Modifier.fillMaxWidth()
         )
         

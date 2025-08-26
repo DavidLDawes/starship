@@ -66,6 +66,10 @@ interface StarShipRepository {
     fun getShipSummary(shipId: Int): Flow<ShipSummary?>
     
     suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip>
+    
+    suspend fun doesShipNameExist(name: String): Boolean
+    
+    suspend fun addWithNameValidation(starShip: StarShip): Result<StarShip>
 }
 
 class DefaultStarShipRepository @Inject constructor(
@@ -96,5 +100,24 @@ class DefaultStarShipRepository @Inject constructor(
     
     override suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip> {
         return shipCopyService.copyShipDesign(originalShipId, newName)
+    }
+    
+    override suspend fun doesShipNameExist(name: String): Boolean {
+        return starShipDao.doesShipNameExist(name)
+    }
+    
+    override suspend fun addWithNameValidation(starShip: StarShip): Result<StarShip> {
+        return try {
+            // Check if name already exists
+            if (doesShipNameExist(starShip.name)) {
+                Result.failure(IllegalArgumentException("There's already a ship with that name"))
+            } else {
+                // Add the ship
+                starShipDao.insertStarShip(starShip)
+                Result.success(starShip)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

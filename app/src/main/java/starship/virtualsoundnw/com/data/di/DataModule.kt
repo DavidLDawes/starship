@@ -107,6 +107,18 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
     override suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip> {
         return Result.failure(NotImplementedError("SaveAs not implemented in fake repository"))
     }
+    
+    override suspend fun doesShipNameExist(name: String): Boolean {
+        return fakeStarShips.any { it.name.equals(name, ignoreCase = true) }
+    }
+    
+    override suspend fun addWithNameValidation(starShip: StarShip): Result<StarShip> {
+        return if (doesShipNameExist(starShip.name)) {
+            Result.failure(IllegalArgumentException("There's already a ship with that name"))
+        } else {
+            Result.success(starShip)
+        }
+    }
 }
 
 // Test data for fake repository

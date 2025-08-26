@@ -20,6 +20,7 @@ package starship.virtualsoundnw.com.data.local.database
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
@@ -34,7 +35,9 @@ enum class Configuration {
     SPHERE, DISPERSED_STRUCTURE, PLANETOID, BUFFERED_PLANETOID
 }
 
-@Entity
+@Entity(
+    indices = [Index(value = ["name"], unique = true)]
+)
 data class StarShip(
     val name: String,
     val description: String,
@@ -69,6 +72,12 @@ interface StarShipDao {
     
     @Delete
     suspend fun deleteStarShip(item: StarShip)
+    
+    @Query("SELECT COUNT(*) FROM starship WHERE name = :name COLLATE NOCASE")
+    suspend fun countShipsWithName(name: String): Int
+    
+    @Query("SELECT EXISTS(SELECT 1 FROM starship WHERE name = :name COLLATE NOCASE)")
+    suspend fun doesShipNameExist(name: String): Boolean
 }
 
 // Helper functions for ship calculations
