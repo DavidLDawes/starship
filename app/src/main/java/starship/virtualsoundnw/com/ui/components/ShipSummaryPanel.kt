@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.ui.utils.RoundingUtils
 
 /**
  * Data class to hold ship summary information from all systems
@@ -128,7 +129,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.enginesTonnage)} tons (${String.format("%.1f", summaryData.enginesCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.enginesTonnage)} tons (${RoundingUtils.formatMCr(summaryData.enginesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -144,7 +145,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.fuelTonnage)} tons",
+                    text = "${RoundingUtils.formatTons(summaryData.fuelTonnage)} tons",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -160,7 +161,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.weaponsTonnage)} tons (${String.format("%.1f", summaryData.weaponsCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.weaponsTonnage)} tons (${RoundingUtils.formatMCr(summaryData.weaponsCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -176,7 +177,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.defensesTonnage)} tons (${String.format("%.1f", summaryData.defensesCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.defensesTonnage)} tons (${RoundingUtils.formatMCr(summaryData.defensesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -192,7 +193,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.fittingsTonnage)} tons (${String.format("%.1f", summaryData.fittingsCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.fittingsTonnage)} tons (${RoundingUtils.formatMCr(summaryData.fittingsCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -208,7 +209,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.0f", summaryData.cargoTonnage)} tons (${String.format("%.1f", summaryData.cargoCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.cargoTonnage)} tons (${RoundingUtils.formatMCr(summaryData.cargoCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -224,7 +225,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.vehiclesTonnage)} tons (${String.format("%.1f", summaryData.vehiclesCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.vehiclesTonnage)} tons (${RoundingUtils.formatMCr(summaryData.vehiclesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -240,7 +241,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.dronesTonnage)} tons (${String.format("%.1f", summaryData.dronesCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.dronesTonnage)} tons (${RoundingUtils.formatMCr(summaryData.dronesCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -256,7 +257,7 @@ fun ComprehensiveShipSummaryPanel(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.berthsTonnage)} tons (${String.format("%.1f", summaryData.berthsCost)} MCr)",
+                    text = "${RoundingUtils.formatTons(summaryData.berthsTonnage)} tons (${RoundingUtils.formatMCr(summaryData.berthsCost)} MCr)",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -282,7 +283,7 @@ fun ComprehensiveShipSummaryPanel(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${String.format("%.1f", summaryData.remainingTonnage)} tons",
+                    text = "${RoundingUtils.formatTons(summaryData.remainingTonnage)} tons",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = if (summaryData.remainingTonnage >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -299,7 +300,7 @@ fun ComprehensiveShipSummaryPanel(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${String.format("%.2f", summaryData.totalSystemsCost)} MCr",
+                    text = "${RoundingUtils.formatMCr(summaryData.totalSystemsCost)} MCr",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )

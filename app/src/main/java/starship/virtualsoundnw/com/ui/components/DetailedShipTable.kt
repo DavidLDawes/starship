@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.ShipTableRow
+import starship.virtualsoundnw.com.ui.utils.RoundingUtils
 
 /**
  * Detailed ship table component showing all ship components with Category/Item/Tons/Cost/Crew
@@ -155,14 +156,14 @@ private fun ShipTableDataRow(row: ShipTableRow) {
             modifier = Modifier.weight(3f)
         )
         Text(
-            text = String.format("%.1f", row.tons),
+            text = RoundingUtils.formatTons(row.tons),
             style = MaterialTheme.typography.bodySmall,
             fontFamily = FontFamily.Monospace,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1.5f)
         )
         Text(
-            text = String.format("%.1f", row.costMCr),
+            text = RoundingUtils.formatMCr(row.costMCr),
             style = MaterialTheme.typography.bodySmall,
             fontFamily = FontFamily.Monospace,
             textAlign = TextAlign.End,
@@ -197,7 +198,7 @@ private fun ShipTableTotalRow(
             modifier = Modifier.weight(5f)
         )
         Text(
-            text = String.format("%.1f", tons),
+            text = RoundingUtils.formatTons(tons),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
@@ -205,7 +206,7 @@ private fun ShipTableTotalRow(
             modifier = Modifier.weight(1.5f)
         )
         Text(
-            text = String.format("%.1f", costMCr),
+            text = RoundingUtils.formatMCr(costMCr),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
@@ -237,7 +238,7 @@ private fun ShipTableRemainingTonsRow(remainingTons: Double) {
             modifier = Modifier.weight(5f)
         )
         Text(
-            text = String.format("%.1f", remainingTons),
+            text = RoundingUtils.formatTons(remainingTons),
             style = MaterialTheme.typography.bodyMedium,
             fontFamily = FontFamily.Monospace,
             fontWeight = if (remainingTons < 0) FontWeight.Bold else FontWeight.Normal,

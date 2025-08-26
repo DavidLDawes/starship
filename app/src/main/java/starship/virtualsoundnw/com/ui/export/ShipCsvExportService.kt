@@ -23,6 +23,7 @@ import android.content.ClipboardManager
 import androidx.core.content.ContextCompat.getSystemService
 import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.ShipTableRow
+import starship.virtualsoundnw.com.ui.utils.RoundingUtils
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -56,7 +57,7 @@ class ShipCsvExportService @Inject constructor() {
         for (row in tableData.rows) {
             val category = if (row.isFirstInCategory) row.category else ""
             csvBuilder.appendLine(
-                "${escapeForCsv(category)},${escapeForCsv(row.item)},${row.tons},${row.costMCr},${row.crew}"
+                "${escapeForCsv(category)},${escapeForCsv(row.item)},${RoundingUtils.roundUpTons(row.tons)},${RoundingUtils.roundUpMCr(row.costMCr)},${row.crew}"
             )
         }
         
@@ -64,10 +65,10 @@ class ShipCsvExportService @Inject constructor() {
         csvBuilder.appendLine()
         
         // Totals row
-        csvBuilder.appendLine("TOTALS,,${tableData.totalTons},${tableData.totalCostMCr},${tableData.totalCrew}")
+        csvBuilder.appendLine("TOTALS,,${RoundingUtils.roundUpTons(tableData.totalTons)},${RoundingUtils.roundUpMCr(tableData.totalCostMCr)},${tableData.totalCrew}")
         
         // Remaining tons
-        csvBuilder.appendLine("Remaining Tons,,${tableData.remainingTons},,")
+        csvBuilder.appendLine("Remaining Tons,,${RoundingUtils.roundUpTons(tableData.remainingTons)},,")
         
         return csvBuilder.toString()
     }
