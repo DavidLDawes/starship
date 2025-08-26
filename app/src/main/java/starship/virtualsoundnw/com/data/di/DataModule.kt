@@ -103,6 +103,10 @@ class FakeStarShipRepository @Inject constructor() : StarShipRepository {
             }
         )
     }
+    
+    override suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip> {
+        return Result.failure(NotImplementedError("SaveAs not implemented in fake repository"))
+    }
 }
 
 // Test data for fake repository
