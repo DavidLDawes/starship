@@ -32,6 +32,7 @@ import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.components.DetailedShipTable
+import starship.virtualsoundnw.com.ui.components.SaveAsDialog
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -70,6 +71,12 @@ fun ReviewScreen(
                     }
                     
                     item {
+                        ReviewActionButtons(
+                            onSaveAs = viewModel::showSaveAsDialog
+                        )
+                    }
+                    
+                    item {
                         ReviewNavigationButtons(
                             shipId = shipId,
                             onNavigateToBerths = onNavigateToBerths
@@ -86,6 +93,19 @@ fun ReviewScreen(
                             .padding(16.dp)
                     )
                 }
+            }
+        }
+        
+        // Save As Dialog
+        if (uiState.showSaveAsDialog) {
+            uiState.ship?.let { ship ->
+                SaveAsDialog(
+                    currentShipName = ship.name,
+                    isLoading = uiState.saveAsLoading,
+                    errorMessage = uiState.saveAsError,
+                    onSave = viewModel::saveAs,
+                    onCancel = viewModel::hideSaveAsDialog
+                )
             }
         }
     }
@@ -109,6 +129,39 @@ private fun ReviewHeader(ship: StarShip) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun ReviewActionButtons(
+    onSaveAs: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Actions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Button(
+                    onClick = onSaveAs,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text("Save As...")
+                }
+            }
         }
     }
 }

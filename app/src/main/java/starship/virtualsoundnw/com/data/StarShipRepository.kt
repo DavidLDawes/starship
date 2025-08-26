@@ -64,10 +64,13 @@ interface StarShipRepository {
     suspend fun delete(starShip: StarShip)
     
     fun getShipSummary(shipId: Int): Flow<ShipSummary?>
+    
+    suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip>
 }
 
 class DefaultStarShipRepository @Inject constructor(
-    private val starShipDao: StarShipDao
+    private val starShipDao: StarShipDao,
+    private val shipCopyService: ShipCopyService
 ) : StarShipRepository {
 
     override val starShips: Flow<List<StarShip>> =
@@ -89,5 +92,9 @@ class DefaultStarShipRepository @Inject constructor(
                 ShipSummary(ship = ship)
             }
         }
+    }
+    
+    override suspend fun saveAs(originalShipId: Int, newName: String): Result<StarShip> {
+        return shipCopyService.copyShipDesign(originalShipId, newName)
     }
 }

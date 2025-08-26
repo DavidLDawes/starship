@@ -41,7 +41,10 @@ data class ReviewUiState(
     val shipSummary: ShipSummary? = null,
     val detailedTableData: DetailedShipTableData? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val showSaveAsDialog: Boolean = false,
+    val saveAsLoading: Boolean = false,
+    val saveAsError: String? = null
 )
 
 @HiltViewModel
@@ -83,5 +86,61 @@ class ReviewViewModel @Inject constructor(
     
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+    
+    fun showSaveAsDialog() {
+        _uiState.value = _uiState.value.copy(
+            showSaveAsDialog = true,
+            saveAsError = null
+        )
+    }
+    
+    fun hideSaveAsDialog() {
+        _uiState.value = _uiState.value.copy(
+            showSaveAsDialog = false,
+            saveAsLoading = false,
+            saveAsError = null
+        )
+    }
+    
+    fun saveAs(newName: String) {
+        val currentShip = _uiState.value.ship
+        if (currentShip == null) {
+            _uiState.value = _uiState.value.copy(
+                saveAsError = "No ship selected"
+            )
+            return
+        }
+        
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                saveAsLoading = true,
+                saveAsError = null
+            )
+            
+            try {
+                val result = starShipRepository.saveAs(currentShip.uid, newName)
+                if (result.isSuccess) {
+                    // Success - close dialog
+                    _uiState.value = _uiState.value.copy(
+                        showSaveAsDialog = false,
+                        saveAsLoading = false,
+                        saveAsError = null
+                    )
+                    // Optionally, you might want to navigate to the new ship or show a success message
+                } else {
+                    // Handle error
+                    _uiState.value = _uiState.value.copy(
+                        saveAsLoading = false,
+                        saveAsError = result.exceptionOrNull()?.message ?: "Failed to save ship"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    saveAsLoading = false,
+                    saveAsError = e.message ?: "Unexpected error occurred"
+                )
+            }
+        }
     }
 }
