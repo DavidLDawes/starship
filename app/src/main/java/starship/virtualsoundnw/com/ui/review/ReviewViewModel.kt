@@ -31,6 +31,8 @@ import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.DetailedShipTableService
 import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.local.database.StarShip
+import starship.virtualsoundnw.com.ui.print.ShipPrintService
+import android.content.Context
 import javax.inject.Inject
 
 /**
@@ -51,7 +53,8 @@ data class ReviewUiState(
 class ReviewViewModel @Inject constructor(
     private val shipSummaryService: ShipSummaryService,
     private val starShipRepository: StarShipRepository,
-    private val detailedShipTableService: DetailedShipTableService
+    private val detailedShipTableService: DetailedShipTableService,
+    private val shipPrintService: ShipPrintService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState(isLoading = true))
@@ -141,6 +144,18 @@ class ReviewViewModel @Inject constructor(
                     saveAsError = e.message ?: "Unexpected error occurred"
                 )
             }
+        }
+    }
+    
+    /**
+     * Print the current ship design
+     */
+    fun printShipDesign(context: Context) {
+        val currentShip = _uiState.value.ship
+        val currentTableData = _uiState.value.detailedTableData
+        
+        if (currentShip != null && currentTableData != null) {
+            shipPrintService.printShipDesign(context, currentShip.name, currentTableData)
         }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
@@ -43,6 +44,7 @@ fun ReviewScreen(
     viewModel: ReviewViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     
     LaunchedEffect(shipId) {
         viewModel.loadDataForShip(shipId)
@@ -72,7 +74,8 @@ fun ReviewScreen(
                     
                     item {
                         ReviewActionButtons(
-                            onSaveAs = viewModel::showSaveAsDialog
+                            onSaveAs = viewModel::showSaveAsDialog,
+                            onPrint = { viewModel.printShipDesign(context) }
                         )
                     }
                     
@@ -136,6 +139,7 @@ private fun ReviewHeader(ship: StarShip) {
 @Composable
 private fun ReviewActionButtons(
     onSaveAs: () -> Unit,
+    onPrint: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card {
@@ -160,6 +164,13 @@ private fun ReviewActionButtons(
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Text("Save As...")
+                }
+                
+                Button(
+                    onClick = onPrint,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text("Print")
                 }
             }
         }
@@ -189,5 +200,16 @@ fun ReviewNavigationButtons(
 private fun ReviewScreenPreview() {
     MyApplicationTheme {
         ReviewScreen(shipId = 1)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReviewActionButtonsPreview() {
+    MyApplicationTheme {
+        ReviewActionButtons(
+            onSaveAs = {},
+            onPrint = {}
+        )
     }
 }
