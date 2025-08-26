@@ -19,12 +19,14 @@ With the nicely architected and approved trivial UI in place, I can start buildi
 * Vehicles (Assorted, including fighters ideally)
 * Drones (Assorted)
 * Berths (Staterooms, Lux Staterooms, Low Berths)
-* Ship Design (Item, mass and cost summary, Save, Copy as text (CSV), Print)
+* Ship Review (Item, mass and cost summary, Save, Copy as text (CSV), Copy CSV to clipboard, Print)
 
 I'm largely doing this to get used to using Claude in my Android development.
 
-**TODO Add missing stuff for hulls: number of sections, hull structure, and structure per section**
-**TODO Add Capital Ship Sensor Suites, one per section 
+**TODO Add missing stuff for hulls: hull structure, and structure per section**
+**TODO Add Capital Ship Sensor Suites, one per section
+**TODO Add optional Crew, Security and Marines, to Defenses
+**TODO Vehicles need 5% overhead for bay, or 15% overhead for service bay
 ## Development Workflow
 
 This project uses a structured workflow combining GitHub Projects for backlog management and Claude AI for development work.

@@ -34,6 +34,7 @@ import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.components.DetailedShipTable
 import starship.virtualsoundnw.com.ui.components.SaveAsDialog
+import starship.virtualsoundnw.com.ui.components.CsvExportDialog
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -75,7 +76,8 @@ fun ReviewScreen(
                     item {
                         ReviewActionButtons(
                             onSaveAs = viewModel::showSaveAsDialog,
-                            onPrint = { viewModel.printShipDesign(context) }
+                            onPrint = { viewModel.printShipDesign(context) },
+                            onExportCsv = viewModel::showCsvExportDialog
                         )
                     }
                     
@@ -111,6 +113,23 @@ fun ReviewScreen(
                 )
             }
         }
+        
+        // CSV Export Dialog
+        if (uiState.showCsvExportDialog) {
+            uiState.ship?.let { ship ->
+                uiState.csvContent?.let { csvContent ->
+                    CsvExportDialog(
+                        csvContent = csvContent,
+                        shipName = ship.name,
+                        isLoading = uiState.csvExportLoading,
+                        statusMessage = uiState.csvExportMessage,
+                        onCopyToClipboard = { viewModel.copyCsvToClipboard(context) },
+                        onSaveToFile = { viewModel.saveCsvToFile(context) },
+                        onDismiss = viewModel::hideCsvExportDialog
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -140,6 +159,7 @@ private fun ReviewHeader(ship: StarShip) {
 private fun ReviewActionButtons(
     onSaveAs: () -> Unit,
     onPrint: () -> Unit,
+    onExportCsv: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card {
@@ -155,22 +175,33 @@ private fun ReviewActionButtons(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = onSaveAs,
-                    modifier = Modifier.padding(end = 8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Save As...")
+                    Button(
+                        onClick = onSaveAs,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Save As...")
+                    }
+                    
+                    Button(
+                        onClick = onPrint,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Print")
+                    }
                 }
                 
                 Button(
-                    onClick = onPrint,
-                    modifier = Modifier.padding(end = 8.dp)
+                    onClick = onExportCsv,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Print")
+                    Text("Export as CSV")
                 }
             }
         }
@@ -209,7 +240,8 @@ private fun ReviewActionButtonsPreview() {
     MyApplicationTheme {
         ReviewActionButtons(
             onSaveAs = {},
-            onPrint = {}
+            onPrint = {},
+            onExportCsv = {}
         )
     }
 }

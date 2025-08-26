@@ -32,6 +32,7 @@ import starship.virtualsoundnw.com.data.DetailedShipTableService
 import starship.virtualsoundnw.com.data.DetailedShipTableData
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.print.ShipPrintService
+import starship.virtualsoundnw.com.ui.export.ShipCsvExportService
 import android.content.Context
 import javax.inject.Inject
 
@@ -46,7 +47,11 @@ data class ReviewUiState(
     val errorMessage: String? = null,
     val showSaveAsDialog: Boolean = false,
     val saveAsLoading: Boolean = false,
-    val saveAsError: String? = null
+    val saveAsError: String? = null,
+    val showCsvExportDialog: Boolean = false,
+    val csvExportLoading: Boolean = false,
+    val csvExportMessage: String? = null,
+    val csvContent: String? = null
 )
 
 @HiltViewModel
@@ -54,7 +59,8 @@ class ReviewViewModel @Inject constructor(
     private val shipSummaryService: ShipSummaryService,
     private val starShipRepository: StarShipRepository,
     private val detailedShipTableService: DetailedShipTableService,
-    private val shipPrintService: ShipPrintService
+    private val shipPrintService: ShipPrintService,
+    private val shipCsvExportService: ShipCsvExportService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState(isLoading = true))
@@ -156,6 +162,80 @@ class ReviewViewModel @Inject constructor(
         
         if (currentShip != null && currentTableData != null) {
             shipPrintService.printShipDesign(context, currentShip.name, currentTableData)
+        }
+    }
+    
+    /**
+     * Show CSV export dialog
+     */
+    fun showCsvExportDialog() {
+        val currentTableData = _uiState.value.detailedTableData
+        if (currentTableData != null) {
+            val csvContent = shipCsvExportService.generateCsv(currentTableData)
+            _uiState.value = _uiState.value.copy(
+                showCsvExportDialog = true,
+                csvContent = csvContent,
+                csvExportMessage = null
+            )
+        }
+    }
+    
+    /**
+     * Hide CSV export dialog
+     */
+    fun hideCsvExportDialog() {
+        _uiState.value = _uiState.value.copy(
+            showCsvExportDialog = false,
+            csvExportLoading = false,
+            csvExportMessage = null,
+            csvContent = null
+        )
+    }
+    
+    /**
+     * Copy CSV content to clipboard
+     */
+    fun copyCsvToClipboard(context: Context) {
+        val csvContent = _uiState.value.csvContent
+        if (csvContent != null) {
+            _uiState.value = _uiState.value.copy(csvExportLoading = true)
+            
+            viewModelScope.launch {
+                val result = shipCsvExportService.copyToClipboard(context, csvContent)
+                _uiState.value = _uiState.value.copy(
+                    csvExportLoading = false,
+                    csvExportMessage = if (result.isSuccess) {
+                        "CSV content copied to clipboard!"
+                    } else {
+                        "Failed to copy to clipboard: ${result.exceptionOrNull()?.message}"
+                    }
+                )
+            }
+        }
+    }
+    
+    /**
+     * Save CSV content to file
+     */
+    fun saveCsvToFile(context: Context) {
+        val csvContent = _uiState.value.csvContent
+        val currentShip = _uiState.value.ship
+        
+        if (csvContent != null && currentShip != null) {
+            _uiState.value = _uiState.value.copy(csvExportLoading = true)
+            
+            viewModelScope.launch {
+                val fileName = shipCsvExportService.generateFileName(currentShip.name)
+                val result = shipCsvExportService.saveToFile(context, csvContent, fileName)
+                _uiState.value = _uiState.value.copy(
+                    csvExportLoading = false,
+                    csvExportMessage = if (result.isSuccess) {
+                        "CSV saved to: ${result.getOrNull()?.absolutePath}"
+                    } else {
+                        "Failed to save file: ${result.exceptionOrNull()?.message}"
+                    }
+                )
+            }
         }
     }
 }
