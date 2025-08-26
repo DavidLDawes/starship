@@ -48,7 +48,7 @@ class CrewCalculationService @Inject constructor(
      * Calculate complete crew manifest for a ship
      */
     fun getCrewManifest(shipId: Int): Flow<CrewManifest?> {
-        return starShipRepository.starShips.+flatMapLatest { ships ->
+        return starShipRepository.starShips.flatMapLatest { ships ->
             val ship = ships.find { it.uid == shipId }
             if (ship != null) {
                 combine(
