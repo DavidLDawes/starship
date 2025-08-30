@@ -65,6 +65,7 @@ import starship.virtualsoundnw.com.data.local.database.ComputerModel
 import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.CrewSummaryPanel
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -131,6 +132,14 @@ fun FittingsScreen(
                         FittingsSummaryPanel(
                             ship = ship,
                             uiState = uiState
+                        )
+                    }
+                    
+                    // Fittings Crew Summary (Issue #76 comment)
+                    item {
+                        CrewSummaryPanel(
+                            title = "Fittings Crew",
+                            crewMembers = uiState.bridgeCrew
                         )
                     }
                     

@@ -70,6 +70,7 @@ import starship.virtualsoundnw.com.data.local.database.WeaponType
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.CrewSummaryPanel
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -140,6 +141,14 @@ fun WeaponsScreen(
                                 viewModel.removeWeapon(weapon)
                             }
                         }
+                    )
+                }
+                
+                // Weapons Crew Summary (Issue #76 comment)
+                item {
+                    CrewSummaryPanel(
+                        title = "Weapons Crew",
+                        crewMembers = uiState.weaponsCrew
                     )
                 }
                 

@@ -64,6 +64,7 @@ import starship.virtualsoundnw.com.data.local.database.Engine
 import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.CrewSummaryPanel
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
@@ -157,6 +158,14 @@ fun EnginesScreen(
                         FuelPanel(
                             ship = ship,
                             uiState = uiState
+                        )
+                    }
+                    
+                    // Engines Crew Summary (Issue #76 comment)
+                    item {
+                        CrewSummaryPanel(
+                            title = "Engines Crew",
+                            crewMembers = uiState.engineCrew
                         )
                     }
                     
