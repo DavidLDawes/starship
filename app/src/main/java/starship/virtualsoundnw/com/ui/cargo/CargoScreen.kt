@@ -170,7 +170,7 @@ fun CargoConfigurationCard(
             
             if (uiState.isCargoEditingDisabled) {
                 Text(
-                    text = "Cargo editing disabled: No remaining ship tonnage available",
+                    text = "Ship over-tonnage: Only existing cargo allocations can be reduced",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Medium
@@ -182,7 +182,7 @@ fun CargoConfigurationCard(
                 cargoType = CargoType.CARGO,
                 currentTons = uiState.cargoTons,
                 maxTons = uiState.getAvailableTonnageFor(CargoType.CARGO),
-                enabled = !uiState.isCargoEditingDisabled,
+                enabled = uiState.canEditCargoType(CargoType.CARGO),
                 onValueChange = onCargoUpdate
             )
             
@@ -192,7 +192,7 @@ fun CargoConfigurationCard(
                 currentTons = uiState.sparesTons,
                 maxTons = uiState.getAvailableTonnageFor(CargoType.SPARES),
                 stepSize = uiState.sparesStepSize,
-                enabled = !uiState.isCargoEditingDisabled,
+                enabled = uiState.canEditCargoType(CargoType.SPARES),
                 onValueChange = onCargoUpdate,
                 extraInfo = "Service every ${uiState.serviceIntervalMonths} months"
             )
@@ -202,7 +202,7 @@ fun CargoConfigurationCard(
                 cargoType = CargoType.COLD_STORAGE,
                 currentTons = uiState.coldStorageTons,
                 maxTons = uiState.getAvailableTonnageFor(CargoType.COLD_STORAGE),
-                enabled = !uiState.isCargoEditingDisabled,
+                enabled = uiState.canEditCargoType(CargoType.COLD_STORAGE),
                 onValueChange = onCargoUpdate
             )
             
@@ -211,7 +211,7 @@ fun CargoConfigurationCard(
                 cargoType = CargoType.SECURED_CARGO,
                 currentTons = uiState.securedCargoTons,
                 maxTons = uiState.getAvailableTonnageFor(CargoType.SECURED_CARGO),
-                enabled = !uiState.isCargoEditingDisabled,
+                enabled = uiState.canEditCargoType(CargoType.SECURED_CARGO),
                 onValueChange = onCargoUpdate
             )
             
@@ -220,7 +220,7 @@ fun CargoConfigurationCard(
                 cargoType = CargoType.XENO_CARGO,
                 currentTons = uiState.xenoCargoTons,
                 maxTons = uiState.getAvailableTonnageFor(CargoType.XENO_CARGO),
-                enabled = !uiState.isCargoEditingDisabled,
+                enabled = uiState.canEditCargoType(CargoType.XENO_CARGO),
                 onValueChange = onCargoUpdate
             )
         }
