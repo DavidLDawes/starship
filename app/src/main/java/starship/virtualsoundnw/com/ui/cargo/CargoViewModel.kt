@@ -192,8 +192,8 @@ class CargoViewModel @Inject constructor(
         val currentState = _uiState.value
         val ship = currentState.ship ?: return
         
-        // Don't allow updates if cargo editing is disabled (remaining tonnage <= 0)
-        if (currentState.isCargoEditingDisabled) {
+        // Don't allow updates if this specific cargo type can't be edited
+        if (!currentState.canEditCargoType(cargoType)) {
             return
         }
         
