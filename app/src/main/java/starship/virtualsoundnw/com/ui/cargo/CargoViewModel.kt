@@ -49,6 +49,24 @@ data class CargoUiState(
 ) {
     val ship: StarShip? get() = shipSummary?.ship
     val isCargoEditingDisabled: Boolean get() = shipSummary?.let { it.remainingTonnage <= 0 } ?: false
+    
+    /**
+     * Check if a specific cargo type can be edited when ship is over-tonnage
+     * Allow reducing non-zero cargo types to free up tonnage
+     */
+    fun canEditCargoType(cargoType: CargoType): Boolean {
+        val remainingTonnage = shipSummary?.remainingTonnage ?: 0.0
+        if (remainingTonnage > 0) return true // Normal editing when tonnage available
+        
+        // When over-tonnage, only allow editing cargo types that have current allocation > 0
+        return when (cargoType) {
+            CargoType.CARGO -> cargoTons > 0
+            CargoType.SPARES -> sparesTons > 0
+            CargoType.COLD_STORAGE -> coldStorageTons > 0
+            CargoType.SECURED_CARGO -> securedCargoTons > 0
+            CargoType.XENO_CARGO -> xenoCargoTons > 0
+        }
+    }
     val serviceIntervalMonths: Int get() = shipSummary?.let { summary -> 
         if (summary.ship.tons > 0) {
             val sparesPercentage = (sparesTons.toFloat() / summary.ship.tons) * 100
@@ -65,6 +83,7 @@ data class CargoUiState(
     
     /**
      * Get available tonnage for a specific cargo type
+     * When ship is over-tonnage, only allow reducing current allocations
      */
     fun getAvailableTonnageFor(cargoType: CargoType): Int {
         val currentTotalTonnage = cargoTons + sparesTons + coldStorageTons + securedCargoTons + xenoCargoTons
@@ -76,6 +95,14 @@ data class CargoUiState(
             CargoType.XENO_CARGO -> xenoCargoTons
         }
         
+        val remainingTonnage = shipSummary?.remainingTonnage ?: 0.0
+        
+        // When ship is over-tonnage, only allow reducing current allocation
+        if (remainingTonnage <= 0) {
+            return currentTypeTonnage
+        }
+        
+        // Normal case: ship has available tonnage
         // Special constraint for Spares: maximum 11% of ship tonnage (for service every 12 months)
         if (cargoType == CargoType.SPARES) {
             val maxSparesAllowed = ship?.let { (it.tons * 0.11).toInt() } ?: 0
