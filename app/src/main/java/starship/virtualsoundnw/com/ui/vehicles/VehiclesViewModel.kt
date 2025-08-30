@@ -33,6 +33,9 @@ import starship.virtualsoundnw.com.data.ShipSummaryService
 import starship.virtualsoundnw.com.data.StarShipRepository
 import starship.virtualsoundnw.com.data.VehiclesRepository
 import starship.virtualsoundnw.com.data.VehiclesDataService
+import starship.virtualsoundnw.com.data.CrewCalculationService
+import starship.virtualsoundnw.com.data.local.database.CrewMember
+import starship.virtualsoundnw.com.data.local.database.CrewManifest
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.Vehicle
 import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
@@ -46,6 +49,7 @@ data class VehiclesUiState(
     val availableVehicles: List<Vehicle> = emptyList(),
     val vehiclesWithAllocations: List<VehicleWithAllocation> = emptyList(),
     val shipSummary: ShipSummary? = null,
+    val vehiclesCrew: List<CrewMember> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val showAddVehicleDialog: Boolean = false
@@ -61,7 +65,8 @@ class VehiclesViewModel @Inject constructor(
     private val starShipRepository: StarShipRepository,
     private val vehiclesRepository: VehiclesRepository,
     private val shipSummaryService: ShipSummaryService,
-    private val vehiclesDataService: VehiclesDataService
+    private val vehiclesDataService: VehiclesDataService,
+    private val crewCalculationService: CrewCalculationService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VehiclesUiState(isLoading = true))
@@ -81,15 +86,17 @@ class VehiclesViewModel @Inject constructor(
                 starShipRepository.starShips.flatMapLatest { ships ->
                     val ship = ships.find { it.uid == shipId }
                     if (ship != null) {
-                        // Now get vehicles and summary with correct tech level
+                        // Now get vehicles, crew, and summary with correct tech level
                         combine(
                             vehiclesRepository.getVehiclesWithAllocationsForShip(shipId, ship.techLevel),
-                            shipSummaryService.getComprehensiveShipSummary(shipId)
-                        ) { vehiclesWithAllocations, shipSummary ->
+                            shipSummaryService.getComprehensiveShipSummary(shipId),
+                            crewCalculationService.getCrewManifest(shipId)
+                        ) { vehiclesWithAllocations, shipSummary, crewManifest ->
                             VehiclesUiState(
                                 ship = ship,
                                 vehiclesWithAllocations = vehiclesWithAllocations,
                                 shipSummary = shipSummary,
+                                vehiclesCrew = crewManifest?.vehicleCrew ?: emptyList(),
                                 isLoading = false,
                                 errorMessage = null
                             )

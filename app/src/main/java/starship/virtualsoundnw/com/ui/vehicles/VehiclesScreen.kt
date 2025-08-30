@@ -65,6 +65,7 @@ import starship.virtualsoundnw.com.data.local.database.Vehicle
 import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.CrewSummaryPanel
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -106,6 +107,14 @@ fun VehiclesScreen(
                             onAddVehicle = { viewModel.showAddVehicleDialog() },
                             onIncrementVehicle = viewModel::incrementVehicle,
                             onDecrementVehicle = viewModel::decrementVehicle
+                        )
+                    }
+                    
+                    // Vehicles Crew Summary (Issue #76 third comment)
+                    item {
+                        CrewSummaryPanel(
+                            title = "Vehicles Crew",
+                            crewMembers = uiState.vehiclesCrew
                         )
                     }
                     
