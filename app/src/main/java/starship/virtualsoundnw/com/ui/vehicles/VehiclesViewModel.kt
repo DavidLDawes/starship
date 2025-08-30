@@ -171,6 +171,8 @@ class VehiclesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 vehiclesRepository.addVehicleToShip(currentShipId, vehicleId, 1)
+                // Immediately clear any error messages on successful operation
+                _uiState.value = _uiState.value.copy(errorMessage = null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to increment vehicle: ${e.message}"
@@ -183,6 +185,8 @@ class VehiclesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 vehiclesRepository.removeVehicleFromShip(currentShipId, vehicleId, 1)
+                // Immediately clear any error messages on successful operation
+                _uiState.value = _uiState.value.copy(errorMessage = null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to decrement vehicle: ${e.message}"
