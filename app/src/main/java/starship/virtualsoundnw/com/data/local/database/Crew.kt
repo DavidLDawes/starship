@@ -67,7 +67,11 @@ data class CrewMember(
         CrewType.FREIGHT -> "Freight"
     }
     
-    val description: String get() = "$quantity $displayName${if (quantity > 1) "s" else ""} - $assignment"
+    val description: String get() = when {
+        // Handle combined roles like "Pilot/Navigator for X ton vessel"
+        assignment.startsWith("Pilot/Navigator") -> "$quantity Pilot/Navigator"
+        else -> "$quantity $displayName${if (quantity > 1) "s" else ""} - $assignment"
+    }
 }
 
 /**
