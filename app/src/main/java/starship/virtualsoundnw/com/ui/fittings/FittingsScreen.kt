@@ -427,12 +427,6 @@ fun BridgeSection(
                 fontWeight = FontWeight.Medium
             )
             
-            Text(
-                text = "Automatically calculated as 0.5% of ship tonnage",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
