@@ -217,4 +217,39 @@ class BerthsViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
+    
+    /**
+     * Reset berths to correct values based on crew requirements
+     */
+    fun resetBerthsForCrewRequirements() {
+        val currentState = _uiState.value
+        val ship = currentState.ship ?: return
+        val crewCount = currentState.crewManifest?.totalCrewCount ?: 0
+        
+        if (crewCount > 0) {
+            viewModelScope.launch {
+                try {
+                    // Calculate minimum berths needed and create correct berths data
+                    val minimumCrewBerths = Berths(shipId = 0, 0, 0, 0, 0).calculateMinimumCrewBerths(crewCount)
+                    val correctedBerths = Berths(
+                        shipId = ship.uid,
+                        staterooms = minimumCrewBerths, // Put all crew berths as regular staterooms
+                        luxuryStaterooms = 0,
+                        lowPassage = 0,
+                        emergencyLow = 0
+                    )
+                    
+                    berthsRepository.insertBerths(correctedBerths)
+                    
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Berths reset to $minimumCrewBerths staterooms for $crewCount crew (${correctedBerths.getTotalTonnage()} tons)"
+                    )
+                } catch (e: Exception) {
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Failed to reset berths: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
 }

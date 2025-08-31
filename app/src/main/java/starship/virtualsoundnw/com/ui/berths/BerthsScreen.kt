@@ -78,6 +78,16 @@ fun BerthsScreen(
                         )
                     }
                     
+                    // Debug button to fix berths data
+                    item {
+                        OutlinedButton(
+                            onClick = { viewModel.resetBerthsForCrewRequirements() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Debug: Reset Berths for Crew Requirements")
+                        }
+                    }
+                    
                     item {
                         ComprehensiveShipSummaryPanel(
                             summaryData = ShipSummaryData(
