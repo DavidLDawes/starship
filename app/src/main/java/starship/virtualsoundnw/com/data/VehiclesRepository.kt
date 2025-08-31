@@ -47,14 +47,15 @@ class VehiclesRepository @Inject constructor(
         vehicleDao.getAvailableVehiclesForTechLevel(techLevel)
     
     /**
-     * Get vehicles with allocations for a specific ship
+     * Get vehicles with allocations for a specific ship - reactive to allocation changes
      */
     fun getVehiclesWithAllocationsForShip(shipId: Int, techLevel: TechLevel): Flow<List<VehicleWithAllocation>> {
-        return flow {
-            val rawData = vehicleAllocationDao.getVehiclesWithAllocationsRaw(shipId, techLevel)
-            val result = rawData.map { VehicleWithAllocation.fromRaw(it) }
-            emit(result)
-        }
+        return vehicleAllocationDao.getAllocationsForShip(shipId)
+            .map { allocations ->
+                // When allocations change, re-fetch the full data with vehicle details
+                val rawData = vehicleAllocationDao.getVehiclesWithAllocationsRaw(shipId, techLevel)
+                rawData.map { VehicleWithAllocation.fromRaw(it) }
+            }
     }
     
     /**

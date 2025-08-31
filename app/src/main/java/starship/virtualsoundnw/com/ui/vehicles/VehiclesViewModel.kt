@@ -133,8 +133,23 @@ class VehiclesViewModel @Inject constructor(
                 vehiclesDataService.ensureVehicleCatalogPopulated()
                 val ship = _uiState.value.ship
                 if (ship != null) {
-                    val availableVehicles = vehiclesRepository.getAvailableVehiclesForTechLevel(ship.techLevel).first()
-                    _uiState.value = _uiState.value.copy(availableVehicles = availableVehicles)
+                    // Use sync version to avoid Flow collection issues
+                    val availableVehicles = vehiclesDataService.getAvailableVehiclesForTechLevelSync(ship.techLevel)
+                    _uiState.value = _uiState.value.copy(
+                        availableVehicles = availableVehicles,
+                        errorMessage = null // Clear any previous errors
+                    )
+                    
+                    // If no vehicles are available, provide helpful error message
+                    if (availableVehicles.isEmpty()) {
+                        _uiState.value = _uiState.value.copy(
+                            errorMessage = "No vehicles available for Tech Level ${ship.techLevel}. Available vehicles require higher tech levels."
+                        )
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Cannot load vehicles: Ship data not available"
+                    )
                 }
             } catch (e: Exception) {
                 val ship = _uiState.value.ship
@@ -158,7 +173,8 @@ class VehiclesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 vehiclesRepository.addVehicleToShip(currentShipId, vehicleId, 1)
-                // No need to manually update UI state - the reactive flow will handle it
+                // Clear any error messages on success
+                _uiState.value = _uiState.value.copy(errorMessage = null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to add vehicle: ${e.message}"
@@ -171,6 +187,8 @@ class VehiclesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 vehiclesRepository.addVehicleToShip(currentShipId, vehicleId, 1)
+                // Immediately clear any error messages on successful operation
+                _uiState.value = _uiState.value.copy(errorMessage = null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to increment vehicle: ${e.message}"
@@ -183,6 +201,8 @@ class VehiclesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 vehiclesRepository.removeVehicleFromShip(currentShipId, vehicleId, 1)
+                // Immediately clear any error messages on successful operation
+                _uiState.value = _uiState.value.copy(errorMessage = null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     errorMessage = "Failed to decrement vehicle: ${e.message}"
