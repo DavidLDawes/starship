@@ -28,7 +28,6 @@ import starship.virtualsoundnw.com.data.local.database.Weapon
 import starship.virtualsoundnw.com.data.local.database.Defense
 import starship.virtualsoundnw.com.data.local.database.Fitting
 import starship.virtualsoundnw.com.data.local.database.Cargo
-import starship.virtualsoundnw.com.data.local.database.Berths
 import starship.virtualsoundnw.com.data.local.database.VehicleAllocation
 import starship.virtualsoundnw.com.data.local.database.VehicleWithAllocation
 import starship.virtualsoundnw.com.data.local.database.DroneWithAllocation
@@ -59,7 +58,6 @@ class ShipSummaryService @Inject constructor(
     
     /**
      * Get comprehensive ship summary with all system data
-     * Fixed to ensure consistent calculations across all screens by ensuring all flows emit initial values
      */
     fun getComprehensiveShipSummary(shipId: Int): Flow<ShipSummary?> {
         return starShipRepository.starShips.flatMapLatest { ships ->
@@ -128,33 +126,9 @@ class ShipSummaryService @Inject constructor(
                 val dronesTonnage = dronesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
                 val dronesCost = dronesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
                 
-                // Calculate berths tonnage and cost with consistent auto-adjustment logic
-                val effectiveBerths = berths?.let { existingBerths ->
-                    // If berths exist but don't meet crew requirements, auto-adjust for consistent calculation
-                    crewManifest?.let { crew ->
-                        if (!existingBerths.meetsMinimumCrewBerths(crew.totalCrewCount)) {
-                            existingBerths.ensureMinimumCrewBerths(crew.totalCrewCount)
-                        } else {
-                            existingBerths
-                        }
-                    } ?: existingBerths
-                } ?: run {
-                    // If no berths exist but crew does, create minimum berths for consistent calculation
-                    crewManifest?.let { crew ->
-                        if (crew.totalCrewCount > 0) {
-                            Berths(
-                                shipId = shipId,
-                                staterooms = kotlin.math.ceil(crew.totalCrewCount / 2.0).toInt(),
-                                luxuryStaterooms = 0,
-                                lowPassage = 0,
-                                emergencyLow = 0
-                            )
-                        } else null
-                    }
-                }
-                
-                val berthsTonnage = effectiveBerths?.getTotalTonnage()?.toDouble() ?: 0.0
-                val berthsCost = effectiveBerths?.getTotalBerthsCost()?.toDouble() ?: 0.0
+                // Calculate berths tonnage and cost 
+                val berthsTonnage = berths?.getTotalTonnage()?.toDouble() ?: 0.0
+                val berthsCost = berths?.getTotalBerthsCost()?.toDouble() ?: 0.0
                 
                 ShipSummary(
                     ship = ship,

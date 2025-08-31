@@ -148,25 +148,9 @@ class BerthsViewModel @Inject constructor(
                 ) { ships, shipSummary, berths, crewManifest ->
                     val ship = ships.find { it.uid == shipId }
                     
-                    // Auto-adjust berths if crew requirements have changed
-                    val adjustedBerths = berths?.let { b ->
-                        crewManifest?.let { crew ->
-                            if (!b.meetsMinimumCrewBerths(crew.totalCrewCount)) {
-                                b.ensureMinimumCrewBerths(crew.totalCrewCount)
-                            } else {
-                                b
-                            }
-                        } ?: b
-                    }
-                    
-                    // If berths were adjusted, save them
-                    if (adjustedBerths != berths && adjustedBerths != null) {
-                        berthsRepository.insertBerths(adjustedBerths)
-                    }
-                    
                     BerthsUiState(
                         ship = ship,
-                        berths = adjustedBerths ?: berths,
+                        berths = berths,
                         shipSummary = shipSummary,
                         crewManifest = crewManifest,
                         isLoading = false
