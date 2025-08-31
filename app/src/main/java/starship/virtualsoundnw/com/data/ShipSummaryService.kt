@@ -126,7 +126,7 @@ class ShipSummaryService @Inject constructor(
                 val dronesTonnage = dronesWithAllocations.sumOf { it.extendedTonnage.toDouble() }
                 val dronesCost = dronesWithAllocations.sumOf { it.extendedCostMCr.toDouble() }
                 
-                // Calculate berths tonnage and cost
+                // Calculate berths tonnage and cost 
                 val berthsTonnage = berths?.getTotalTonnage()?.toDouble() ?: 0.0
                 val berthsCost = berths?.getTotalBerthsCost()?.toDouble() ?: 0.0
                 
