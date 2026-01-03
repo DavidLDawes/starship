@@ -33,6 +33,7 @@ import starship.virtualsoundnw.com.ui.defenses.DefensesScreen
 import starship.virtualsoundnw.com.ui.cargo.CargoScreen
 import starship.virtualsoundnw.com.ui.vehicles.VehiclesScreen
 import starship.virtualsoundnw.com.ui.drones.DronesScreen
+import starship.virtualsoundnw.com.ui.custom.CustomScreen
 import starship.virtualsoundnw.com.ui.berths.BerthsScreen
 import starship.virtualsoundnw.com.ui.review.ReviewScreen
 
@@ -133,6 +134,19 @@ fun MainNavigation() {
                     navController.navigate("vehicles/$shipId")
                 },
                 onNavigateToBerths = { shipId ->
+                    navController.navigate("custom/$shipId")
+                }
+            )
+        }
+        composable("custom/{shipId}") { backStackEntry ->
+            val shipId = backStackEntry.arguments?.getString("shipId")?.toIntOrNull() ?: -1
+            CustomScreen(
+                shipId = shipId,
+                modifier = Modifier.padding(16.dp),
+                onNavigateToDrones = { shipId ->
+                    navController.navigate("drones/$shipId")
+                },
+                onNavigateToBerths = { shipId ->
                     navController.navigate("berths/$shipId")
                 }
             )
@@ -143,7 +157,7 @@ fun MainNavigation() {
                 shipId = shipId,
                 modifier = Modifier.padding(16.dp),
                 onNavigateToDrones = { shipId ->
-                    navController.navigate("drones/$shipId")
+                    navController.navigate("custom/$shipId")
                 },
                 onNavigateToReview = { shipId ->
                     navController.navigate("review/$shipId")

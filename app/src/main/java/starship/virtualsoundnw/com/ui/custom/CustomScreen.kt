@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package starship.virtualsoundnw.com.ui.drones
+package starship.virtualsoundnw.com.ui.custom
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,22 +30,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -58,29 +57,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import starship.virtualsoundnw.com.data.local.database.CustomItem
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.components.toShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
-fun DronesScreen(
+fun CustomScreen(
     shipId: Int,
     modifier: Modifier = Modifier,
-    onNavigateToVehicles: (Int) -> Unit = {},
+    onNavigateToDrones: (Int) -> Unit = {},
     onNavigateToBerths: (Int) -> Unit = {},
-    viewModel: DronesViewModel = hiltViewModel()
+    viewModel: CustomViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     LaunchedEffect(shipId) {
         viewModel.loadDataForShip(shipId)
     }
-    
+
     Box(modifier = modifier.fillMaxSize()) {
         if (uiState.isLoading) {
             CircularProgressIndicator(
@@ -93,18 +94,15 @@ fun DronesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    DronesManagementPanel(
-                        dronesWithAllocations = uiState.dronesWithAllocations,
-                        availableDrones = uiState.availableDrones,
-                        totalCount = uiState.totalDroneCount,
-                        totalTonnage = uiState.totalDroneTonnage,
-                        totalCost = uiState.totalDroneCostMCr,
-                        onShowAddDroneDialog = viewModel::showAddDroneDialog,
-                        onIncrementDrone = viewModel::incrementDrone,
-                        onDecrementDrone = viewModel::decrementDrone
+                    CustomItemsManagementPanel(
+                        customItems = uiState.customItems,
+                        totalTonnage = uiState.totalCustomTonnage,
+                        totalCost = uiState.totalCustomCostMCr,
+                        onShowAddCustomItemDialog = viewModel::showAddCustomItemDialog,
+                        onDeleteCustomItem = viewModel::deleteCustomItem
                     )
                 }
-                
+
                 uiState.shipSummary?.let { shipSummary ->
                     item {
                         ComprehensiveShipSummaryPanel(
@@ -112,29 +110,28 @@ fun DronesScreen(
                         )
                     }
                 }
-                
+
                 item {
-                    DronesNavigationButtons(
+                    CustomNavigationButtons(
                         shipId = shipId,
-                        onNavigateToVehicles = onNavigateToVehicles,
+                        onNavigateToDrones = onNavigateToDrones,
                         onNavigateToBerths = onNavigateToBerths
                     )
                 }
             }
         }
-        
-        // Add Drone Dialog
-        if (uiState.showAddDroneDialog) {
-            AddDroneDialog(
-                availableDrones = uiState.availableDrones,
-                onDroneSelected = { droneId ->
-                    viewModel.addDrone(droneId)
-                    viewModel.hideAddDroneDialog()
+
+        // Add Custom Item Dialog
+        if (uiState.showAddCustomItemDialog) {
+            AddCustomItemDialog(
+                onCustomItemAdded = { name, tons, cost ->
+                    viewModel.addCustomItem(name, tons, cost)
+                    viewModel.hideAddCustomItemDialog()
                 },
-                onDismiss = viewModel::hideAddDroneDialog
+                onDismiss = viewModel::hideAddCustomItemDialog
             )
         }
-        
+
         // Error Dialog
         uiState.errorMessage?.let { errorMessage ->
             AlertDialog(
@@ -152,15 +149,12 @@ fun DronesScreen(
 }
 
 @Composable
-fun DronesManagementPanel(
-    dronesWithAllocations: List<starship.virtualsoundnw.com.data.local.database.DroneWithAllocation>,
-    availableDrones: List<starship.virtualsoundnw.com.data.local.database.Drone>,
-    totalCount: Int,
+fun CustomItemsManagementPanel(
+    customItems: List<CustomItem>,
     totalTonnage: Float,
     totalCost: Float,
-    onShowAddDroneDialog: () -> Unit,
-    onIncrementDrone: (Int) -> Unit,
-    onDecrementDrone: (Int) -> Unit,
+    onShowAddCustomItemDialog: () -> Unit,
+    onDeleteCustomItem: (CustomItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -170,36 +164,35 @@ fun DronesManagementPanel(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header with Add Drone button
+            // Header with Add button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Drones",
+                    text = "Custom Items",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
                 )
-                
+
                 FilledTonalButton(
-                    onClick = onShowAddDroneDialog,
-                    enabled = availableDrones.isNotEmpty()
+                    onClick = onShowAddCustomItemDialog
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add Drones")
+                    Text("Add Custom Item")
                 }
             }
-            
+
             // Summary
-            if (totalCount > 0) {
+            if (customItems.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Total: $totalCount drones",
+                        text = "Total: ${customItems.size} items",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -210,10 +203,9 @@ fun DronesManagementPanel(
                     )
                 }
             }
-            
-            // Drone List - Only show drones with quantity > 0
-            val activeDrones = dronesWithAllocations.filter { it.quantity > 0 }
-            if (activeDrones.isEmpty()) {
+
+            // Custom Items List
+            if (customItems.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -221,7 +213,7 @@ fun DronesManagementPanel(
                     )
                 ) {
                     Text(
-                        text = "No drones configured. Use 'Add Drone' to get started.",
+                        text = "No custom items added. Use 'Add Custom Item' to get started.",
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -233,11 +225,10 @@ fun DronesManagementPanel(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    activeDrones.forEach { droneWithAllocation ->
-                        DroneAllocationItem(
-                            droneWithAllocation = droneWithAllocation,
-                            onIncrement = { onIncrementDrone(droneWithAllocation.drone.uid) },
-                            onDecrement = { onDecrementDrone(droneWithAllocation.drone.uid) }
+                    customItems.forEach { customItem ->
+                        CustomItemRow(
+                            customItem = customItem,
+                            onDelete = { onDeleteCustomItem(customItem) }
                         )
                     }
                 }
@@ -247,10 +238,9 @@ fun DronesManagementPanel(
 }
 
 @Composable
-fun DroneAllocationItem(
-    droneWithAllocation: starship.virtualsoundnw.com.data.local.database.DroneWithAllocation,
-    onIncrement: () -> Unit,
-    onDecrement: () -> Unit,
+fun CustomItemRow(
+    customItem: CustomItem,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -258,132 +248,93 @@ fun DroneAllocationItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Drone info
+        // Item info
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = droneWithAllocation.drone.name,
+                text = customItem.name,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${droneWithAllocation.drone.tons} tons • ${String.format("%.3f", droneWithAllocation.drone.costMCr)} MCr each",
+                text = "${customItem.tons} tons • ${String.format("%.3f", customItem.costMCr)} MCr",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
-        // Quantity controls
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onDecrement) {
-                Text("-", style = MaterialTheme.typography.titleMedium)
-            }
-            
-            Text(
-                text = "${droneWithAllocation.quantity}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
-            
-            IconButton(onClick = onIncrement) {
-                Text("+", style = MaterialTheme.typography.titleMedium)
-            }
-        }
-        
-        // Extended totals
-        Column(
-            horizontalAlignment = Alignment.End
-        ) {
-            Text(
-                text = "${String.format("%.1f", droneWithAllocation.extendedTonnage)} tons",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "${String.format("%.3f", droneWithAllocation.extendedCostMCr)} MCr",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+
+        // Delete button
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete ${customItem.name}",
+                tint = MaterialTheme.colorScheme.error
             )
         }
     }
 }
 
 @Composable
-fun AddDroneDialog(
-    availableDrones: List<starship.virtualsoundnw.com.data.local.database.Drone>,
-    onDroneSelected: (Int) -> Unit,
+fun AddCustomItemDialog(
+    onCustomItemAdded: (String, Float, Float) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedDrone by remember { mutableStateOf<starship.virtualsoundnw.com.data.local.database.Drone?>(null) }
-    
+    var name by remember { mutableStateOf("") }
+    var tons by remember { mutableStateOf("") }
+    var cost by remember { mutableStateOf("") }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Drone") },
+        title = { Text("Add Custom Item") },
         text = {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 Text(
-                    text = "Select a drone type to add to your ship:",
+                    text = "Enter details for your custom item:",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
-                // Dropdown for drone selection
-                Box {
-                    OutlinedButton(
-                        onClick = { expanded = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = selectedDrone?.name ?: "Choose Drone Type",
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
-                    }
-                    
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        availableDrones.forEach { drone ->
-                            DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text(
-                                            text = drone.name,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        Text(
-                                            text = "${drone.tons} tons, ${String.format("%.3f", drone.costMCr)} MCr",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    selectedDrone = drone
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = tons,
+                    onValueChange = { tons = it },
+                    label = { Text("Tonnage") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = cost,
+                    onValueChange = { cost = it },
+                    label = { Text("Cost (MCr)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true
+                )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    selectedDrone?.let { drone ->
-                        onDroneSelected(drone.uid)
+                    val tonsFloat = tons.toFloatOrNull() ?: 0f
+                    val costFloat = cost.toFloatOrNull() ?: 0f
+                    if (name.isNotBlank() && tonsFloat > 0) {
+                        onCustomItemAdded(name, tonsFloat, costFloat)
                     }
                 },
-                enabled = selectedDrone != null
+                enabled = name.isNotBlank() && tons.toFloatOrNull() != null && cost.toFloatOrNull() != null
             ) {
                 Text("Add")
             }
@@ -397,9 +348,9 @@ fun AddDroneDialog(
 }
 
 @Composable
-fun DronesNavigationButtons(
+fun CustomNavigationButtons(
     shipId: Int,
-    onNavigateToVehicles: (Int) -> Unit,
+    onNavigateToDrones: (Int) -> Unit,
     onNavigateToBerths: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -408,26 +359,26 @@ fun DronesNavigationButtons(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         OutlinedButton(
-            onClick = { onNavigateToVehicles(shipId) }
+            onClick = { onNavigateToDrones(shipId) }
         ) {
-            Text("Back: Vehicles")
+            Text("Back: Drones")
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Button(
             onClick = { onNavigateToBerths(shipId) },
             modifier = Modifier.weight(1f)
         ) {
-            Text("Next: Custom")
+            Text("Next: Berths")
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun DronesScreenPreview() {
+private fun CustomScreenPreview() {
     MyApplicationTheme {
-        DronesScreen(shipId = 1)
+        CustomScreen(shipId = 1)
     }
 }

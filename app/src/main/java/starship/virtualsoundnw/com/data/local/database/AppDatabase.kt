@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class, Berths::class], version = 14)
+@Database(entities = [StarShip::class, Engine::class, Fitting::class, Weapon::class, Defense::class, Cargo::class, Vehicle::class, VehicleAllocation::class, Drone::class, DroneAllocation::class, Berths::class, CustomItem::class], version = 15)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun starShipDao(): StarShipDao
     abstract fun engineDao(): EngineDao
@@ -34,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vehicleAllocationDao(): VehicleAllocationDao
     abstract fun droneDao(): DroneDao
     abstract fun berthsDao(): BerthsDao
+    abstract fun customItemDao(): CustomItemDao
 
     companion object {
         /**
@@ -162,22 +163,44 @@ abstract class AppDatabase : RoomDatabase() {
                         configuration TEXT NOT NULL
                     )
                 """.trimIndent())
-                
+
                 // Copy data from old table to new table
                 database.execSQL("""
                     INSERT INTO starship_new (uid, name, description, tons, techLevel, configuration)
                     SELECT uid, name, description, tons, techLevel, configuration
                     FROM starship
                 """.trimIndent())
-                
+
                 // Drop the old table
                 database.execSQL("DROP TABLE starship")
-                
+
                 // Rename the new table to the original name
                 database.execSQL("ALTER TABLE starship_new RENAME TO starship")
-                
+
                 // Create the unique index on name (case-insensitive)
                 database.execSQL("CREATE UNIQUE INDEX index_starship_name ON starship(name COLLATE NOCASE)")
+            }
+        }
+
+        /**
+         * Migration from version 14 to 15: Add Custom Items table
+         */
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create custom_items table
+                database.execSQL("""
+                    CREATE TABLE custom_items (
+                        uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        shipId INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        tons REAL NOT NULL,
+                        costMCr REAL NOT NULL,
+                        FOREIGN KEY(shipId) REFERENCES StarShip(uid) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+
+                // Create index on shipId
+                database.execSQL("CREATE INDEX index_custom_items_shipId ON custom_items(shipId)")
             }
         }
     }

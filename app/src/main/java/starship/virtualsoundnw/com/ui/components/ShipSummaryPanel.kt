@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.ui.utils.RoundingUtils
 
@@ -56,11 +57,42 @@ data class ShipSummaryData(
     val dronesTonnage: Double = 0.0,
     val dronesCost: Double = 0.0,
     val berthsTonnage: Double = 0.0,
-    val berthsCost: Double = 0.0
+    val berthsCost: Double = 0.0,
+    val customTonnage: Double = 0.0,
+    val customCost: Double = 0.0
 ) {
-    val totalSystemsTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage + dronesTonnage + berthsTonnage
-    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost + dronesCost + berthsCost + ship.hullCost
+    val totalSystemsTonnage: Double get() = enginesTonnage + fuelTonnage + weaponsTonnage + defensesTonnage + fittingsTonnage + cargoTonnage + vehiclesTonnage + dronesTonnage + berthsTonnage + customTonnage
+    val totalSystemsCost: Double get() = enginesCost + weaponsCost + defensesCost + fittingsCost + cargoCost + vehiclesCost + dronesCost + berthsCost + customCost + ship.hullCost
     val remainingTonnage: Double get() = ship.tons - totalSystemsTonnage
+}
+
+/**
+ * Extension function to convert ShipSummary to ShipSummaryData
+ * This eliminates repetitive mapping code across all screen files
+ */
+fun ShipSummary.toShipSummaryData(): ShipSummaryData {
+    return ShipSummaryData(
+        ship = this.ship,
+        enginesTonnage = this.enginesTonnage,
+        enginesCost = this.enginesCost,
+        fuelTonnage = this.fuelTonnage,
+        weaponsTonnage = this.weaponsTonnage,
+        weaponsCost = this.weaponsCost,
+        defensesTonnage = this.defensesTonnage,
+        defensesCost = this.defensesCost,
+        fittingsTonnage = this.fittingsTonnage,
+        fittingsCost = this.fittingsCost,
+        cargoTonnage = this.cargoTonnage.toDouble(),
+        cargoCost = this.cargoCost,
+        vehiclesTonnage = this.vehiclesTonnage,
+        vehiclesCost = this.vehiclesCost,
+        dronesTonnage = this.dronesTonnage,
+        dronesCost = this.dronesCost,
+        berthsTonnage = this.berthsTonnage,
+        berthsCost = this.berthsCost,
+        customTonnage = this.customTonnage,
+        customCost = this.customCost
+    )
 }
 
 /**

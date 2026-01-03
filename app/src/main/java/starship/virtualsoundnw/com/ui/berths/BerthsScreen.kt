@@ -37,6 +37,7 @@ import starship.virtualsoundnw.com.data.local.database.TechLevel
 import starship.virtualsoundnw.com.data.local.database.Configuration
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.toShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 
 @Composable
@@ -80,26 +81,7 @@ fun BerthsScreen(
                     
                     item {
                         ComprehensiveShipSummaryPanel(
-                            summaryData = ShipSummaryData(
-                                ship = shipSummary.ship,
-                                enginesTonnage = shipSummary.enginesTonnage,
-                                enginesCost = shipSummary.enginesCost,
-                                fuelTonnage = shipSummary.fuelTonnage,
-                                weaponsTonnage = shipSummary.weaponsTonnage,
-                                weaponsCost = shipSummary.weaponsCost,
-                                defensesTonnage = shipSummary.defensesTonnage,
-                                defensesCost = shipSummary.defensesCost,
-                                fittingsTonnage = shipSummary.fittingsTonnage,
-                                fittingsCost = shipSummary.fittingsCost,
-                                cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                                cargoCost = shipSummary.cargoCost,
-                                vehiclesTonnage = shipSummary.vehiclesTonnage,
-                                vehiclesCost = shipSummary.vehiclesCost,
-                                dronesTonnage = shipSummary.dronesTonnage,
-                                dronesCost = shipSummary.dronesCost,
-                                berthsTonnage = shipSummary.berthsTonnage,
-                                berthsCost = shipSummary.berthsCost
-                            )
+                            summaryData = shipSummary.toShipSummaryData()
                         )
                     }
                     
@@ -344,7 +326,7 @@ fun BerthsNavigationButtons(
         OutlinedButton(
             onClick = { onNavigateToDrones(shipId) }
         ) {
-            Text("Back: Drones")
+            Text("Back: Custom")
         }
         
         Spacer(modifier = Modifier.width(16.dp))

@@ -65,6 +65,7 @@ import starship.virtualsoundnw.com.data.local.database.EngineType
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
 import starship.virtualsoundnw.com.ui.components.CrewSummaryPanel
+import starship.virtualsoundnw.com.ui.components.toShipSummaryData
 import starship.virtualsoundnw.com.data.local.database.PowerPlantType
 import starship.virtualsoundnw.com.data.local.database.StarShip
 import starship.virtualsoundnw.com.data.local.database.TechLevel
@@ -172,26 +173,7 @@ fun EnginesScreen(
                     item {
                         uiState.shipSummary?.let { shipSummary ->
                             ComprehensiveShipSummaryPanel(
-                                summaryData = ShipSummaryData(
-                                    ship = shipSummary.ship,
-                                    enginesTonnage = shipSummary.enginesTonnage,
-                                    enginesCost = shipSummary.enginesCost,
-                                    fuelTonnage = shipSummary.fuelTonnage,
-                                    weaponsTonnage = shipSummary.weaponsTonnage,
-                                    weaponsCost = shipSummary.weaponsCost,
-                                    defensesTonnage = shipSummary.defensesTonnage,
-                                    defensesCost = shipSummary.defensesCost,
-                                    fittingsTonnage = shipSummary.fittingsTonnage,
-                                    fittingsCost = shipSummary.fittingsCost,
-                                    cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                                    cargoCost = shipSummary.cargoCost,
-                                    vehiclesTonnage = shipSummary.vehiclesTonnage,
-                                    vehiclesCost = shipSummary.vehiclesCost,
-                                    dronesTonnage = shipSummary.dronesTonnage,
-                                    dronesCost = shipSummary.dronesCost,
-                                    berthsTonnage = shipSummary.berthsTonnage,
-                                    berthsCost = shipSummary.berthsCost
-                                )
+                                summaryData = shipSummary.toShipSummaryData()
                             )
                         }
                     }
@@ -780,24 +762,7 @@ private fun EnginesScreenPreview() {
             item {
                 uiState.shipSummary?.let { shipSummary ->
                     ComprehensiveShipSummaryPanel(
-                        summaryData = ShipSummaryData(
-                            ship = shipSummary.ship,
-                            enginesTonnage = shipSummary.enginesTonnage,
-                            enginesCost = shipSummary.enginesCost,
-                            fuelTonnage = shipSummary.fuelTonnage,
-                            weaponsTonnage = shipSummary.weaponsTonnage,
-                            weaponsCost = shipSummary.weaponsCost,
-                            defensesTonnage = shipSummary.defensesTonnage,
-                            defensesCost = shipSummary.defensesCost,
-                            fittingsTonnage = shipSummary.fittingsTonnage,
-                            fittingsCost = shipSummary.fittingsCost,
-                            cargoTonnage = shipSummary.cargoTonnage.toDouble(),
-                            cargoCost = shipSummary.cargoCost,
-                            vehiclesTonnage = shipSummary.vehiclesTonnage,
-                            vehiclesCost = shipSummary.vehiclesCost,
-                            dronesTonnage = shipSummary.dronesTonnage,
-                            dronesCost = shipSummary.dronesCost
-                        )
+                        summaryData = shipSummary.toShipSummaryData()
                     )
                 }
             }

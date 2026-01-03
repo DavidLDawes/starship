@@ -50,6 +50,7 @@ import starship.virtualsoundnw.com.data.local.database.CargoType
 import starship.virtualsoundnw.com.data.ShipSummary
 import starship.virtualsoundnw.com.ui.components.ComprehensiveShipSummaryPanel
 import starship.virtualsoundnw.com.ui.components.ShipSummaryData
+import starship.virtualsoundnw.com.ui.components.toShipSummaryData
 import starship.virtualsoundnw.com.ui.theme.MyApplicationTheme
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -114,26 +115,7 @@ fun CargoScreen(
         if (uiState.shipSummary != null && !uiState.isLoading) {
             item {
                 ComprehensiveShipSummaryPanel(
-                    summaryData = ShipSummaryData(
-                        ship = uiState.shipSummary!!.ship,
-                        enginesTonnage = uiState.shipSummary!!.enginesTonnage,
-                        enginesCost = uiState.shipSummary!!.enginesCost,
-                        fuelTonnage = uiState.shipSummary!!.fuelTonnage,
-                        weaponsTonnage = uiState.shipSummary!!.weaponsTonnage,
-                        weaponsCost = uiState.shipSummary!!.weaponsCost,
-                        defensesTonnage = uiState.shipSummary!!.defensesTonnage,
-                        defensesCost = uiState.shipSummary!!.defensesCost,
-                        fittingsTonnage = uiState.shipSummary!!.fittingsTonnage,
-                        fittingsCost = uiState.shipSummary!!.fittingsCost,
-                        cargoTonnage = uiState.shipSummary!!.cargoTonnage.toDouble(),
-                        cargoCost = uiState.shipSummary!!.cargoCost,
-                        vehiclesTonnage = uiState.shipSummary!!.vehiclesTonnage,
-                        vehiclesCost = uiState.shipSummary!!.vehiclesCost,
-                        dronesTonnage = uiState.shipSummary!!.dronesTonnage,
-                        dronesCost = uiState.shipSummary!!.dronesCost,
-                        berthsTonnage = uiState.shipSummary!!.berthsTonnage,
-                        berthsCost = uiState.shipSummary!!.berthsCost
-                    )
+                    summaryData = uiState.shipSummary!!.toShipSummaryData()
                 )
             }
         }

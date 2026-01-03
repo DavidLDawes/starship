@@ -13,7 +13,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing Commands
 - `./gradlew.bat test` - Run all unit tests
 - `./gradlew.bat testDebugUnitTest` - Run debug unit tests only
-- `./gradlew.bat connectedAndroidTest` - Run instrumentation tests (requires device/emulator)
 - `./gradlew.bat :app:testDebugUnitTest --tests "*.StarShipViewModelTest"` - Run single test class
 
 ### Development Commands
@@ -23,8 +22,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture Overview
 
 ### Technology Stack
-- **Android**: Target SDK 35, Min SDK 21
-- **UI**: Jetpack Compose with Material3
 - **Database**: Room with SQLite
 - **DI**: Hilt for dependency injection
 - **Async**: Kotlin Coroutines with Flow
@@ -32,41 +29,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Code Architecture
 
-#### MVVM + Repository Pattern + Service Layer
-```
-Screen (Compose UI)
-  ↓ observes StateFlow
-ViewModel (@HiltViewModel)
-  ↓ calls repository methods + ShipSummaryService
-Repository (interface + implementation) 
-  ↓ uses DAO
-DAO (Room DAO)
-  ↓ queries
-AppDatabase (Room Database)
-```
-
 #### Current Screens & ViewModels
-- **StarShipScreen/ViewModel** - Main ship selection and creation
-- **EnginesScreen/ViewModel** - Engine configuration (Power Plants, Jump/Maneuver Drives)
-- **WeaponsScreen/ViewModel** - Weapon systems and turrets
-- **DefensesScreen/ViewModel** - Armor and defensive screens
-- **FittingsScreen/ViewModel** - Sensors and computer systems
-- **CargoScreen/ViewModel** - Cargo allocation (5 types: Cargo, Spares, Cold Storage, Secured, Xeno)
-- **VehiclesScreen/ViewModel** - Vehicle bay configuration
-- **DronesScreen/ViewModel** - Drone complement configuration
-- **BerthsScreen/ViewModel** - Crew manifest and berths allocation with comprehensive crew calculations
 
 #### Package Structure
-- `ui.starship.*` - Main ship selection screen
-- `ui.engines.*` - Engine configuration screen and logic
-- `ui.weapons.*` - Weapons configuration screen and logic  
-- `ui.defenses.*` - Defenses configuration screen and logic
-- `ui.fittings.*` - Fittings configuration screen and logic
-- `ui.cargo.*` - Cargo configuration screen and logic
-- `ui.vehicles.*` - Vehicles configuration screen and logic
-- `ui.drones.*` - Drones configuration screen and logic
-- `ui.berths.*` - Berths and crew manifest screen and logic
-- `ui.components.*` - Shared UI components (ComprehensiveShipSummaryPanel)
+- `ui.components.*` - Shared UI components
 - `ui.theme.*` - Material3 theming
 - `data.*` - Repository implementations, interfaces, and services (including CrewCalculationService)
 - `data.local.database.*` - Room entities, DAOs, and database
@@ -74,80 +40,11 @@ AppDatabase (Room Database)
 - `data.local.di.*` - Hilt modules for database
 
 #### Key Architectural Files
-- `StarShipDesigner.kt` - Application class with `@HiltAndroidApp`
-- `AppDatabase.kt` - Room database with migration support (currently version 13)
-- `StarShip.kt`, `Engine.kt`, `Weapon.kt`, `Defense.kt`, `Fitting.kt`, `Cargo.kt`, `Berths.kt`, `Crew.kt` - Room entities and DAOs
-- `StarShipRepository.kt` + domain-specific repositories - Repository pattern implementation
-- `ShipSummaryService.kt` - Centralized service for comprehensive ship data aggregation
-- `CrewCalculationService.kt` - Comprehensive crew calculation service with complex business logic
-- `ShipSummaryPanel.kt` - Shared UI component for consistent ship summaries across all screens
-- `DatabaseModule.kt` & `DataModule.kt` - Hilt dependency injection modules
-- `Navigation.kt` - Compose navigation setup
-
-#### Ship Summary Architecture (Cross-Screen Feature)
-
-The ship summary system provides consistent, comprehensive ship data across all configuration screens:
-
-**Components:**
-- `ShipSummaryService` - Centralized service that aggregates data from all repositories
-- `ComprehensiveShipSummaryPanel` - Shared UI component for displaying complete ship information  
-- `ShipSummaryData` - UI data class for comprehensive ship summary
-- `ShipSummary` - Domain data class from service layer
-
-**Data Flow:**
-```
-Screen requests ship summary
-  ↓
-ViewModel calls ShipSummaryService.getComprehensiveShipSummary()
-  ↓  
-Service combines data from all repositories (engines, weapons, defenses, fittings, cargo, vehicles, drones, crew)
-  ↓
-Service calculates totals (tonnage, costs, fuel requirements, crew manifest)
-  ↓
-Returns ShipSummary to ViewModel
-  ↓
-ViewModel converts to ShipSummaryData for UI
-  ↓
-Screen displays ComprehensiveShipSummaryPanel
-```
-
-**Key Features:**
-- **Centralized Data**: Single source of truth for ship totals across all systems
-- **Real-time Updates**: Reactive flows ensure summaries update when any system changes
-- **Consistent UI**: Same summary component used across all configuration screens
-- **Complete Information**: Shows engines, weapons, defenses, fittings, cargo, vehicles, drones with costs/tonnage
-- **Calculated Values**: Remaining tonnage, total costs, fuel requirements, service intervals, crew requirements
-
-**Usage Pattern:** All configuration screens (Engines, Weapons, Defenses, Fittings, Cargo, Vehicles, Drones, Berths) use this system to show users the complete ship state while configuring individual systems.
-
-#### Crew Calculation Architecture
-
-The crew system provides comprehensive crew requirement calculations based on ship systems and configuration:
-
-**Components:**
-- `CrewCalculationService` - Service that calculates crew requirements from all ship systems
-- `Crew.kt` - Data models including CrewType enum, CrewMember, and CrewManifest
-- `BerthsScreen/ViewModel` - UI for displaying complete crew manifest with assignments
-
-**Crew Calculation Rules:**
-- **Engine Crew**: 1 Engineer per 100 tons of engines (combined or separate by type based on ship size)
-- **Bridge Crew**: Pilot/Navigator for small ships, separate roles plus command crew for capital ships
-- **Weapons Crew**: 1 Gunner per 10 armed turrets of same type (excludes hardpoints)
-- **Defense Crew**: 1 Gunner per 100 tons of defensive screens
-- **Cargo Crew**: 1 Security for secured cargo, 1 Xeno Handler per 25 tons of xeno cargo
-- **Vehicle Crew**: 1 Service per 3 vehicles
-- **Drone Crew**: 1 Service per 10 drones
-
-**Key Features:**
-- **Reactive Calculations**: Crew requirements automatically update when ship systems change
-- **Detailed Assignments**: Each crew member has specific assignment descriptions
-- **Ship Size Scaling**: Different crew requirements based on ship tonnage (100-200t, 300-2000t, 2000t+)
-- **System Integration**: Combines data from all repositories to calculate complete crew manifest
 
 ### Testing Strategy
 
 #### Unit Tests (`/test/`)
-- Use fake implementations: `FakeStarShipRepository`, `FakeStarShipDao`
+- Use fake implementations:
 - Test ViewModels with `TestDispatcher` and `runTest`
 - Mock external dependencies, use fakes for internal components
 
@@ -160,59 +57,10 @@ The crew system provides comprehensive crew requirement calculations based on sh
 ### State Management Pattern
 
 #### UI State Patterns
-Each screen uses a data class-based UiState pattern:
-
-```kotlin
-data class EnginesUiState(
-    val ship: StarShip? = null,
-    val engines: List<Engine> = emptyList(),
-    val powerPlants: List<Engine> = emptyList(),
-    val jumpDrives: List<Engine> = emptyList(),
-    val maneuverDrives: List<Engine> = emptyList(),
-    val fitting: Fitting? = null,
-    val weapons: List<Weapon> = emptyList(),
-    val shipSummary: ShipSummary? = null,  // Comprehensive ship data
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-) {
-    // Helper methods for calculations
-    fun getTotalEngineTonnage(): Float { ... }
-    fun hasRequiredEngines(): Boolean { ... }
-}
-```
 
 #### ViewModel Pattern
-- Expose `StateFlow<UiState>` for UI observation  
-- Use `viewModelScope` for coroutine management
-- Combine multiple repository flows using `combine()`
-- Include `ShipSummaryService` for comprehensive ship data
-- Transform domain data to UI state
 
 #### Common ViewModel Structure
-```kotlin
-@HiltViewModel
-class ScreenViewModel @Inject constructor(
-    private val specificRepository: SpecificRepository,
-    private val starShipRepository: StarShipRepository,
-    private val shipSummaryService: ShipSummaryService
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(ScreenUiState(isLoading = true))
-    val uiState: StateFlow<ScreenUiState> = _uiState.asStateFlow()
-
-    fun loadDataForShip(shipId: Int) {
-        viewModelScope.launch {
-            combine(
-                starShipRepository.starShips,
-                specificRepository.getDataForShip(shipId),
-                shipSummaryService.getComprehensiveShipSummary(shipId)
-            ) { ships, specificData, shipSummary ->
-                // Transform to UiState
-            }.collect { _uiState.value = it }
-        }
-    }
-}
-```
 
 ### Room Database Patterns
 
@@ -223,20 +71,10 @@ class ScreenViewModel @Inject constructor(
 - Business logic methods in entities for calculations
 
 #### Current Database Entities
-- **StarShip** - Core ship definition (name, tons, tech level, configuration)
-- **Engine** - Power plants, jump drives, maneuver drives with performance ratings
-- **Weapon** - Weapon systems and turret configurations
-- **Defense** - Armor protection and defensive screens (nuclear damper, meson screen, black globe)
-- **Fitting** - Sensors and computer systems
-- **Cargo** - Five cargo types (Cargo, Spares, Cold Storage, Secured Cargo, Xeno Cargo)
-- **VehicleAllocation** - Vehicle bay allocations with quantities and tech level constraints
-- **DroneAllocation** - Drone complement allocations with quantities and tech level constraints
-- **Berths** - Berth allocations (Staterooms, Luxury Staterooms, Low Passage, Emergency Low) with tonnage and cost calculations
-- **Crew** - Crew data models (CrewType enum, CrewMember, CrewManifest) for comprehensive crew calculations
 
 #### Database Configuration
 - Schema location: `$projectDir/schemas` for version control
-- **Database version: Currently 13** (migrated from 10 to 11 for VehicleAllocation/DroneAllocation entities, then to 12 for crew system support, then to 13 for Berths entities)
+- **Database version: Currently 1, empty
 - Export schema: `true` for migration tracking
 - Uses `fallbackToDestructiveMigration()` for development flexibility
 
@@ -252,7 +90,7 @@ class ScreenViewModel @Inject constructor(
 
 #### Review Phase
 5. Logs copied to story/issue, Claude asks for approval
-6. Human reviews and either requests changes or approves for branch/PR creation
+6. Human reviews and either requests changes or approves for branch/PR creation; apply steps 3 & 4 for changes.
 
 ### Git Workflow - NEVER Merge Locally
 
@@ -286,15 +124,6 @@ class ScreenViewModel @Inject constructor(
 - Use Room database patterns for data persistence
 - Follow Compose UI patterns with StateFlow observation
 - Always run tests before finalizing work
-
-### Ship Summary Requirements (Critical)
-- **ALL configuration screens MUST use `ComprehensiveShipSummaryPanel`** - No local summary implementations
-- **Include `ShipSummaryService`** in ViewModels for comprehensive ship data
-- **Add `shipSummary: ShipSummary?`** field to UiState for complete ship information
-- **Use `combine()`** to collect data from specific repository + `ShipSummaryService`
-- **Show complete data**: engines, weapons, defenses, fittings, cargo, vehicles, drones with costs and tonnage
-- **Real-time updates**: Summary must reflect all system changes immediately
-- **Consistent positioning**: Summary panels should appear at consistent locations across screens
 
 ### Copyright Management
 

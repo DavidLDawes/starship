@@ -35,6 +35,7 @@ import starship.virtualsoundnw.com.data.local.database.VehicleDao
 import starship.virtualsoundnw.com.data.local.database.VehicleAllocationDao
 import starship.virtualsoundnw.com.data.local.database.DroneDao
 import starship.virtualsoundnw.com.data.local.database.BerthsDao
+import starship.virtualsoundnw.com.data.local.database.CustomItemDao
 import javax.inject.Singleton
 
 
@@ -92,6 +93,11 @@ class DatabaseModule {
     }
 
     @Provides
+    fun provideCustomItemDao(appDatabase: AppDatabase): CustomItemDao {
+        return appDatabase.customItemDao()
+    }
+
+    @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
         return Room.databaseBuilder(
@@ -102,7 +108,8 @@ class DatabaseModule {
             AppDatabase.MIGRATION_9_10,
             AppDatabase.MIGRATION_11_12,
             AppDatabase.MIGRATION_12_13,
-            AppDatabase.MIGRATION_13_14
+            AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15
         ).fallbackToDestructiveMigration()
          .build()
     }
