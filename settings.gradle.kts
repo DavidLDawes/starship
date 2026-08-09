@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project, 2025 David L. Dawes
+ * Notice: As this license requires, be aware this file has been changed by David L. Dawes since cloning it from github.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +23,7 @@ pluginManagement {
     }
 }
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)

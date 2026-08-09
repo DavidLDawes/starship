@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project, 2025 David L. Dawes
+ * Notice: As this license requires, be aware this file has been changed by David L. Dawes since cloning it from github.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +15,8 @@
  * limitations under the License.
  */
 
-@Suppress("DSL_SCOPE_VIOLATION") // Remove when fixed https://youtrack.jetbrains.com/issue/KTIJ-19369
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt.gradle)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
@@ -26,11 +24,16 @@ plugins {
 
 android {
     namespace = "starship.virtualsoundnw.com"
-    compileSdk = 35
+    // Bumped from 35: several current AndroidX libraries (androidx.core 1.19.0,
+    // androidx.lifecycle 2.11.0, androidx.hilt 1.4.0, etc.) require compiling
+    // against API 37 or higher (enforced by AGP's AAR metadata check).
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "starship.virtualsoundnw.com"
-        minSdk = 21
+        // minSdk raised from 21 to 23: androidx.room 2.8.x (and the current AndroidX
+        // ecosystem generally) requires a minSdk of 23 or higher.
+        minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -54,13 +57,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    // With AGP's built-in Kotlin support, jvmTarget defaults to
+    // android.compileOptions.targetCompatibility above, so no separate
+    // kotlinOptions/compilerOptions jvmTarget override is needed.
 
     buildFeatures {
         compose = true
@@ -70,7 +73,7 @@ android {
         shaders = false
     }
 
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -89,14 +92,18 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     // Hilt Dependency Injection
+    // Note: Hilt's annotation processing uses KSP rather than kapt here because the
+    // org.jetbrains.kotlin.kapt plugin is incompatible with AGP 9's built-in Kotlin
+    // support (confirmed by a real build failure during this migration). Dagger/Hilt
+    // publishes a KSP-compatible compiler, so the same artifacts are used via ksp(...).
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     // Hilt and instrumented tests.
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.hilt.android.compiler)
     // Hilt and Robolectric tests.
     testImplementation(libs.hilt.android.testing)
-    kaptTest(libs.hilt.android.compiler)
+    kspTest(libs.hilt.android.compiler)
 
     // Arch Components
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -111,6 +118,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.core)
     // Tooling
     debugImplementation(libs.androidx.compose.ui.tooling)
     // Instrumented tests
