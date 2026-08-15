@@ -34,3 +34,6 @@ google-services.json
 *.hprof
 
 .kotlin
+
+# Visual Studio
+.vs/
